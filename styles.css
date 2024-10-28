@@ -112,3 +112,47 @@ section {
     margin: 20px 0;
     padding: 10px;
 }
+
+/* Weather condition-specific styles */
+.weather-clear {
+    background: linear-gradient(to bottom, #87CEEB, #f0f0f0);
+    border: 1px solid #87CEEB;
+}
+
+.weather-clouds {
+    background: linear-gradient(to bottom, #B4B4B4, #f0f0f0);
+    border: 1px solid #B4B4B4;
+}
+
+.weather-rain {
+    background: linear-gradient(to bottom, #4682B4, #f0f0f0);
+    border: 1px solid #4682B4;
+}
+
+.weather-snow {
+    background: linear-gradient(to bottom, #E0FFFF, #f0f0f0);
+    border: 1px solid #E0FFFF;
+}
+
+.weather-thunderstorm {
+    background: linear-gradient(to bottom, #483D8B, #f0f0f0);
+    border: 1px solid #483D8B;
+    color: white;
+}
+
+.weather-drizzle {
+    background: linear-gradient(to bottom, #87CEEB, #f0f0f0);
+    border: 1px solid #87CEEB;
+}
+
+.weather-mist, .weather-fog {
+    background: linear-gradient(to bottom, #D3D3D3, #f0f0f0);
+    border: 1px solid #D3D3D3;
+}
+
+/* Make text more visible on dark backgrounds */
+.weather-thunderstorm .weather-date,
+.weather-thunderstorm .weather-desc,
+.weather-thunderstorm .weather-details {
+    color: #fff;
+}
