@@ -119,12 +119,20 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Use CalFire's ArcGIS service instead
+        // Use CalFire's ArcGIS service
         const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Active_Incidents_Public/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json';
         
         const response = await fetch(url);
         if (!response.ok) throw new Error('CalFire API error');
         const data = await response.json();
+        
+        // Debug log
+        console.log('Fire data received:', data);
+        
+        // Check if data exists and has features
+        if (!data || !data.features || !Array.isArray(data.features)) {
+            throw new Error('No fire data available');
+        }
         
         // Initialize wildfire map
         const wildfireMap = L.map('wildfire-map').setView([lat, lon], 7);
@@ -134,11 +142,17 @@ async function fetchWildfireData(lat, lon) {
 
         // Add fire markers
         data.features.forEach(feature => {
+            // Debug log for each feature
+            console.log('Processing fire:', feature);
+            
             const fire = feature.attributes;
             const coords = feature.geometry;
             
             // Skip if no location data
-            if (!coords || !coords.y || !coords.x) return;
+            if (!coords || !coords.y || !coords.x) {
+                console.log('Skipping fire due to missing coordinates');
+                return;
+            }
 
             // Determine marker color based on containment
             const containment = parseInt(fire.PercentContained) || 0;
@@ -169,7 +183,7 @@ async function fetchWildfireData(lat, lon) {
                 `);
         });
 
-        // Add legend (same as before)
+        // Add legend
         const legend = L.control({position: 'bottomright'});
         legend.onAdd = function(map) {
             const div = L.DomUtil.create('div', 'info legend');
