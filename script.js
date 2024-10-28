@@ -119,13 +119,13 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using NIFC's GeoJSON service
-        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/NIFC_Wildland_Fire_Locations_Last_24_Hours/FeatureServer/0/query?where=1%3D1&outFields=*&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&outSR=4326&f=geojson';
+        // Using InciWeb's API
+        const url = 'https://inciweb.nwcg.gov/feeds/json/esri/';
         
         console.log('Fetching from URL:', url);
         
         const response = await fetch(url);
-        if (!response.ok) throw new Error('NIFC API error');
+        if (!response.ok) throw new Error('InciWeb API error');
         const data = await response.json();
         
         console.log('Fire data received:', data);
@@ -144,11 +144,11 @@ async function fetchWildfireData(lat, lon) {
             // Skip if no coordinates
             if (!coords || coords.length < 2) return;
 
-            // Determine fire size and color
-            const acres = parseFloat(fire.DailyAcres) || 0;
-            const color = acres > 1000 ? '#FF5252' :  // Red for large fires
-                         acres > 100 ? '#FFA726' :    // Orange for medium fires
-                                     '#FFD54F';       // Yellow for small fires
+            // Determine fire status and color
+            const status = fire.status?.toLowerCase() || '';
+            const color = status.includes('contained') ? '#4CAF50' :   // Green for contained
+                         status.includes('control') ? '#FFA726' :      // Orange for controlled
+                                                    '#FF5252';         // Red for active
 
             // Create marker with custom icon
             const fireIcon = L.divIcon({
@@ -161,12 +161,13 @@ async function fetchWildfireData(lat, lon) {
                 .addTo(wildfireMap)
                 .bindPopup(`
                     <div class="fire-popup">
-                        <h3>${fire.IncidentName || 'Unnamed Fire'}</h3>
-                        <p><strong>Type:</strong> ${fire.IncidentTypeCategory || 'N/A'}</p>
-                        <p><strong>Size:</strong> ${fire.DailyAcres ? Math.round(fire.DailyAcres) + ' acres' : 'N/A'}</p>
-                        <p><strong>Discovery Date:</strong> ${new Date(fire.FireDiscoveryDateTime).toLocaleDateString()}</p>
-                        <p><strong>Status:</strong> ${fire.IncidentManagementOrganization || 'N/A'}</p>
-                        <p><strong>Location:</strong> ${fire.POOState || 'N/A'}</p>
+                        <h3>${fire.title || 'Unnamed Fire'}</h3>
+                        <p><strong>Status:</strong> ${fire.status || 'N/A'}</p>
+                        <p><strong>Size:</strong> ${fire.size ? fire.size + ' acres' : 'N/A'}</p>
+                        <p><strong>Type:</strong> ${fire.fire_type || 'N/A'}</p>
+                        <p><strong>State:</strong> ${fire.state || 'N/A'}</p>
+                        <p><strong>Updated:</strong> ${new Date(fire.updated).toLocaleDateString()}</p>
+                        <a href="${fire.url}" target="_blank" class="fire-details-link">View Details</a>
                     </div>
                 `);
         });
@@ -177,18 +178,18 @@ async function fetchWildfireData(lat, lon) {
             const div = L.DomUtil.create('div', 'info legend');
             div.innerHTML = `
                 <div class="legend-container">
-                    <h4>Fire Size (Acres)</h4>
+                    <h4>Fire Status</h4>
                     <div class="legend-item">
                         <span class="legend-color" style="background: #FF5252"></span>
-                        <span>Large (>1000)</span>
+                        <span>Active</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background: #FFA726"></span>
-                        <span>Medium (100-1000)</span>
+                        <span>Controlled</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FFD54F"></span>
-                        <span>Small (<100)</span>
+                        <span class="legend-color" style="background: #4CAF50"></span>
+                        <span>Contained</span>
                     </div>
                 </div>
             `;
