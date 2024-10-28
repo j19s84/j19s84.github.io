@@ -119,15 +119,15 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Use CalFire's ArcGIS service
-        const url = 'const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Current_Incidents/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json';
+        const url = `https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Current_Incidents/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json`;
+        
+        console.log('Fetching from URL:', url); // Debug log
         
         const response = await fetch(url);
         if (!response.ok) throw new Error('CalFire API error');
         const data = await response.json();
         
-        // Debug log
-        console.log('Fire data received:', data);
+        console.log('Fire data received:', data); // Debug log
         
         // Check if data exists and has features
         if (!data || !data.features || !Array.isArray(data.features)) {
@@ -142,8 +142,7 @@ async function fetchWildfireData(lat, lon) {
 
         // Add fire markers
         data.features.forEach(feature => {
-            // Debug log for each feature
-            console.log('Processing fire:', feature);
+            console.log('Processing fire:', feature); // Debug log
             
             const fire = feature.attributes;
             const coords = feature.geometry;
@@ -214,7 +213,6 @@ async function fetchWildfireData(lat, lon) {
             '<p>Wildfire data temporarily unavailable. Please try again later.</p>';
     }
 }
-
 // Launch SOS Plan
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
