@@ -44,6 +44,42 @@ function initializeMap(lat, lon) {
 
 // Basic weather data fetch (we'll add API key later)
 async function fetchWeatherData(lat, lon) {
+    async function fetchWeatherData(lat, lon) {
+    const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&cnt=5`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Weather API error');
+        const data = await response.json();
+        
+        // Create weather display
+        const weatherContainer = document.getElementById('weather-container');
+        weatherContainer.innerHTML = ''; // Clear existing content
+        
+        data.list.forEach(day => {
+            const date = new Date(day.dt * 1000);
+            const temp = Math.round(day.main.temp);
+            const description = day.weather[0].description;
+            const icon = day.weather[0].icon;
+            
+            const weatherCard = document.createElement('div');
+            weatherCard.className = 'weather-card';
+            weatherCard.innerHTML = `
+                <div class="weather-date">${date.toLocaleDateString()}</div>
+                <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
+                <div class="weather-temp">${temp}°C</div>
+                <div class="weather-desc">${description}</div>
+            `;
+            
+            weatherContainer.appendChild(weatherCard);
+        });
+    } catch (error) {
+        console.error('Error fetching weather:', error);
+        document.getElementById('weather-container').innerHTML = 
+            '<p>Weather data temporarily unavailable. Please try again later.</p>';
+    }
+}
     // For now, just show a placeholder
     document.getElementById('weather-container').innerHTML = 
         '<p>Weather data will appear here</p>';
