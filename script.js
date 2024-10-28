@@ -112,6 +112,8 @@ async function fetchWeatherData(lat, lon) {
             '<p>Weather data temporarily unavailable. Please try again later.</p>';
     }
 }
+async function fetchWildfireData(lat, lon) {
+    const FIRMS_API_KEY = 'b8d92538f03b23a0d2d6fb8405c8a455';
 // Launch SOS Plan
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
