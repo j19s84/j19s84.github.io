@@ -119,18 +119,17 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using California Fire API
-        const url = 'https://www.fire.ca.gov/umbraco/api/IncidentApi/List';
+        // First, get temporary access to the CORS proxy
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const targetUrl = 'https://www.fire.ca.gov/umbraco/api/IncidentApi/List';
+        const url = proxyUrl + targetUrl;
         
         console.log('Fetching from URL:', url);
         
         const response = await fetch(url, {
-            method: 'GET',
             headers: {
-                'Accept': 'application/json',
                 'Origin': 'https://j19s84.github.io'
-            },
-            mode: 'cors'
+            }
         });
         
         if (!response.ok) throw new Error('CalFire API error');
