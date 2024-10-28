@@ -118,86 +118,72 @@ async function fetchWeatherData(lat, lon) {
 
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
-    const FIRMS_API_KEY = 'b8d92538f03b23a0d2d6fb8405c8a455';
-    
-    // Calculate bounding box (roughly 100km around location)
-    const boxSize = 1; // roughly 100km in degrees
-    const bounds = {
-        north: lat + boxSize,
-        south: lat - boxSize,
-        east: lon + boxSize,
-        west: lon - boxSize
-    };
-
-    // Format date for API (yesterday to today)
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const formatDate = (date) => {
-        return date.toISOString().split('T')[0].replace(/-/g, '');
-    };
-
-    const url = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${FIRMS_API_KEY}/VIIRS_SNPP_NRT/${bounds.west},${bounds.south},${bounds.east},${bounds.north}/${formatDate(yesterday)}`;
-
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Wildfire API error');
-        const text = await response.text();
-        
-        // Parse CSV data
-        const rows = text.split('\n').slice(1); // Skip header row
-        const fires = rows.filter(row => row.length > 0).map(row => {
-            const columns = row.split(',');
-            return {
-                latitude: parseFloat(columns[0]),
-                longitude: parseFloat(columns[1]),
-                brightness: parseFloat(columns[2]),
-                confidence: columns[8].toLowerCase(),
-                acq_date: columns[5],
-                acq_time: columns[6]
-            };
-        });
+        // Fetch CalFire incidents
+        const response = await fetch('https://www.fire.ca.gov/umbraco/api/IncidentApi/List?inactive=false');
+        if (!response.ok) throw new Error('CalFire API error');
+        const data = await response.json();
         
         // Initialize wildfire map
-        const wildfireMap = L.map('wildfire-map').setView([lat, lon], 9);
+        const wildfireMap = L.map('wildfire-map').setView([lat, lon], 7); // Wider view for CA fires
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
         // Add fire markers
-        fires.forEach(fire => {
-            const confidence = fire.confidence || 'n';
-            const color = confidence === 'h' ? '#ff0000' : 
-                         confidence === 'n' ? '#ff9900' : '#ffff00';
-            
-            L.circle([fire.latitude, fire.longitude], {
-                color: color,
-                fillColor: color,
-                fillOpacity: 0.5,
-                radius: 1000 // 1km radius
-            }).addTo(wildfireMap)
-            .bindPopup(`
-                <strong>Fire Detected</strong><br>
-                Date: ${fire.acq_date}<br>
-                Time: ${fire.acq_time}<br>
-                Confidence: ${confidence.toUpperCase()}<br>
-                Brightness: ${fire.brightness}K
-            `);
+        data.forEach(fire => {
+            // Skip if no location data
+            if (!fire.latitude || !fire.longitude) return;
+
+            // Determine marker color based on containment
+            const containment = parseInt(fire.percentContained) || 0;
+            const color = containment > 70 ? '#4CAF50' :  // Green for mostly contained
+                         containment > 30 ? '#FFA726' :   // Orange for partially contained
+                                          '#FF5252';      // Red for low containment
+
+            // Create marker with custom icon
+            const fireIcon = L.divIcon({
+                className: 'fire-marker',
+                html: `<div style="background-color: ${color};" class="fire-icon"></div>`,
+                iconSize: [20, 20]
+            });
+
+            L.marker([fire.latitude, fire.longitude], { icon: fireIcon })
+                .addTo(wildfireMap)
+                .bindPopup(`
+                    <div class="fire-popup">
+                        <h3>${fire.name}</h3>
+                        <p><strong>County:</strong> ${fire.county}</p>
+                        <p><strong>Location:</strong> ${fire.location}</p>
+                        <p><strong>Acres Burned:</strong> ${fire.acresBurned || 'N/A'}</p>
+                        <p><strong>Containment:</strong> ${fire.percentContained || '0'}%</p>
+                        <p><strong>Updated:</strong> ${new Date(fire.updated).toLocaleString()}</p>
+                        ${fire.controlStatement ? `<p><strong>Status:</strong> ${fire.controlStatement}</p>` : ''}
+                        <a href="${fire.url}" target="_blank" class="fire-details-link">View Full Details</a>
+                    </div>
+                `);
         });
 
         // Add legend
         const legend = L.control({position: 'bottomright'});
         legend.onAdd = function(map) {
             const div = L.DomUtil.create('div', 'info legend');
-            div.style.backgroundColor = 'white';
-            div.style.padding = '10px';
-            div.style.borderRadius = '5px';
             div.innerHTML = `
-                <strong>Fire Confidence</strong><br>
-                <span style="color: #ff0000">●</span> High<br>
-                <span style="color: #ff9900">●</span> Nominal<br>
-                <span style="color: #ffff00">●</span> Low
+                <div class="legend-container">
+                    <h4>Fire Containment</h4>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #FF5252"></span>
+                        <span>0-30% Contained</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #FFA726"></span>
+                        <span>31-70% Contained</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #4CAF50"></span>
+                        <span>71-100% Contained</span>
+                    </div>
+                </div>
             `;
             return div;
         };
@@ -209,7 +195,6 @@ async function fetchWildfireData(lat, lon) {
             '<p>Wildfire data temporarily unavailable. Please try again later.</p>';
     }
 }
-
 // Launch SOS Plan
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
