@@ -119,24 +119,29 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Fetch CalFire incidents
-        const response = await fetch('https://www.fire.ca.gov/umbraco/api/IncidentApi/List?inactive=false');
+        // Use CalFire's ArcGIS service instead
+        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Active_Incidents_Public/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json';
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error('CalFire API error');
         const data = await response.json();
         
         // Initialize wildfire map
-        const wildfireMap = L.map('wildfire-map').setView([lat, lon], 7); // Wider view for CA fires
+        const wildfireMap = L.map('wildfire-map').setView([lat, lon], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
         // Add fire markers
-        data.forEach(fire => {
+        data.features.forEach(feature => {
+            const fire = feature.attributes;
+            const coords = feature.geometry;
+            
             // Skip if no location data
-            if (!fire.latitude || !fire.longitude) return;
+            if (!coords || !coords.y || !coords.x) return;
 
             // Determine marker color based on containment
-            const containment = parseInt(fire.percentContained) || 0;
+            const containment = parseInt(fire.PercentContained) || 0;
             const color = containment > 70 ? '#4CAF50' :  // Green for mostly contained
                          containment > 30 ? '#FFA726' :   // Orange for partially contained
                                           '#FF5252';      // Red for low containment
@@ -148,23 +153,23 @@ async function fetchWildfireData(lat, lon) {
                 iconSize: [20, 20]
             });
 
-            L.marker([fire.latitude, fire.longitude], { icon: fireIcon })
+            L.marker([coords.y, coords.x], { icon: fireIcon })
                 .addTo(wildfireMap)
                 .bindPopup(`
                     <div class="fire-popup">
-                        <h3>${fire.name}</h3>
-                        <p><strong>County:</strong> ${fire.county}</p>
-                        <p><strong>Location:</strong> ${fire.location}</p>
-                        <p><strong>Acres Burned:</strong> ${fire.acresBurned || 'N/A'}</p>
-                        <p><strong>Containment:</strong> ${fire.percentContained || '0'}%</p>
-                        <p><strong>Updated:</strong> ${new Date(fire.updated).toLocaleString()}</p>
-                        ${fire.controlStatement ? `<p><strong>Status:</strong> ${fire.controlStatement}</p>` : ''}
-                        <a href="${fire.url}" target="_blank" class="fire-details-link">View Full Details</a>
+                        <h3>${fire.IncidentName || 'Unnamed Fire'}</h3>
+                        <p><strong>County:</strong> ${fire.County || 'N/A'}</p>
+                        <p><strong>Location:</strong> ${fire.Location || 'N/A'}</p>
+                        <p><strong>Acres Burned:</strong> ${fire.AcresBurned || 'N/A'}</p>
+                        <p><strong>Containment:</strong> ${fire.PercentContained || '0'}%</p>
+                        <p><strong>Updated:</strong> ${new Date(fire.UpdateDate).toLocaleString()}</p>
+                        ${fire.ControlStatement ? `<p><strong>Status:</strong> ${fire.ControlStatement}</p>` : ''}
+                        <a href="https://www.fire.ca.gov/incidents" target="_blank" class="fire-details-link">View All Incidents</a>
                     </div>
                 `);
         });
 
-        // Add legend
+        // Add legend (same as before)
         const legend = L.control({position: 'bottomright'});
         legend.onAdd = function(map) {
             const div = L.DomUtil.create('div', 'info legend');
