@@ -42,9 +42,8 @@ function initializeMap(lat, lon) {
         .openPopup();
 }
 
-// Basic weather data fetch (we'll add API key later)
+// Weather data fetch with API
 async function fetchWeatherData(lat, lon) {
-    async function fetchWeatherData(lat, lon) {
     const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&cnt=5`;
     
@@ -79,10 +78,6 @@ async function fetchWeatherData(lat, lon) {
         document.getElementById('weather-container').innerHTML = 
             '<p>Weather data temporarily unavailable. Please try again later.</p>';
     }
-}
-    // For now, just show a placeholder
-    document.getElementById('weather-container').innerHTML = 
-        '<p>Weather data will appear here</p>';
 }
 
 // Launch SOS Plan
