@@ -214,6 +214,7 @@ async function fetchWildfireData(lat, lon) {
             '<p>Wildfire data temporarily unavailable. Please try again later.</p>';
     }
 }
+
 // Launch SOS Plan
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
