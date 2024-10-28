@@ -45,8 +45,14 @@ function initializeMap(lat, lon) {
 // Weather data fetch with API
 async function fetchWeatherData(lat, lon) {
     const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
-    // Changed to daily forecast endpoint
     const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+    
+    // Helper function to get wind direction
+    function getWindDirection(degrees) {
+        const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+        const index = Math.round(degrees / 22.5) % 16;
+        return directions[index];
+    }
     
     try {
         const response = await fetch(url);
@@ -54,9 +60,8 @@ async function fetchWeatherData(lat, lon) {
         const data = await response.json();
         
         const weatherContainer = document.getElementById('weather-container');
-        weatherContainer.innerHTML = ''; // Clear existing content
+        weatherContainer.innerHTML = '';
         
-        // Group forecasts by day
         const dailyForecasts = {};
         
         data.list.forEach(forecast => {
@@ -68,7 +73,6 @@ async function fetchWeatherData(lat, lon) {
             }
         });
         
-        // Take only the first 5 days
         Object.values(dailyForecasts).slice(0, 5).forEach(day => {
             const date = new Date(day.dt * 1000);
             const tempC = Math.round(day.main.temp);
@@ -78,11 +82,15 @@ async function fetchWeatherData(lat, lon) {
             const weatherMain = day.weather[0].main.toLowerCase();
             const humidity = day.main.humidity;
             const windSpeed = Math.round(day.wind.speed * 2.237); // Convert m/s to mph
+            const windDir = getWindDirection(day.wind.deg); // Get wind direction
             
             const weatherCard = document.createElement('div');
             weatherCard.className = `weather-card weather-${weatherMain}`;
             weatherCard.innerHTML = `
-                <div class="weather-date">${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                <div class="weather-date-container">
+                    <div class="weather-day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                    <div class="weather-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                </div>
                 <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
                 <div class="weather-temp">
                     <span class="temp-c">${tempC}°C</span>
@@ -91,8 +99,8 @@ async function fetchWeatherData(lat, lon) {
                 </div>
                 <div class="weather-desc">${description}</div>
                 <div class="weather-details">
-                    <div class="humidity">💧 ${humidity}% humidity</div>
-                    <div class="wind">💨 ${windSpeed} mph wind</div>
+                    <div class="humidity">💧 ${humidity}%</div>
+                    <div class="wind">💨 ${windSpeed} mph ${windDir}</div>
                 </div>
             `;
             
@@ -104,7 +112,6 @@ async function fetchWeatherData(lat, lon) {
             '<p>Weather data temporarily unavailable. Please try again later.</p>';
     }
 }
-
 // Launch SOS Plan
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
