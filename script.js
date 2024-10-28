@@ -61,11 +61,12 @@ async function fetchWeatherData(lat, lon) {
             const tempF = Math.round((tempC * 9/5) + 32);
             const description = day.weather[0].description;
             const icon = day.weather[0].icon;
+            const weatherMain = day.weather[0].main.toLowerCase();
             const humidity = day.main.humidity;
             const windSpeed = Math.round(day.wind.speed * 2.237); // Convert m/s to mph
             
             const weatherCard = document.createElement('div');
-            weatherCard.className = 'weather-card';
+            weatherCard.className = `weather-card weather-${weatherMain}`;
             weatherCard.innerHTML = `
                 <div class="weather-date">${date.toLocaleDateString()}</div>
                 <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
