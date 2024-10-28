@@ -119,13 +119,20 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using InciWeb's API
-        const url = 'https://inciweb.nwcg.gov/feeds/json/esri/';
+        // Using USFS IRWIN service through a CORS proxy
+        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+        const baseUrl = 'https://fsapps.nwcg.gov/geoserver/wfs?service=wfs&version=2.0.0&request=GetFeature&typeNames=wfigs:current_incidents_all&outputFormat=json';
+        const url = corsProxy + baseUrl;
         
         console.log('Fetching from URL:', url);
         
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('InciWeb API error');
+        const response = await fetch(url, {
+            headers: {
+                'Origin': 'https://j19s84.github.io'
+            }
+        });
+        
+        if (!response.ok) throw new Error('USFS API error');
         const data = await response.json();
         
         console.log('Fire data received:', data);
@@ -136,41 +143,43 @@ async function fetchWildfireData(lat, lon) {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        // Add fire markers
-        data.features.forEach(feature => {
-            const fire = feature.properties;
-            const coords = feature.geometry.coordinates;
-            
-            // Skip if no coordinates
-            if (!coords || coords.length < 2) return;
+        if (data.features && data.features.length > 0) {
+            data.features.forEach(feature => {
+                const props = feature.properties;
+                const coords = feature.geometry.coordinates;
+                
+                if (!coords || coords.length < 2) return;
 
-            // Determine fire status and color
-            const status = fire.status?.toLowerCase() || '';
-            const color = status.includes('contained') ? '#4CAF50' :   // Green for contained
-                         status.includes('control') ? '#FFA726' :      // Orange for controlled
-                                                    '#FF5252';         // Red for active
+                // Determine incident type and color
+                const type = props.incident_type_category || '';
+                const color = type.includes('Wildfire') ? '#FF5252' :
+                            type.includes('Prescribed') ? '#4CAF50' :
+                            '#FFA726';  // Other incidents
 
-            // Create marker with custom icon
-            const fireIcon = L.divIcon({
-                className: 'fire-marker',
-                html: `<div style="background-color: ${color};" class="fire-icon"></div>`,
-                iconSize: [20, 20]
+                // Create fire icon
+                const fireIcon = L.divIcon({
+                    className: 'fire-marker',
+                    html: `<div style="background-color: ${color};" class="fire-icon"></div>`,
+                    iconSize: [20, 20]
+                });
+
+                // Add marker
+                L.marker([coords[1], coords[0]], { icon: fireIcon })
+                    .addTo(wildfireMap)
+                    .bindPopup(`
+                        <div class="fire-popup">
+                            <h3>${props.incident_name || 'Unnamed Incident'}</h3>
+                            <p><strong>Type:</strong> ${props.incident_type_category || 'N/A'}</p>
+                            <p><strong>Size:</strong> ${props.daily_acres ? Math.round(props.daily_acres) + ' acres' : 'N/A'}</p>
+                            <p><strong>Discovery:</strong> ${props.discovery_date || 'N/A'}</p>
+                            <p><strong>Location:</strong> ${props.state_name || 'N/A'}</p>
+                            <p><strong>Status:</strong> ${props.incident_status || 'Active'}</p>
+                        </div>
+                    `);
             });
-
-            L.marker([coords[1], coords[0]], { icon: fireIcon })
-                .addTo(wildfireMap)
-                .bindPopup(`
-                    <div class="fire-popup">
-                        <h3>${fire.title || 'Unnamed Fire'}</h3>
-                        <p><strong>Status:</strong> ${fire.status || 'N/A'}</p>
-                        <p><strong>Size:</strong> ${fire.size ? fire.size + ' acres' : 'N/A'}</p>
-                        <p><strong>Type:</strong> ${fire.fire_type || 'N/A'}</p>
-                        <p><strong>State:</strong> ${fire.state || 'N/A'}</p>
-                        <p><strong>Updated:</strong> ${new Date(fire.updated).toLocaleDateString()}</p>
-                        <a href="${fire.url}" target="_blank" class="fire-details-link">View Details</a>
-                    </div>
-                `);
-        });
+        } else {
+            console.log('No active incidents found in the area');
+        }
 
         // Add legend
         const legend = L.control({position: 'bottomright'});
@@ -178,18 +187,18 @@ async function fetchWildfireData(lat, lon) {
             const div = L.DomUtil.create('div', 'info legend');
             div.innerHTML = `
                 <div class="legend-container">
-                    <h4>Fire Status</h4>
+                    <h4>Incident Types</h4>
                     <div class="legend-item">
                         <span class="legend-color" style="background: #FF5252"></span>
-                        <span>Active</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: #FFA726"></span>
-                        <span>Controlled</span>
+                        <span>Wildfire</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background: #4CAF50"></span>
-                        <span>Contained</span>
+                        <span>Prescribed Fire</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #FFA726"></span>
+                        <span>Other Incident</span>
                     </div>
                 </div>
             `;
