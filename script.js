@@ -129,14 +129,35 @@ async function fetchWildfireData(lat, lon) {
         west: lon - boxSize
     };
 
-    // Get last 24 hours of fire data
-    const today = new Date().toISOString().split('T')[0];
-    const url = `https://firms.modaps.eosdis.nasa.gov/api/area/json/${FIRMS_API_KEY}/VIIRS_SNPP_NRT/${bounds.west},${bounds.south},${bounds.east},${bounds.north}/1`;
+    // Format date for API (yesterday to today)
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const formatDate = (date) => {
+        return date.toISOString().split('T')[0].replace(/-/g, '');
+    };
+
+    const url = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${FIRMS_API_KEY}/VIIRS_SNPP_NRT/${bounds.west},${bounds.south},${bounds.east},${bounds.north}/${formatDate(yesterday)}`;
 
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Wildfire API error');
-        const data = await response.json();
+        const text = await response.text();
+        
+        // Parse CSV data
+        const rows = text.split('\n').slice(1); // Skip header row
+        const fires = rows.filter(row => row.length > 0).map(row => {
+            const columns = row.split(',');
+            return {
+                latitude: parseFloat(columns[0]),
+                longitude: parseFloat(columns[1]),
+                brightness: parseFloat(columns[2]),
+                confidence: columns[8].toLowerCase(),
+                acq_date: columns[5],
+                acq_time: columns[6]
+            };
+        });
         
         // Initialize wildfire map
         const wildfireMap = L.map('wildfire-map').setView([lat, lon], 9);
@@ -145,8 +166,8 @@ async function fetchWildfireData(lat, lon) {
         }).addTo(wildfireMap);
 
         // Add fire markers
-        data.forEach(fire => {
-            const confidence = fire.confidence || 'N';
+        fires.forEach(fire => {
+            const confidence = fire.confidence || 'n';
             const color = confidence === 'h' ? '#ff0000' : 
                          confidence === 'n' ? '#ff9900' : '#ffff00';
             
@@ -161,7 +182,7 @@ async function fetchWildfireData(lat, lon) {
                 Date: ${fire.acq_date}<br>
                 Time: ${fire.acq_time}<br>
                 Confidence: ${confidence.toUpperCase()}<br>
-                Brightness: ${fire.bright_ti4}K
+                Brightness: ${fire.brightness}K
             `);
         });
 
