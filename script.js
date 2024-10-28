@@ -52,23 +52,33 @@ async function fetchWeatherData(lat, lon) {
         if (!response.ok) throw new Error('Weather API error');
         const data = await response.json();
         
-        // Create weather display
         const weatherContainer = document.getElementById('weather-container');
         weatherContainer.innerHTML = ''; // Clear existing content
         
         data.list.forEach(day => {
             const date = new Date(day.dt * 1000);
-            const temp = Math.round(day.main.temp);
+            const tempC = Math.round(day.main.temp);
+            const tempF = Math.round((tempC * 9/5) + 32);
             const description = day.weather[0].description;
             const icon = day.weather[0].icon;
+            const humidity = day.main.humidity;
+            const windSpeed = Math.round(day.wind.speed * 2.237); // Convert m/s to mph
             
             const weatherCard = document.createElement('div');
             weatherCard.className = 'weather-card';
             weatherCard.innerHTML = `
                 <div class="weather-date">${date.toLocaleDateString()}</div>
                 <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
-                <div class="weather-temp">${temp}°C</div>
+                <div class="weather-temp">
+                    <span class="temp-c">${tempC}°C</span>
+                    <span class="temp-divider"> | </span>
+                    <span class="temp-f">${tempF}°F</span>
+                </div>
                 <div class="weather-desc">${description}</div>
+                <div class="weather-details">
+                    <div class="humidity">💧 ${humidity}% humidity</div>
+                    <div class="wind">💨 ${windSpeed} mph wind</div>
+                </div>
             `;
             
             weatherContainer.appendChild(weatherCard);
