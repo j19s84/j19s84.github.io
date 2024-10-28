@@ -119,20 +119,13 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using USFS IRWIN service through a CORS proxy
-        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-        const baseUrl = 'https://fsapps.nwcg.gov/geoserver/wfs?service=wfs&version=2.0.0&request=GetFeature&typeNames=wfigs:current_incidents_all&outputFormat=json';
-        const url = corsProxy + baseUrl;
+        // Using updated InciWeb endpoint
+        const url = 'https://inciweb.wildfire.gov/api/incidents/current';
         
         console.log('Fetching from URL:', url);
         
-        const response = await fetch(url, {
-            headers: {
-                'Origin': 'https://j19s84.github.io'
-            }
-        });
-        
-        if (!response.ok) throw new Error('USFS API error');
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('InciWeb API error');
         const data = await response.json();
         
         console.log('Fire data received:', data);
@@ -143,43 +136,36 @@ async function fetchWildfireData(lat, lon) {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        if (data.features && data.features.length > 0) {
-            data.features.forEach(feature => {
-                const props = feature.properties;
-                const coords = feature.geometry.coordinates;
-                
-                if (!coords || coords.length < 2) return;
+        // Add fire markers
+        data.forEach(fire => {
+            if (!fire.latitude || !fire.longitude) return;
 
-                // Determine incident type and color
-                const type = props.incident_type_category || '';
-                const color = type.includes('Wildfire') ? '#FF5252' :
-                            type.includes('Prescribed') ? '#4CAF50' :
-                            '#FFA726';  // Other incidents
+            // Determine fire type and color
+            const type = fire.type?.toLowerCase() || '';
+            const color = type.includes('wildfire') ? '#FF5252' :
+                         type.includes('prescribed') ? '#4CAF50' :
+                                                     '#FFA726';
 
-                // Create fire icon
-                const fireIcon = L.divIcon({
-                    className: 'fire-marker',
-                    html: `<div style="background-color: ${color};" class="fire-icon"></div>`,
-                    iconSize: [20, 20]
-                });
-
-                // Add marker
-                L.marker([coords[1], coords[0]], { icon: fireIcon })
-                    .addTo(wildfireMap)
-                    .bindPopup(`
-                        <div class="fire-popup">
-                            <h3>${props.incident_name || 'Unnamed Incident'}</h3>
-                            <p><strong>Type:</strong> ${props.incident_type_category || 'N/A'}</p>
-                            <p><strong>Size:</strong> ${props.daily_acres ? Math.round(props.daily_acres) + ' acres' : 'N/A'}</p>
-                            <p><strong>Discovery:</strong> ${props.discovery_date || 'N/A'}</p>
-                            <p><strong>Location:</strong> ${props.state_name || 'N/A'}</p>
-                            <p><strong>Status:</strong> ${props.incident_status || 'Active'}</p>
-                        </div>
-                    `);
+            // Create marker with custom icon
+            const fireIcon = L.divIcon({
+                className: 'fire-marker',
+                html: `<div style="background-color: ${color};" class="fire-icon"></div>`,
+                iconSize: [20, 20]
             });
-        } else {
-            console.log('No active incidents found in the area');
-        }
+
+            L.marker([fire.latitude, fire.longitude], { icon: fireIcon })
+                .addTo(wildfireMap)
+                .bindPopup(`
+                    <div class="fire-popup">
+                        <h3>${fire.name || 'Unnamed Fire'}</h3>
+                        <p><strong>Type:</strong> ${fire.type || 'N/A'}</p>
+                        <p><strong>Size:</strong> ${fire.size ? fire.size + ' acres' : 'N/A'}</p>
+                        <p><strong>State:</strong> ${fire.state || 'N/A'}</p>
+                        <p><strong>Updated:</strong> ${new Date(fire.updated).toLocaleDateString()}</p>
+                        <a href="https://inciweb.wildfire.gov/incident/${fire.id}" target="_blank" class="fire-details-link">View Details</a>
+                    </div>
+                `);
+        });
 
         // Add legend
         const legend = L.control({position: 'bottomright'});
