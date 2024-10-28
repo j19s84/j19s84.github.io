@@ -46,4 +46,69 @@ section {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
+    margin: 20px 0;
+    padding: 10px;
+}
+
+.weather-card {
+    background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    flex: 1;
+    min-width: 200px;
+    transition: transform 0.2s;
+}
+
+.weather-card:hover {
+    transform: translateY(-5px);
+}
+
+.weather-date {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #444;
+}
+
+.weather-temp {
+    font-size: 1.5em;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.temp-divider {
+    color: #999;
+    font-weight: normal;
+}
+
+.weather-desc {
+    text-transform: capitalize;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.weather-details {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.humidity, .wind {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#weather-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    padding: 10px;
 }
