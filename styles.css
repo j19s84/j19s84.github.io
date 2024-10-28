@@ -42,9 +42,11 @@ section {
     background-color: #ff0000;
 }
 
+/* Weather Styles */
 #weather-container {
     display: flex;
     justify-content: space-between;
+    gap: 20px;
     flex-wrap: wrap;
     margin: 20px 0;
     padding: 10px;
@@ -59,16 +61,33 @@ section {
     flex: 1;
     min-width: 200px;
     transition: transform 0.2s;
+    position: relative;
+    overflow: hidden;
 }
 
 .weather-card:hover {
     transform: translateY(-5px);
 }
 
-.weather-date {
+.weather-date-container {
+    background: rgba(0, 0, 0, 0.1);
+    margin: -20px -20px 15px -20px;
+    padding: 15px;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.weather-day {
+    font-size: 1.2em;
     font-weight: bold;
-    margin-bottom: 10px;
-    color: #444;
+    color: #2c3e50;
+    text-transform: uppercase;
+}
+
+.weather-date {
+    font-size: 0.9em;
+    color: #34495e;
+    margin-top: 2px;
 }
 
 .weather-temp {
@@ -93,24 +112,18 @@ section {
     justify-content: space-around;
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
     font-size: 0.9em;
-    color: #555;
+    color: #2c3e50;
 }
 
 .humidity, .wind {
     display: flex;
     align-items: center;
     gap: 5px;
-}
-
-#weather-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin: 20px 0;
-    padding: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 15px;
 }
 
 /* Weather condition-specific styles */
@@ -151,8 +164,15 @@ section {
 }
 
 /* Make text more visible on dark backgrounds */
+.weather-thunderstorm .weather-day,
 .weather-thunderstorm .weather-date,
-.weather-thunderstorm .weather-desc,
 .weather-thunderstorm .weather-details {
     color: #fff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .weather-card {
+        min-width: 150px;
+    }
 }
