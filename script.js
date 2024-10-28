@@ -45,7 +45,8 @@ function initializeMap(lat, lon) {
 // Weather data fetch with API
 async function fetchWeatherData(lat, lon) {
     const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&cnt=5`;
+    // Changed to daily forecast endpoint
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
     
     try {
         const response = await fetch(url);
@@ -55,7 +56,20 @@ async function fetchWeatherData(lat, lon) {
         const weatherContainer = document.getElementById('weather-container');
         weatherContainer.innerHTML = ''; // Clear existing content
         
-        data.list.forEach(day => {
+        // Group forecasts by day
+        const dailyForecasts = {};
+        
+        data.list.forEach(forecast => {
+            const date = new Date(forecast.dt * 1000);
+            const dateString = date.toLocaleDateString();
+            
+            if (!dailyForecasts[dateString]) {
+                dailyForecasts[dateString] = forecast;
+            }
+        });
+        
+        // Take only the first 5 days
+        Object.values(dailyForecasts).slice(0, 5).forEach(day => {
             const date = new Date(day.dt * 1000);
             const tempC = Math.round(day.main.temp);
             const tempF = Math.round((tempC * 9/5) + 32);
@@ -68,7 +82,7 @@ async function fetchWeatherData(lat, lon) {
             const weatherCard = document.createElement('div');
             weatherCard.className = `weather-card weather-${weatherMain}`;
             weatherCard.innerHTML = `
-                <div class="weather-date">${date.toLocaleDateString()}</div>
+                <div class="weather-date">${date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                 <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
                 <div class="weather-temp">
                     <span class="temp-c">${tempC}°C</span>
