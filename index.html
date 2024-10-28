@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2Safety - Emergency Information Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+    <header>
+        <h1>2Safety</h1>
+    </header>
+
+    <main>
+        <section id="location-section">
+            <h2>Your Location</h2>
+            <div id="map"></div>
+            <p id="coordinates"></p>
+        </section>
+
+        <section id="weather-section">
+            <h2>Weather Forecast</h2>
+            <div id="weather-container"></div>
+        </section>
+
+        <section id="wildfire-section">
+            <h2>Active Wildfires</h2>
+            <div id="wildfire-map"></div>
+        </section>
+
+        <section id="evacuation-section">
+            <h2>Evacuation Status</h2>
+            <div id="evacuation-info">No current evacuation orders</div>
+        </section>
+
+        <button id="sos-button">Launch My SOS Plan</button>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
