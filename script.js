@@ -23,6 +23,9 @@ function successLocation(position) {
     
     // Get weather data
     fetchWeatherData(latitude, longitude);
+    
+    // Get wildfire data (add this line)
+    fetchWildfireData(latitude, longitude);
 }
 
 // Error callback for geolocation
@@ -44,78 +47,9 @@ function initializeMap(lat, lon) {
 
 // Weather data fetch with API
 async function fetchWeatherData(lat, lon) {
-    const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-    
-    // Helper function to get wind direction
-    function getWindDirection(degrees) {
-        const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-        const index = Math.round(degrees / 22.5) % 16;
-        return directions[index];
-    }
-    
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Weather API error');
-        const data = await response.json();
-        
-        const weatherContainer = document.getElementById('weather-container');
-        weatherContainer.innerHTML = '';
-        
-        const dailyForecasts = {};
-        
-        data.list.forEach(forecast => {
-            const date = new Date(forecast.dt * 1000);
-            const dateString = date.toLocaleDateString();
-            
-            if (!dailyForecasts[dateString]) {
-                dailyForecasts[dateString] = forecast;
-            }
-        });
-        
-        Object.values(dailyForecasts).slice(0, 5).forEach(day => {
-            const date = new Date(day.dt * 1000);
-            const tempC = Math.round(day.main.temp);
-            const tempF = Math.round((tempC * 9/5) + 32);
-            const description = day.weather[0].description;
-            const icon = day.weather[0].icon;
-            const weatherMain = day.weather[0].main.toLowerCase();
-            const humidity = day.main.humidity;
-            const windSpeed = Math.round(day.wind.speed * 2.237); // Convert m/s to mph
-            const windDir = getWindDirection(day.wind.deg); // Get wind direction
-            
-            const weatherCard = document.createElement('div');
-            weatherCard.className = `weather-card weather-${weatherMain}`;
-            weatherCard.innerHTML = `
-                <div class="weather-date-container">
-                    <div class="weather-day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                    <div class="weather-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-                </div>
-                <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
-                <div class="weather-temp">
-                    <span class="temp-c">${tempC}°C</span>
-                    <span class="temp-divider"> | </span>
-                    <span class="temp-f">${tempF}°F</span>
-                </div>
-                <div class="weather-desc">${description}</div>
-                <div class="weather-details">
-                    <div class="humidity">💧 ${humidity}%</div>
-                    <div class="wind">💨 ${windSpeed} mph ${windDir}</div>
-                </div>
-            `;
-            
-            weatherContainer.appendChild(weatherCard);
-        });
-    } catch (error) {
-        console.error('Error fetching weather:', error);
-        document.getElementById('weather-container').innerHTML = 
-            '<p>Weather data temporarily unavailable. Please try again later.</p>';
-    }
+    // ... your existing weather function code ...
 }
+
+// Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
-    const FIRMS_API_KEY = 'b8d92538f03b23a0d2d6fb8405c8a455';
-// Launch SOS Plan
-function launchSOSPlan() {
-    alert('SOS Plan feature coming soon!');
-    // We'll add the actual navigation later
-}
+    const FIRMS_
