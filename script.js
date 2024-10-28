@@ -120,7 +120,7 @@ async function fetchWeatherData(lat, lon) {
 async function fetchWildfireData(lat, lon) {
     try {
         // Use CalFire's ArcGIS service
-        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Active_Incidents_Public/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json';
+        const url = 'const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Current_Incidents/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json';
         
         const response = await fetch(url);
         if (!response.ok) throw new Error('CalFire API error');
