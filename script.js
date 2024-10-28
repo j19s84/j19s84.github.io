@@ -119,13 +119,21 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using updated InciWeb endpoint
-        const url = 'https://inciweb.wildfire.gov/api/incidents/current';
+        // Using California Fire API
+        const url = 'https://www.fire.ca.gov/umbraco/api/IncidentApi/List';
         
         console.log('Fetching from URL:', url);
         
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('InciWeb API error');
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Origin': 'https://j19s84.github.io'
+            },
+            mode: 'cors'
+        });
+        
+        if (!response.ok) throw new Error('CalFire API error');
         const data = await response.json();
         
         console.log('Fire data received:', data);
@@ -138,13 +146,13 @@ async function fetchWildfireData(lat, lon) {
 
         // Add fire markers
         data.forEach(fire => {
-            if (!fire.latitude || !fire.longitude) return;
+            if (!fire.Latitude || !fire.Longitude) return;
 
-            // Determine fire type and color
-            const type = fire.type?.toLowerCase() || '';
-            const color = type.includes('wildfire') ? '#FF5252' :
-                         type.includes('prescribed') ? '#4CAF50' :
-                                                     '#FFA726';
+            // Determine containment level and color
+            const containment = parseInt(fire.PercentContained) || 0;
+            const color = containment > 70 ? '#4CAF50' :   // Green for mostly contained
+                         containment > 30 ? '#FFA726' :    // Orange for partially contained
+                                          '#FF5252';       // Red for low containment
 
             // Create marker with custom icon
             const fireIcon = L.divIcon({
@@ -153,16 +161,17 @@ async function fetchWildfireData(lat, lon) {
                 iconSize: [20, 20]
             });
 
-            L.marker([fire.latitude, fire.longitude], { icon: fireIcon })
+            L.marker([fire.Latitude, fire.Longitude], { icon: fireIcon })
                 .addTo(wildfireMap)
                 .bindPopup(`
                     <div class="fire-popup">
-                        <h3>${fire.name || 'Unnamed Fire'}</h3>
-                        <p><strong>Type:</strong> ${fire.type || 'N/A'}</p>
-                        <p><strong>Size:</strong> ${fire.size ? fire.size + ' acres' : 'N/A'}</p>
-                        <p><strong>State:</strong> ${fire.state || 'N/A'}</p>
-                        <p><strong>Updated:</strong> ${new Date(fire.updated).toLocaleDateString()}</p>
-                        <a href="https://inciweb.wildfire.gov/incident/${fire.id}" target="_blank" class="fire-details-link">View Details</a>
+                        <h3>${fire.Name || 'Unnamed Fire'}</h3>
+                        <p><strong>County:</strong> ${fire.County || 'N/A'}</p>
+                        <p><strong>Location:</strong> ${fire.Location || 'N/A'}</p>
+                        <p><strong>Size:</strong> ${fire.AcresBurned ? fire.AcresBurned + ' acres' : 'N/A'}</p>
+                        <p><strong>Containment:</strong> ${fire.PercentContained || '0'}%</p>
+                        <p><strong>Updated:</strong> ${new Date(fire.Updated).toLocaleDateString()}</p>
+                        ${fire.ControlStatement ? `<p><strong>Status:</strong> ${fire.ControlStatement}</p>` : ''}
                     </div>
                 `);
         });
@@ -173,18 +182,18 @@ async function fetchWildfireData(lat, lon) {
             const div = L.DomUtil.create('div', 'info legend');
             div.innerHTML = `
                 <div class="legend-container">
-                    <h4>Incident Types</h4>
+                    <h4>Fire Containment</h4>
                     <div class="legend-item">
                         <span class="legend-color" style="background: #FF5252"></span>
-                        <span>Wildfire</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: #4CAF50"></span>
-                        <span>Prescribed Fire</span>
+                        <span>0-30% Contained</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background: #FFA726"></span>
-                        <span>Other Incident</span>
+                        <span>31-70% Contained</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #4CAF50"></span>
+                        <span>71-100% Contained</span>
                     </div>
                 </div>
             `;
