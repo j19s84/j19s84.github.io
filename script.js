@@ -119,8 +119,8 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using the NIFC Wildland Fire Locations endpoint
-        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/NIFC_Wildland_Fire_Locations_Last_24_Hours/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json';
+        // Using the exact service from the ArcGIS map you referenced
+        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Current_WildlandFires/FeatureServer/0/query?where=1%3D1&outFields=*&geometryType=esriGeometryPoint&spatialRel=esriSpatialRelIntersects&returnGeometry=true&f=geojson';
         
         console.log('Fetching from URL:', url);
         
@@ -131,35 +131,39 @@ async function fetchWildfireData(lat, lon) {
         console.log('Fire data received:', data);
         console.log('Number of fires found:', data.features ? data.features.length : 0);
         
-        // Initialize wildfire map
-        const wildfireMap = L.map('wildfire-map').setView([37.1841, -119.4696], 6);
+        // Initialize wildfire map with national view
+        const wildfireMap = L.map('wildfire-map').setView([39.8283, -98.5795], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
-                const props = feature.attributes;
-                const geom = feature.geometry;
+                const props = feature.properties;
+                const coords = feature.geometry.coordinates;
                 
-                if (!geom || !geom.x || !geom.y) return;
+                if (!coords || coords.length < 2) return;
                 
-                const lat = geom.y;
-                const lon = geom.x;
+                const lat = coords[1];
+                const lon = coords[0];
                 
-                console.log(`Adding fire: ${props.incident_name} at ${lat}, ${lon}`);
+                console.log(`Adding fire: ${props.IncidentName} at ${lat}, ${lon}`);
                 
-                // Determine color based on incident type
-                const color = props.incident_type_category === 'WF' ? '#FF5252' : 
-                            props.incident_type_category === 'RX' ? '#4CAF50' : 
-                            '#FFA726';
+                // Determine size and color based on acres
+                const acres = props.DailyAcres || 0;
+                const radius = Math.max(Math.sqrt(acres) * 100, 5000); // Minimum radius of 5km
+                
+                const color = acres > 10000 ? '#FF0000' :
+                            acres > 1000 ? '#FF4444' :
+                            '#FF8888';
 
-                // Create fire marker
+                // Create fire perimeter
                 const fireMarker = L.circle([lat, lon], {
                     color: color,
                     fillColor: color,
-                    fillOpacity: 0.5,
-                    radius: Math.sqrt(props.daily_acres || 1000) * 100
+                    fillOpacity: 0.4,
+                    weight: 2,
+                    radius: radius
                 }).addTo(wildfireMap);
 
                 // Add pulsing marker
@@ -173,12 +177,12 @@ async function fetchWildfireData(lat, lon) {
                     .addTo(wildfireMap)
                     .bindPopup(`
                         <div class="fire-popup">
-                            <h3>${props.incident_name || 'Active Fire'}</h3>
-                            <p><strong>Type:</strong> ${props.incident_type_category || 'N/A'}</p>
-                            <p><strong>Size:</strong> ${props.daily_acres ? Math.round(props.daily_acres) + ' acres' : 'N/A'}</p>
-                            <p><strong>Status:</strong> ${props.incident_status || 'Active'}</p>
-                            <p><strong>State:</strong> ${props.state_name || 'N/A'}</p>
-                            <p><strong>Discovery:</strong> ${props.fire_discovery_datetime ? new Date(props.fire_discovery_datetime).toLocaleDateString() : 'N/A'}</p>
+                            <h3>${props.IncidentName || 'Active Fire'}</h3>
+                            <p><strong>Size:</strong> ${props.DailyAcres ? Math.round(props.DailyAcres).toLocaleString() + ' acres' : 'N/A'}</p>
+                            <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
+                            <p><strong>Discovery:</strong> ${props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime).toLocaleDateString() : 'N/A'}</p>
+                            <p><strong>Location:</strong> ${props.POOState || 'N/A'}</p>
+                            <p><strong>Status:</strong> ${props.IncidentManagementOrganization || 'Active'}</p>
                         </div>
                     `);
             });
@@ -192,18 +196,18 @@ async function fetchWildfireData(lat, lon) {
             const div = L.DomUtil.create('div', 'info legend');
             div.innerHTML = `
                 <div class="legend-container">
-                    <h4>Fire Types</h4>
+                    <h4>Fire Size</h4>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FF5252"></span>
-                        <span>Wildfire (WF)</span>
+                        <span class="legend-color" style="background: #FF0000"></span>
+                        <span>Large (>10,000 acres)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #4CAF50"></span>
-                        <span>Prescribed Fire (RX)</span>
+                        <span class="legend-color" style="background: #FF4444"></span>
+                        <span>Medium (1,000-10,000 acres)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FFA726"></span>
-                        <span>Other Incident</span>
+                        <span class="legend-color" style="background: #FF8888"></span>
+                        <span>Small (<1,000 acres)</span>
                     </div>
                 </div>
             `;
