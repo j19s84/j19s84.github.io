@@ -145,6 +145,28 @@ async function fetchWildfireData(lat, lon) {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
+        // Define size categories outside the loop
+        const sizeCategories = {
+            large: {
+                threshold: 10000,
+                color: '#FF0000',     // Deep red
+                radius: 15000,        // Larger circle
+                label: 'Large'
+            },
+            medium: {
+                threshold: 1000,
+                color: '#FFA500',     // Orange
+                radius: 10000,        // Medium circle
+                label: 'Medium'
+            },
+            small: {
+                threshold: 0,
+                color: '#FFD700',     // Gold/Yellow
+                radius: 5000,         // Smaller circle
+                label: 'Small'
+            }
+        };
+
         if (data.features && data.features.length > 0) {
             console.log(`Found ${data.features.length} fires`);
             
@@ -161,28 +183,6 @@ async function fetchWildfireData(lat, lon) {
                 const acres = props.GISAcres || 0;
                 const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
                 const isNew = discoveryDate && (new Date() - discoveryDate) < (24 * 60 * 60 * 1000); // 24 hours
-
-                // Define size categories and their properties
-                const sizeCategories = {
-                    large: {
-                        threshold: 10000,
-                        color: '#FF0000',     // Deep red
-                        radius: 15000,        // Larger circle
-                        label: 'Large'
-                    },
-                    medium: {
-                        threshold: 1000,
-                        color: '#FFA500',     // Orange
-                        radius: 10000,        // Medium circle
-                        label: 'Medium'
-                    },
-                    small: {
-                        threshold: 0,
-                        color: '#FFD700',     // Gold/Yellow
-                        radius: 5000,         // Smaller circle
-                        label: 'Small'
-                    }
-                };
 
                 // Determine size category
                 const sizeCategory = acres > sizeCategories.large.threshold ? sizeCategories.large :
