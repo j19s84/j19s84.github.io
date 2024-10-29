@@ -1,68 +1,23 @@
-body {
-    font-family: Arial, sans-serif;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f5f5f5;
-}
-
-header {
-    text-align: center;
-    padding: 20px 0;
-}
-
-section {
-    background: white;
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-#map, #wildfire-map {
-    height: 300px;
-    width: 100%;
-    margin: 10px 0;
-}
-
-#sos-button {
-    display: block;
-    width: 100%;
-    padding: 20px;
-    background-color: #ff4444;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.2em;
-    cursor: pointer;
-    margin: 20px 0;
-}
-
-#sos-button:hover {
-    background-color: #ff0000;
-}
-
-/* Weather Styles */
-#weather-container {
+/* Weather card styles */
+.weather-container {
     display: flex;
-    justify-content: space-between;
-    gap: 20px;
     flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
     margin: 20px 0;
-    padding: 10px;
 }
 
 .weather-card {
-    background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
-    flex: 1;
-    min-width: 200px;
-    transition: transform 0.2s;
-    position: relative;
-    overflow: hidden;
+    min-width: 150px;
+    transition: transform 0.3s ease;
 }
 
 .weather-card:hover {
@@ -70,120 +25,97 @@ section {
 }
 
 .weather-date-container {
-    background: rgba(0, 0, 0, 0.1);
-    margin: -20px -20px 15px -20px;
-    padding: 15px;
-    border-radius: 12px 12px 0 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 10px;
 }
 
 .weather-day {
-    font-size: 1.2em;
     font-weight: bold;
-    color: #2c3e50;
-    text-transform: uppercase;
+    color: #333;
 }
 
 .weather-date {
     font-size: 0.9em;
-    color: #34495e;
-    margin-top: 2px;
+    color: #666;
 }
 
 .weather-temp {
-    font-size: 1.5em;
+    font-size: 1.2em;
     margin: 10px 0;
-    font-weight: bold;
 }
 
 .temp-divider {
     color: #999;
-    font-weight: normal;
 }
 
 .weather-desc {
     text-transform: capitalize;
-    color: #666;
-    margin-bottom: 15px;
+    margin: 5px 0;
+    color: #444;
 }
 
 .weather-details {
     display: flex;
     justify-content: space-around;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: 10px;
     font-size: 0.9em;
-    color: #2c3e50;
+    color: #666;
 }
 
-.humidity, .wind {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 5px 10px;
-    border-radius: 15px;
-}
-
-/* Weather condition-specific styles */
+/* Weather background variations */
 .weather-clear {
-    background: linear-gradient(to bottom, #87CEEB, #f0f0f0);
-    border: 1px solid #87CEEB;
+    background: linear-gradient(to bottom right, #87CEEB, #E0F6FF);
 }
 
 .weather-clouds {
-    background: linear-gradient(to bottom, #B4B4B4, #f0f0f0);
-    border: 1px solid #B4B4B4;
+    background: linear-gradient(to bottom right, #B4C5E4, #D3DCF2);
 }
 
 .weather-rain {
-    background: linear-gradient(to bottom, #4682B4, #f0f0f0);
-    border: 1px solid #4682B4;
+    background: linear-gradient(to bottom right, #6B7B8C, #9BACC4);
 }
 
 .weather-snow {
-    background: linear-gradient(to bottom, #E0FFFF, #f0f0f0);
-    border: 1px solid #E0FFFF;
+    background: linear-gradient(to bottom right, #E3E3E3, #FFFFFF);
 }
 
 .weather-thunderstorm {
-    background: linear-gradient(to bottom, #483D8B, #f0f0f0);
-    border: 1px solid #483D8B;
-    color: white;
-}
-
-.weather-drizzle {
-    background: linear-gradient(to bottom, #87CEEB, #f0f0f0);
-    border: 1px solid #87CEEB;
+    background: linear-gradient(to bottom right, #4A5568, #718096);
 }
 
 .weather-mist, .weather-fog {
-    background: linear-gradient(to bottom, #D3D3D3, #f0f0f0);
-    border: 1px solid #D3D3D3;
+    background: linear-gradient(to bottom right, #CBD5E0, #E2E8F0);
 }
 
-/* Make text more visible on dark backgrounds */
-.weather-thunderstorm .weather-day,
-.weather-thunderstorm .weather-date,
-.weather-thunderstorm .weather-details {
-    color: #fff;
+/* Map container styles */
+#map, #wildfire-map {
+    height: 400px;
+    width: 100%;
+    border-radius: 10px;
+    margin: 20px 0;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .weather-card {
-        min-width: 150px;
-    }
+/* Fire popup styles */
+.fire-popup {
+    padding: 10px;
+    max-width: 250px;
 }
+
+.fire-popup h3 {
+    margin: 0 0 10px 0;
+    color: #FF0000;
+    border-bottom: 1px solid #eee;
+}
+
 /* Pulsing fire marker styles */
 .pulsing-dot {
     width: 20px;
     height: 20px;
-    background: rgba(255, 0, 0, 0.8);
     border-radius: 50%;
     position: relative;
     animation: pulse 1.5s infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @keyframes pulse {
@@ -197,26 +129,47 @@ section {
     }
 }
 
-.legend-circle {
+/* New fire indicator */
+.new-fire-indicator {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: #FF3D00;
+    color: white;
+    font-size: 8px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+    animation: bounce 1s infinite;
+}
+
+.new-fire-indicator-legend {
+    background: #FF3D00;
+    color: white;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+/* Legend styles */
+.legend-color {
     width: 20px;
     height: 20px;
-    background: rgba(255, 68, 68, 0.5);
-    border: 2px solid #FF0000;
     border-radius: 50%;
     display: inline-block;
+    border: 1px solid rgba(0,0,0,0.2);
 }
 
-.fire-popup {
-    padding: 10px;
-    max-width: 250px;
-}
-
-.fire-popup h3 {
-    margin: 0 0 10px 0;
-    color: #FF0000;
-    border-bottom: 1px solid #eee;
-}
-/* Legend styles */
 .legend-container {
     background: white;
     padding: 10px;
@@ -231,18 +184,38 @@ section {
     gap: 8px;
 }
 
-.legend-color {
-    width: 20px;
-    height: 20px;
+/* SOS Button styles */
+#sos-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #ff4444;
+    color: white;
+    border: none;
     border-radius: 50%;
-    display: inline-block;
+    width: 60px;
+    height: 60px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    z-index: 1000;
 }
 
-.legend-circle {
-    width: 20px;
-    height: 20px;
-    background: rgba(255, 68, 68, 0.5);
-    border: 2px solid #FF0000;
-    border-radius: 50%;
-    display: inline-block;
+#sos-button:hover {
+    background-color: #ff0000;
+    transform: scale(1.1);
+}
+
+#sos-button:active {
+    transform: scale(0.9);
+}
+
+/* Coordinates display */
+#coordinates {
+    text-align: center;
+    margin: 10px 0;
+    font-family: monospace;
+    color: #666;
 }
