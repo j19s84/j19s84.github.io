@@ -157,27 +157,55 @@ async function fetchWildfireData(lat, lon) {
                 
                 console.log(`Adding fire: ${props.IncidentName || 'Unnamed'} at ${lat}, ${lon}`);
                 
-                // Determine size and color based on acres
+                // Determine size, color, and if the fire is new
                 const acres = props.GISAcres || 0;
-                const radius = Math.max(Math.sqrt(acres) * 100, 5000);
-                
-                const color = acres > 10000 ? '#FF0000' :
-                            acres > 1000 ? '#FF4444' :
-                            '#FF8888';
+                const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
+                const isNew = discoveryDate && (new Date() - discoveryDate) < (24 * 60 * 60 * 1000); // 24 hours
 
-                // Create fire perimeter
+                // Define size categories and their properties
+                const sizeCategories = {
+                    large: {
+                        threshold: 10000,
+                        color: '#FF0000',     // Deep red
+                        radius: 15000,        // Larger circle
+                        label: 'Large'
+                    },
+                    medium: {
+                        threshold: 1000,
+                        color: '#FFA500',     // Orange
+                        radius: 10000,        // Medium circle
+                        label: 'Medium'
+                    },
+                    small: {
+                        threshold: 0,
+                        color: '#FFD700',     // Gold/Yellow
+                        radius: 5000,         // Smaller circle
+                        label: 'Small'
+                    }
+                };
+
+                // Determine size category
+                const sizeCategory = acres > sizeCategories.large.threshold ? sizeCategories.large :
+                                   acres > sizeCategories.medium.threshold ? sizeCategories.medium :
+                                   sizeCategories.small;
+
+                // Create fire perimeter with new sizing
                 const fireMarker = L.circle([lat, lon], {
-                    color: color,
-                    fillColor: color,
+                    color: sizeCategory.color,
+                    fillColor: sizeCategory.color,
                     fillOpacity: 0.4,
                     weight: 2,
-                    radius: radius
+                    radius: sizeCategory.radius
                 }).addTo(wildfireMap);
 
-                // Add pulsing marker
+                // Add pulsing marker with "new" indicator if applicable
                 const pulsingIcon = L.divIcon({
                     className: 'pulsing-icon',
-                    html: `<div class="pulsing-dot" style="background-color: ${color};"></div>`,
+                    html: `
+                        <div class="pulsing-dot" style="background-color: ${sizeCategory.color}">
+                            ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
+                        </div>
+                    `,
                     iconSize: [20, 20]
                 });
 
@@ -191,6 +219,7 @@ async function fetchWildfireData(lat, lon) {
                             <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
                             <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
                             <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
+                            ${isNew ? '<p><strong><span class="new-fire-indicator">NEW</span></strong></p>' : ''}
                         </div>
                     `);
             });
@@ -206,16 +235,20 @@ async function fetchWildfireData(lat, lon) {
                 <div class="legend-container">
                     <h4>Fire Size</h4>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FF0000"></span>
+                        <span class="legend-color" style="background: ${sizeCategories.large.color}"></span>
                         <span>Large (>10,000 acres)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FF4444"></span>
+                        <span class="legend-color" style="background: ${sizeCategories.medium.color}"></span>
                         <span>Medium (1,000-10,000 acres)</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FF8888"></span>
+                        <span class="legend-color" style="background: ${sizeCategories.small.color}"></span>
                         <span>Small (<1,000 acres)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="new-fire-indicator-legend">NEW</span>
+                        <span>Reported in last 24hrs</span>
                     </div>
                 </div>
             `;
