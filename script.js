@@ -119,20 +119,18 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // First, get temporary access to the CORS proxy
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const targetUrl = 'https://www.fire.ca.gov/umbraco/api/IncidentApi/List';
-        const url = proxyUrl + targetUrl;
+        // Using CalFire's GeoJSON feed
+        const url = 'https://www.fire.ca.gov/incidents.geojson';
         
         console.log('Fetching from URL:', url);
         
         const response = await fetch(url, {
             headers: {
-                'Origin': 'https://j19s84.github.io'
+                'Accept': 'application/json'
             }
         });
         
-        if (!response.ok) throw new Error('CalFire API error');
+        if (!response.ok) throw new Error('CalFire GeoJSON error');
         const data = await response.json();
         
         console.log('Fire data received:', data);
@@ -143,34 +141,39 @@ async function fetchWildfireData(lat, lon) {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        // Add fire markers
-        data.forEach(fire => {
-            if (!fire.Latitude || !fire.Longitude) return;
+        // Add fire markers with better visibility
+        data.features.forEach(feature => {
+            const props = feature.properties;
+            const coords = feature.geometry.coordinates;
+            
+            if (!coords || coords.length < 2) return;
 
-            // Determine containment level and color
-            const containment = parseInt(fire.PercentContained) || 0;
-            const color = containment > 70 ? '#4CAF50' :   // Green for mostly contained
-                         containment > 30 ? '#FFA726' :    // Orange for partially contained
-                                          '#FF5252';       // Red for low containment
+            // Create a more visible fire marker
+            const fireMarker = L.circle([coords[1], coords[0]], {
+                color: '#FF0000',
+                fillColor: '#FF4444',
+                fillOpacity: 0.5,
+                radius: 5000  // 5km radius to make fires more visible
+            }).addTo(wildfireMap);
 
-            // Create marker with custom icon
-            const fireIcon = L.divIcon({
-                className: 'fire-marker',
-                html: `<div style="background-color: ${color};" class="fire-icon"></div>`,
+            // Add a pulsing effect
+            const pulsingIcon = L.divIcon({
+                className: 'pulsing-icon',
+                html: '<div class="pulsing-dot"></div>',
                 iconSize: [20, 20]
             });
 
-            L.marker([fire.Latitude, fire.Longitude], { icon: fireIcon })
+            L.marker([coords[1], coords[0]], { icon: pulsingIcon })
                 .addTo(wildfireMap)
                 .bindPopup(`
                     <div class="fire-popup">
-                        <h3>${fire.Name || 'Unnamed Fire'}</h3>
-                        <p><strong>County:</strong> ${fire.County || 'N/A'}</p>
-                        <p><strong>Location:</strong> ${fire.Location || 'N/A'}</p>
-                        <p><strong>Size:</strong> ${fire.AcresBurned ? fire.AcresBurned + ' acres' : 'N/A'}</p>
-                        <p><strong>Containment:</strong> ${fire.PercentContained || '0'}%</p>
-                        <p><strong>Updated:</strong> ${new Date(fire.Updated).toLocaleDateString()}</p>
-                        ${fire.ControlStatement ? `<p><strong>Status:</strong> ${fire.ControlStatement}</p>` : ''}
+                        <h3>${props.name || 'Active Fire'}</h3>
+                        <p><strong>Status:</strong> ${props.status || 'Active'}</p>
+                        <p><strong>Location:</strong> ${props.location || 'N/A'}</p>
+                        <p><strong>County:</strong> ${props.county || 'N/A'}</p>
+                        <p><strong>Size:</strong> ${props.acres ? props.acres + ' acres' : 'N/A'}</p>
+                        <p><strong>Containment:</strong> ${props.containment || 'N/A'}</p>
+                        <p><strong>Updated:</strong> ${new Date(props.updated).toLocaleDateString()}</p>
                     </div>
                 `);
         });
@@ -181,18 +184,14 @@ async function fetchWildfireData(lat, lon) {
             const div = L.DomUtil.create('div', 'info legend');
             div.innerHTML = `
                 <div class="legend-container">
-                    <h4>Fire Containment</h4>
+                    <h4>Active Fires</h4>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FF5252"></span>
-                        <span>0-30% Contained</span>
+                        <span class="pulsing-dot"></span>
+                        <span>Current Fire Location</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #FFA726"></span>
-                        <span>31-70% Contained</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: #4CAF50"></span>
-                        <span>71-100% Contained</span>
+                        <span class="legend-circle"></span>
+                        <span>Fire Area</span>
                     </div>
                 </div>
             `;
