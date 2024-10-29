@@ -2,23 +2,26 @@
 .weather-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;  /* Reduced from 10px */
-    justify-content: center;
-    padding: 10px;  /* Reduced from 20px */
+    gap: 5px;
+    justify-content: space-between; /* Changed from center to space-between */
+    padding: 10px;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
-    margin: 10px 0;  /* Reduced from 20px */
+    margin: 10px 0;
+    max-width: 100%; /* Ensures container doesn't overflow */
 }
 
 .weather-card {
     background: white;
-    padding: 10px;  /* Reduced from 15px */
-    border-radius: 8px;  /* Reduced from 10px */
+    padding: 10px;
+    border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
-    min-width: 120px;  /* Reduced from 150px */
-    max-width: 150px;  /* Added max-width */
+    flex: 1; /* Added to make cards share space evenly */
+    min-width: 120px;
+    max-width: 150px;
     transition: transform 0.3s ease;
+    margin: 5px; /* Added to ensure spacing between cards */
 }
 
 .weather-card:hover {
