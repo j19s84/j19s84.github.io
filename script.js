@@ -119,8 +119,8 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using CalFire's ArcGIS service
-        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/CY_WildlandFires_Current/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=-124.409591%2C32.534156%2C-114.131211%2C42.009518&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json';
+        // Using CalFire's active incidents endpoint
+        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Public_Wildfire_Perimeters_View/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=json';
         
         console.log('Fetching from URL:', url);
         
@@ -129,27 +129,36 @@ async function fetchWildfireData(lat, lon) {
         const data = await response.json();
         
         console.log('Fire data received:', data);
+        console.log('Number of fires found:', data.features ? data.features.length : 0);
         
         // Initialize wildfire map
-        const wildfireMap = L.map('wildfire-map').setView([lat, lon], 7);
+        const wildfireMap = L.map('wildfire-map').setView([37.1841, -119.4696], 6); // Center on California
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        // Add fire markers
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
-                if (!feature.geometry || !feature.geometry.coordinates) return;
+                if (!feature.geometry || !feature.geometry.rings) return;
                 
-                const coords = feature.geometry.coordinates;
-                const props = feature.attributes;
+                // Calculate center point of the fire perimeter
+                const ring = feature.geometry.rings[0];
+                let lat = 0, lon = 0;
+                ring.forEach(coord => {
+                    lon += coord[0];
+                    lat += coord[1];
+                });
+                lat /= ring.length;
+                lon /= ring.length;
+                
+                console.log(`Adding fire at: ${lat}, ${lon}`);
                 
                 // Create fire circle
-                const fireMarker = L.circle([coords[1], coords[0]], {
+                const fireMarker = L.circle([lat, lon], {
                     color: '#FF0000',
                     fillColor: '#FF4444',
                     fillOpacity: 0.5,
-                    radius: 5000  // 5km radius
+                    radius: 5000
                 }).addTo(wildfireMap);
 
                 // Add pulsing marker
@@ -159,22 +168,30 @@ async function fetchWildfireData(lat, lon) {
                     iconSize: [20, 20]
                 });
 
-                L.marker([coords[1], coords[0]], { icon: pulsingIcon })
+                // Add the actual fire perimeter
+                const firePerimeter = L.polygon(ring.map(coord => [coord[1], coord[0]]), {
+                    color: '#FF0000',
+                    weight: 2,
+                    fillColor: '#FF4444',
+                    fillOpacity: 0.2
+                }).addTo(wildfireMap);
+
+                L.marker([lat, lon], { icon: pulsingIcon })
                     .addTo(wildfireMap)
                     .bindPopup(`
                         <div class="fire-popup">
-                            <h3>${props.IncidentName || 'Active Fire'}</h3>
-                            <p><strong>Status:</strong> ${props.IncidentStatus || 'Active'}</p>
-                            <p><strong>Location:</strong> ${props.Location || 'N/A'}</p>
-                            <p><strong>County:</strong> ${props.County || 'N/A'}</p>
-                            <p><strong>Size:</strong> ${props.AcresBurned ? Math.round(props.AcresBurned) + ' acres' : 'N/A'}</p>
-                            <p><strong>Containment:</strong> ${props.PercentContained ? props.PercentContained + '%' : 'N/A'}</p>
-                            <p><strong>Updated:</strong> ${new Date(props.UpdateDate).toLocaleDateString()}</p>
+                            <h3>${feature.attributes.IncidentName || 'Active Fire'}</h3>
+                            <p><strong>Status:</strong> ${feature.attributes.IncidentStatus || 'Active'}</p>
+                            <p><strong>Size:</strong> ${feature.attributes.GISAcres ? Math.round(feature.attributes.GISAcres) + ' acres' : 'N/A'}</p>
+                            <p><strong>Started:</strong> ${feature.attributes.CreatedOn ? new Date(feature.attributes.CreatedOn).toLocaleDateString() : 'N/A'}</p>
+                            <p><strong>Updated:</strong> ${feature.attributes.ModifiedOn ? new Date(feature.attributes.ModifiedOn).toLocaleDateString() : 'N/A'}</p>
                         </div>
                     `);
             });
         } else {
             console.log('No active fires found');
+            document.getElementById('wildfire-map').innerHTML += 
+                '<p style="color: green; text-align: center; margin-top: 10px;">No active fires reported in California at this time.</p>';
         }
 
         // Add legend
@@ -186,7 +203,7 @@ async function fetchWildfireData(lat, lon) {
                     <h4>Active Fires</h4>
                     <div class="legend-item">
                         <span class="pulsing-dot"></span>
-                        <span>Current Fire Location</span>
+                        <span>Fire Location</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-circle"></span>
