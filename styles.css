@@ -2,21 +2,22 @@
 .weather-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 5px;  /* Reduced from 10px */
     justify-content: center;
-    padding: 20px;
+    padding: 10px;  /* Reduced from 20px */
     background: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
-    margin: 20px 0;
+    margin: 10px 0;  /* Reduced from 20px */
 }
 
 .weather-card {
     background: white;
-    padding: 15px;
-    border-radius: 10px;
+    padding: 10px;  /* Reduced from 15px */
+    border-radius: 8px;  /* Reduced from 10px */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
-    min-width: 150px;
+    min-width: 120px;  /* Reduced from 150px */
+    max-width: 150px;  /* Added max-width */
     transition: transform 0.3s ease;
 }
 
@@ -34,13 +35,13 @@
 }
 
 .weather-date {
-    font-size: 0.9em;
+    font-size: 0.8em;  /* Reduced from 0.9em */
     color: #666;
 }
 
 .weather-temp {
-    font-size: 1.2em;
-    margin: 10px 0;
+    font-size: 1.1em;  /* Reduced from 1.2em */
+    margin: 8px 0;  /* Reduced from 10px */
 }
 
 .temp-divider {
@@ -56,8 +57,8 @@
 .weather-details {
     display: flex;
     justify-content: space-around;
-    margin-top: 10px;
-    font-size: 0.9em;
+    margin-top: 8px;  /* Reduced from 10px */
+    font-size: 0.8em;  /* Reduced from 0.9em */
     color: #666;
 }
 
