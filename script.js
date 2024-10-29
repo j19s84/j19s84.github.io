@@ -119,66 +119,63 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using CORS proxy with CalFire's GeoJSON feed
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const targetUrl = 'https://www.fire.ca.gov/incidents.geojson';
-        const url = proxyUrl + targetUrl;
+        // Using CalFire's ArcGIS service
+        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/CY_WildlandFires_Current/FeatureServer/0/query?where=1%3D1&outFields=*&geometry=-124.409591%2C32.534156%2C-114.131211%2C42.009518&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json';
         
         console.log('Fetching from URL:', url);
         
-        const response = await fetch(url, {
-            headers: {
-                'Origin': 'https://j19s84.github.io'
-            }
-        });
-        
-        if (!response.ok) throw new Error('CalFire GeoJSON error');
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('CalFire API error');
         const data = await response.json();
         
         console.log('Fire data received:', data);
         
-        // Rest of your code remains the same...
+        // Initialize wildfire map
         const wildfireMap = L.map('wildfire-map').setView([lat, lon], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        // Add fire markers with better visibility
-        data.features.forEach(feature => {
-            const props = feature.properties;
-            const coords = feature.geometry.coordinates;
-            
-            if (!coords || coords.length < 2) return;
+        // Add fire markers
+        if (data.features && data.features.length > 0) {
+            data.features.forEach(feature => {
+                if (!feature.geometry || !feature.geometry.coordinates) return;
+                
+                const coords = feature.geometry.coordinates;
+                const props = feature.attributes;
+                
+                // Create fire circle
+                const fireMarker = L.circle([coords[1], coords[0]], {
+                    color: '#FF0000',
+                    fillColor: '#FF4444',
+                    fillOpacity: 0.5,
+                    radius: 5000  // 5km radius
+                }).addTo(wildfireMap);
 
-            // Create a more visible fire marker
-            const fireMarker = L.circle([coords[1], coords[0]], {
-                color: '#FF0000',
-                fillColor: '#FF4444',
-                fillOpacity: 0.5,
-                radius: 5000  // 5km radius to make fires more visible
-            }).addTo(wildfireMap);
+                // Add pulsing marker
+                const pulsingIcon = L.divIcon({
+                    className: 'pulsing-icon',
+                    html: '<div class="pulsing-dot"></div>',
+                    iconSize: [20, 20]
+                });
 
-            // Add a pulsing effect
-            const pulsingIcon = L.divIcon({
-                className: 'pulsing-icon',
-                html: '<div class="pulsing-dot"></div>',
-                iconSize: [20, 20]
+                L.marker([coords[1], coords[0]], { icon: pulsingIcon })
+                    .addTo(wildfireMap)
+                    .bindPopup(`
+                        <div class="fire-popup">
+                            <h3>${props.IncidentName || 'Active Fire'}</h3>
+                            <p><strong>Status:</strong> ${props.IncidentStatus || 'Active'}</p>
+                            <p><strong>Location:</strong> ${props.Location || 'N/A'}</p>
+                            <p><strong>County:</strong> ${props.County || 'N/A'}</p>
+                            <p><strong>Size:</strong> ${props.AcresBurned ? Math.round(props.AcresBurned) + ' acres' : 'N/A'}</p>
+                            <p><strong>Containment:</strong> ${props.PercentContained ? props.PercentContained + '%' : 'N/A'}</p>
+                            <p><strong>Updated:</strong> ${new Date(props.UpdateDate).toLocaleDateString()}</p>
+                        </div>
+                    `);
             });
-
-            L.marker([coords[1], coords[0]], { icon: pulsingIcon })
-                .addTo(wildfireMap)
-                .bindPopup(`
-                    <div class="fire-popup">
-                        <h3>${props.name || 'Active Fire'}</h3>
-                        <p><strong>Status:</strong> ${props.status || 'Active'}</p>
-                        <p><strong>Location:</strong> ${props.location || 'N/A'}</p>
-                        <p><strong>County:</strong> ${props.county || 'N/A'}</p>
-                        <p><strong>Size:</strong> ${props.acres ? props.acres + ' acres' : 'N/A'}</p>
-                        <p><strong>Containment:</strong> ${props.containment || 'N/A'}</p>
-                        <p><strong>Updated:</strong> ${new Date(props.updated).toLocaleDateString()}</p>
-                    </div>
-                `);
-        });
+        } else {
+            console.log('No active fires found');
+        }
 
         // Add legend
         const legend = L.control({position: 'bottomright'});
