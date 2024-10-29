@@ -119,28 +119,25 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Full, properly formatted URL
-        const url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Current_WildlandFires/FeatureServer/0/query?' + 
+        // Using NIFC's public fire features service
+        const url = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/0/query?' +
             'where=1%3D1' +
             '&outFields=*' +
             '&geometryType=esriGeometryEnvelope' +
             '&spatialRel=esriSpatialRelIntersects' +
             '&returnGeometry=true' +
-            '&f=json';  // Changed to json instead of geojson
+            '&f=json';
         
         console.log('Fetching from URL:', url);
         
         const response = await fetch(url);
         const data = await response.json();
         
-        // Log the full response for debugging
         console.log('Raw response:', data);
         
         if (data.error) {
-            throw new Error(`ArcGIS API error: ${data.error.message || 'Unknown error'}`);
+            throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
         }
-        
-        console.log('Number of fires found:', data.features ? data.features.length : 0);
         
         // Initialize wildfire map with national view
         const wildfireMap = L.map('wildfire-map').setView([39.8283, -98.5795], 4);
@@ -149,20 +146,19 @@ async function fetchWildfireData(lat, lon) {
         }).addTo(wildfireMap);
 
         if (data.features && data.features.length > 0) {
+            console.log(`Found ${data.features.length} fires`);
+            
             data.features.forEach(feature => {
-                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) {
-                    console.log('Skipping feature due to missing geometry:', feature);
-                    return;
-                }
+                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
                 
                 const props = feature.attributes;
                 const lat = feature.geometry.y;
                 const lon = feature.geometry.x;
                 
-                console.log(`Adding fire: ${props.IncidentName} at ${lat}, ${lon}`);
+                console.log(`Adding fire: ${props.IncidentName || 'Unnamed'} at ${lat}, ${lon}`);
                 
                 // Determine size and color based on acres
-                const acres = props.DailyAcres || 0;
+                const acres = props.GISAcres || 0;
                 const radius = Math.max(Math.sqrt(acres) * 100, 5000);
                 
                 const color = acres > 10000 ? '#FF0000' :
@@ -190,11 +186,11 @@ async function fetchWildfireData(lat, lon) {
                     .bindPopup(`
                         <div class="fire-popup">
                             <h3>${props.IncidentName || 'Active Fire'}</h3>
-                            <p><strong>Size:</strong> ${props.DailyAcres ? Math.round(props.DailyAcres).toLocaleString() + ' acres' : 'N/A'}</p>
-                            <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
-                            <p><strong>Discovery:</strong> ${props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime).toLocaleDateString() : 'N/A'}</p>
-                            <p><strong>Location:</strong> ${props.POOState || 'N/A'}</p>
-                            <p><strong>Status:</strong> ${props.IncidentManagementOrganization || 'Active'}</p>
+                            <p><strong>Size:</strong> ${props.GISAcres ? Math.round(props.GISAcres).toLocaleString() + ' acres' : 'N/A'}</p>
+                            <p><strong>Status:</strong> ${props.IncidentStatus || 'Active'}</p>
+                            <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
+                            <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
+                            <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
                         </div>
                     `);
             });
