@@ -216,3 +216,33 @@ section {
     color: #FF0000;
     border-bottom: 1px solid #eee;
 }
+/* Legend styles */
+.legend-container {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
+.legend-item {
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.legend-circle {
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 68, 68, 0.5);
+    border: 2px solid #FF0000;
+    border-radius: 50%;
+    display: inline-block;
+}
