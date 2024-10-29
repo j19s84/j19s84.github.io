@@ -119,14 +119,16 @@ async function fetchWeatherData(lat, lon) {
 // Wildfire data fetch
 async function fetchWildfireData(lat, lon) {
     try {
-        // Using CalFire's GeoJSON feed
-        const url = 'https://www.fire.ca.gov/incidents.geojson';
+        // Using CORS proxy with CalFire's GeoJSON feed
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const targetUrl = 'https://www.fire.ca.gov/incidents.geojson';
+        const url = proxyUrl + targetUrl;
         
         console.log('Fetching from URL:', url);
         
         const response = await fetch(url, {
             headers: {
-                'Accept': 'application/json'
+                'Origin': 'https://j19s84.github.io'
             }
         });
         
@@ -135,7 +137,7 @@ async function fetchWildfireData(lat, lon) {
         
         console.log('Fire data received:', data);
         
-        // Initialize wildfire map
+        // Rest of your code remains the same...
         const wildfireMap = L.map('wildfire-map').setView([lat, lon], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
