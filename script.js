@@ -167,47 +167,51 @@ async function fetchWildfireData(lat, lon) {
             }
         };
 
-        if (data.features && data.features.length > 0) {
-            console.log(`Found ${data.features.length} fires`);
-            
-            data.features.forEach(feature => {
-                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-                
-                const props = feature.attributes;
-                const lat = feature.geometry.y;
-                const lon = feature.geometry.x;
-                
-                console.log(`Adding fire: ${props.IncidentName || 'Unnamed'} at ${lat}, ${lon}`);
-                
-                // Determine size, color, and if the fire is new
-                const acres = props.GISAcres || 0;
-                const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
-                const isNew = discoveryDate && (new Date() - discoveryDate) < (24 * 60 * 60 * 1000); // 24 hours
+        // Inside your fetchWildfireData function, update the fire marker creation:
 
-                // Determine size category
-                const sizeCategory = acres > sizeCategories.large.threshold ? sizeCategories.large :
-                                   acres > sizeCategories.medium.threshold ? sizeCategories.medium :
-                                   sizeCategories.small;
+data.features.forEach(feature => {
+    if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
+    
+    const props = feature.attributes;
+    const lat = feature.geometry.y;
+    const lon = feature.geometry.x;
+    
+    // Check if fire is new (within last 24 hours)
+    const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
+    const isNew = discoveryDate && 
+                 ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
+    
+    // Determine size and color based on acres
+    const acres = props.GISAcres || 0;
+    let color, size;
+    
+    if (acres > 10000) {
+        color = '#FF0000'; // Red
+        size = 20;
+    } else if (acres > 1000) {
+        color = '#FFA500'; // Orange
+        size = 15;
+    } else {
+        color = '#FFD700'; // Yellow
+        size = 10;
+    }
 
-                // Create fire perimeter with new sizing
-                const fireMarker = L.circle([lat, lon], {
-                    color: sizeCategory.color,
-                    fillColor: sizeCategory.color,
-                    fillOpacity: 0.4,
-                    weight: 2,
-                    radius: sizeCategory.radius
-                }).addTo(wildfireMap);
+    console.log(`Fire: ${props.IncidentName}, Acres: ${acres}, Color: ${color}, Size: ${size}`);
 
-                // Add pulsing marker with "new" indicator if applicable
-                const pulsingIcon = L.divIcon({
-                    className: 'pulsing-icon',
-                    html: `
-                        <div class="pulsing-dot" style="background-color: ${sizeCategory.color}">
-                            ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
-                        </div>
-                    `,
-                    iconSize: [20, 20]
-                });
+    // Create pulsing marker
+    const pulsingIcon = L.divIcon({
+        className: 'pulsing-icon',
+        html: `
+            <div class="pulsing-dot" style="
+                background-color: ${color};
+                width: ${size}px;
+                height: ${size}px;
+            ">
+                ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
+            </div>
+        `,
+        iconSize: [size, size]
+    });
 
                 L.marker([lat, lon], { icon: pulsingIcon })
                     .addTo(wildfireMap)
