@@ -8,12 +8,7 @@
     margin: 10px auto;
     max-width: 800px;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-.weather-container::-webkit-scrollbar {
-    display: none;
+    background: transparent; /* Remove the background */
 }
 
 .weather-card {
@@ -22,8 +17,8 @@
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
-    flex: 0 0 120px;
-    height: fit-content;
+    flex: 0 0 120px; /* Fixed width */
+    margin-right: 5px;
     transition: transform 0.3s ease;
 }
 
@@ -70,30 +65,11 @@
 }
 
 /* Weather background variations */
-.weather-clear {
-    background: linear-gradient(to bottom right, #87CEEB, #E0F6FF);
-}
-
-.weather-clear img,
-.weather-clouds img[src*="02d"],
-.weather-clouds img[src*="03d"] {
-    filter: brightness(1.2) sepia(1) saturate(5) hue-rotate(35deg); /* This will give rgb(255, 191, 0) */
-}
-
-.weather-rain {
-    background: linear-gradient(to bottom right, #6B7B8C, #9BACC4);
-}
-
-.weather-snow {
-    background: linear-gradient(to bottom right, #E3E3E3, #FFFFFF);
-}
-
-.weather-thunderstorm {
-    background: linear-gradient(to bottom right, #4A5568, #718096);
-}
-
-.weather-mist, .weather-fog {
-    background: linear-gradient(to bottom right, #CBD5E0, #E2E8F0);
+/* Remove any background gradients from weather conditions */
+.weather-clear, .weather-clouds, .weather-rain, 
+.weather-snow, .weather-thunderstorm, .weather-mist, 
+.weather-fog {
+    background: white !important;
 }
 
 /* Map container styles */
