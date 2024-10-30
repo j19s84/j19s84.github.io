@@ -145,73 +145,52 @@ async function fetchWildfireData(lat, lon) {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        // Define size categories outside the loop
-        const sizeCategories = {
-            large: {
-                threshold: 10000,
-                color: '#FF0000',     // Deep red
-                radius: 15000,        // Larger circle
-                label: 'Large'
-            },
-            medium: {
-                threshold: 1000,
-                color: '#FFA500',     // Orange
-                radius: 10000,        // Medium circle
-                label: 'Medium'
-            },
-            small: {
-                threshold: 0,
-                color: '#FFD700',     // Gold/Yellow
-                radius: 5000,         // Smaller circle
-                label: 'Small'
-            }
-        };
+        if (data.features && data.features.length > 0) {
+            console.log(`Found ${data.features.length} fires`);
+            
+            data.features.forEach(feature => {
+                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
+                
+                const props = feature.attributes;
+                const lat = feature.geometry.y;
+                const lon = feature.geometry.x;
+                
+                // Check if fire is new (within last 24 hours)
+                const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
+                const isNew = discoveryDate && 
+                             ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
+                
+                // Determine size and color based on acres
+                const acres = props.GISAcres || 0;
+                let color, size;
+                
+                if (acres > 10000) {
+                    color = '#FF0000'; // Red
+                    size = 20;
+                } else if (acres > 1000) {
+                    color = '#FFA500'; // Orange
+                    size = 15;
+                } else {
+                    color = '#FFD700'; // Yellow
+                    size = 10;
+                }
 
-        // Inside your fetchWildfireData function, update the fire marker creation:
+                console.log(`Fire: ${props.IncidentName}, Acres: ${acres}, Color: ${color}, Size: ${size}`);
 
-data.features.forEach(feature => {
-    if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-    
-    const props = feature.attributes;
-    const lat = feature.geometry.y;
-    const lon = feature.geometry.x;
-    
-    // Check if fire is new (within last 24 hours)
-    const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
-    const isNew = discoveryDate && 
-                 ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
-    
-    // Determine size and color based on acres
-    const acres = props.GISAcres || 0;
-    let color, size;
-    
-    if (acres > 10000) {
-        color = '#FF0000'; // Red
-        size = 20;
-    } else if (acres > 1000) {
-        color = '#FFA500'; // Orange
-        size = 15;
-    } else {
-        color = '#FFD700'; // Yellow
-        size = 10;
-    }
-
-    console.log(`Fire: ${props.IncidentName}, Acres: ${acres}, Color: ${color}, Size: ${size}`);
-
-    // Create pulsing marker
-    const pulsingIcon = L.divIcon({
-        className: 'pulsing-icon',
-        html: `
-            <div class="pulsing-dot" style="
-                background-color: ${color};
-                width: ${size}px;
-                height: ${size}px;
-            ">
-                ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
-            </div>
-        `,
-        iconSize: [size, size]
-    });
+                // Create pulsing marker
+                const pulsingIcon = L.divIcon({
+                    className: 'pulsing-icon',
+                    html: `
+                        <div class="pulsing-dot" style="
+                            background-color: ${color};
+                            width: ${size}px;
+                            height: ${size}px;
+                        ">
+                            ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
+                        </div>
+                    `,
+                    iconSize: [size, size]
+                });
 
                 L.marker([lat, lon], { icon: pulsingIcon })
                     .addTo(wildfireMap)
@@ -227,38 +206,38 @@ data.features.forEach(feature => {
                         </div>
                     `);
             });
+
+            // Add legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'info legend');
+                div.innerHTML = `
+                    <div class="legend-container">
+                        <h4>Fire Size</h4>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #FF0000"></span>
+                            <span>Large (>10,000 acres)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #FFA500"></span>
+                            <span>Medium (1,000-10,000 acres)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background: #FFD700"></span>
+                            <span>Small (<1,000 acres)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="new-fire-indicator-legend">NEW</span>
+                            <span>Reported in last 24hrs</span>
+                        </div>
+                    </div>
+                `;
+                return div;
+            };
+            legend.addTo(wildfireMap);
         } else {
             console.log('No active fires found in the data');
         }
-
-        // Add legend
-        const legend = L.control({position: 'bottomright'});
-        legend.onAdd = function(map) {
-            const div = L.DomUtil.create('div', 'info legend');
-            div.innerHTML = `
-                <div class="legend-container">
-                    <h4>Fire Size</h4>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: ${sizeCategories.large.color}"></span>
-                        <span>Large (>10,000 acres)</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: ${sizeCategories.medium.color}"></span>
-                        <span>Medium (1,000-10,000 acres)</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: ${sizeCategories.small.color}"></span>
-                        <span>Small (<1,000 acres)</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="new-fire-indicator-legend">NEW</span>
-                        <span>Reported in last 24hrs</span>
-                    </div>
-                </div>
-            `;
-            return div;
-        };
-        legend.addTo(wildfireMap);
 
     } catch (error) {
         console.error('Error fetching wildfire data:', error);
