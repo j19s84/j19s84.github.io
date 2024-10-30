@@ -148,71 +148,54 @@ async function fetchWildfireData(lat, lon) {
         if (data.features && data.features.length > 0) {
             console.log(`Found ${data.features.length} fires`);
             
-            // Inside your fetchWildfireData function, replace the marker creation code:
+            data.features.forEach(feature => {
+                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
+                
+                const props = feature.attributes;
+                const lat = feature.geometry.y;
+                const lon = feature.geometry.x;
+                
+                // Check if fire is new (within last 24 hours)
+                const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
+                const isNew = discoveryDate && 
+                           ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
+                
+                // Determine size and color based on acres
+                const acres = parseFloat(props.GISAcres) || 0;
+                let color, size;
+                
+                if (acres > 10000) {
+                    color = '#FF0000'; // Red
+                    size = 30;
+                } else if (acres > 1000) {
+                    color = '#FFA500'; // Orange
+                    size = 20;
+                } else {
+                    color = '#FFD700'; // Yellow
+                    size = 12;
+                }
 
-data.features.forEach(feature => {
-    if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-    
-    const props = feature.attributes;
-    const lat = feature.geometry.y;
-    const lon = feature.geometry.x;
-    
-    // Check if fire is new (within last 24 hours)
-    const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
-    const isNew = discoveryDate && 
-                 ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
-    
-    // Determine size and color based on acres
-    const acres = parseFloat(props.GISAcres) || 0;
-    let color, size;
-    
-    if (acres > 10000) {
-        color = '#FF0000'; // Red
-        size = 30;
-    } else if (acres > 1000) {
-        color = '#FFA500'; // Orange
-        size = 20;
-    } else {
-        color = '#FFD700'; // Yellow
-        size = 12;
-    }
+                console.log(`Fire: ${props.IncidentName}, Acres: ${acres}, Color: ${color}, Size: ${size}`);
 
-    console.log(`Fire: ${props.IncidentName}, Acres: ${acres}, Color: ${color}, Size: ${size}`);
+                // Create marker - pulsing only for new fires
+                const markerHtml = isNew ? 
+                    `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
+                        <span class="new-fire-indicator">NEW</span>
+                    </div>` :
+                    `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`;
 
-    // Create marker - pulsing only for new fires
-    const markerHtml = isNew ? 
-        `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
-            <span class="new-fire-indicator">NEW</span>
-        </div>` :
-        `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;">
-        </div>`;
+                const fireIcon = L.divIcon({
+                    className: 'fire-icon',
+                    html: markerHtml,
+                    iconSize: [size, size]
+                });
 
-    const fireIcon = L.divIcon({
-        className: 'fire-icon',
-        html: markerHtml,
-        iconSize: [size, size]
-    });
-
-    L.marker([lat, lon], { icon: fireIcon })
-        .addTo(wildfireMap)
-        .bindPopup(`
-            <div class="fire-popup">
-                <h3>${props.IncidentName || 'Active Fire'}</h3>
-                <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
-                <p><strong>Status:</strong> ${props.IncidentStatus || 'Active'}</p>
-                <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
-                <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
-                <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
-                ${isNew ? '<p><strong><span class="new-fire-indicator">NEW</span></strong></p>' : ''}
-            </div>
-        `);
-});
-                L.marker([lat, lon], { icon: pulsingIcon })
+                L.marker([lat, lon], { icon: fireIcon })
                     .addTo(wildfireMap)
                     .bindPopup(`
                         <div class="fire-popup">
                             <h3>${props.IncidentName || 'Active Fire'}</h3>
-                            <p><strong>Size:</strong> ${props.GISAcres ? Math.round(props.GISAcres).toLocaleString() + ' acres' : 'N/A'}</p>
+                            <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
                             <p><strong>Status:</strong> ${props.IncidentStatus || 'Active'}</p>
                             <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
                             <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
@@ -260,6 +243,7 @@ data.features.forEach(feature => {
             '<p>Wildfire data temporarily unavailable. Please try again later.</p>';
     }
 }
+
 // Launch SOS Plan
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
