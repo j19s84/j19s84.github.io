@@ -1,15 +1,21 @@
 /* Weather card styles */
 .weather-container {
     display: flex;
-    flex-wrap: nowrap;  /* Changed from wrap to nowrap */
+    flex-wrap: nowrap;
     gap: 10px;
-    justify-content: center;  /* Changed back to center */
+    justify-content: flex-start; /* Changed to flex-start */
     padding: 15px;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
-    margin: 10px auto;  /* Changed to auto for horizontal centering */
-    width: 95%;  /* Added to control container width */
-    overflow-x: auto;  /* Added to allow horizontal scrolling if needed */
+    margin: 10px auto;
+    max-width: 800px; /* Set a max-width */
+    overflow-x: auto; /* Allow horizontal scrolling */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+.weather-container::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari */
 }
 
 .weather-card {
@@ -18,14 +24,9 @@
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
-    min-width: 120px;
-    max-width: 150px;
+    flex: 0 0 120px; /* Fixed width, no growing or shrinking */
+    margin-right: 5px;
     transition: transform 0.3s ease;
-    flex: 0 0 auto;  /* Changed to prevent stretching */
-}
-
-.weather-card:hover {
-    transform: translateY(-5px);
 }
 
 .weather-card img {
