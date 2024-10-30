@@ -160,22 +160,25 @@ async function fetchWildfireData(lat, lon) {
                 const isNew = discoveryDate && 
                            ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
                 
-                // Determine size and color based on acres
-                const acres = parseFloat(props.GISAcres) || 0;
-                let color, size;
-                
-                if (acres > 10000) {
-                    color = '#FF0000'; // Red
-                    size = 30;
-                } else if (acres > 1000) {
-                    color = '#FFA500'; // Orange
-                    size = 20;
-                } else {
-                    color = '#FFD700'; // Yellow
-                    size = 12;
-                }
+               // Inside your forEach loop, right after parsing acres:
+const acres = parseFloat(props.GISAcres) || 0;
+console.log('Raw acres value:', props.GISAcres);
+console.log('Parsed acres:', acres);
 
-                console.log(`Fire: ${props.IncidentName}, Acres: ${acres}, Color: ${color}, Size: ${size}`);
+// Then in your size/color determination:
+if (acres > 10000) {
+    color = '#FF0000'; // Red
+    size = 30;
+    console.log(`Large fire: ${props.IncidentName}, ${acres} acres`);
+} else if (acres > 1000) {
+    color = '#FFA500'; // Orange
+    size = 20;
+    console.log(`Medium fire: ${props.IncidentName}, ${acres} acres`);
+} else {
+    color = '#FFD700'; // Yellow
+    size = 12;
+    console.log(`Small fire: ${props.IncidentName}, ${acres} acres`);
+}
 
                 // Create marker - pulsing only for new fires
                 const markerHtml = isNew ? 
