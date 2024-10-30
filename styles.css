@@ -3,19 +3,17 @@
     display: flex;
     flex-wrap: nowrap;
     gap: 10px;
-    justify-content: flex-start; /* Changed to flex-start */
+    justify-content: flex-start;
     padding: 15px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 10px;
     margin: 10px auto;
-    max-width: 800px; /* Set a max-width */
-    overflow-x: auto; /* Allow horizontal scrolling */
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on mobile */
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    max-width: 800px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 
 .weather-container::-webkit-scrollbar {
-    display: none; /* Hide scrollbar for Chrome/Safari */
+    display: none;
 }
 
 .weather-card {
@@ -24,17 +22,15 @@
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
-    flex: 0 0 120px; /* Fixed width, no growing or shrinking */
-    margin-right: 5px;
+    flex: 0 0 120px;
+    height: fit-content;
     transition: transform 0.3s ease;
 }
 
 .weather-card img {
-    width: 50px;  /* Control icon size */
+    width: 50px;
     height: 50px;
-    filter: brightness(1.2);  /* Make icons brighter */
 }
-
 
 .weather-date-container {
     margin-bottom: 10px;
@@ -78,12 +74,10 @@
     background: linear-gradient(to bottom right, #87CEEB, #E0F6FF);
 }
 
-.weather-clear img {
-    filter: sepia(100%) saturate(300%) brightness(1.2) hue-rotate(20deg);  /* Makes sun icons yellow */
-}
-
-.weather-clouds {
-    background: linear-gradient(to bottom right, #B4C5E4, #D3DCF2);
+.weather-clear img,
+.weather-clouds img[src*="02d"],
+.weather-clouds img[src*="03d"] {
+    filter: brightness(1.2) sepia(1) saturate(5) hue-rotate(35deg); /* This will give rgb(255, 191, 0) */
 }
 
 .weather-rain {
