@@ -166,9 +166,11 @@ async function fetchWildfireData(lat, lon) {
                     size = 12;
                 }
 
-                const markerHtml = isNew ? 
+                const isRx = props.IncidentName?.includes('RX') || props.FireType?.includes('RX');
+                const markerHtml = isNew || isRx ? 
                     `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
-                        <span class="new-fire-indicator">NEW</span>
+                        ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
+                        ${isRx ? '<span class="rx-fire-indicator"><span class="rx-symbol">℞</span></span>' : ''}
                     </div>` :
                     `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`;
 
