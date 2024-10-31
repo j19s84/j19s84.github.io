@@ -9,8 +9,22 @@
     max-width: 800px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;  /* For Firefox */
+    scrollbar-color: #bdc3c7 transparent;  /* For Firefox */
+}
+/* For Webkit browsers (Chrome, Safari) */
+.weather-container::-webkit-scrollbar {
+    height: 6px;
 }
 
+.weather-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.weather-container::-webkit-scrollbar-thumb {
+    background-color: #bdc3c7;
+    border-radius: 3px;
+}
 .weather-card {
     background: white;
     padding: 15px;
