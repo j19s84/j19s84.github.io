@@ -169,27 +169,39 @@ img[src*="02d"] {
     }
 }
 
-/* New fire indicator */
-.new-fire-indicator {
+/* Prescribed fire indicator styles */
+.rx-fire-indicator {
     position: absolute;
     top: -15px;
-    right: -15px;
-    background: #FF3D00;
-    color: white;
-    font-size: 8px;
+    left: -15px;
+    background: white;
     padding: 2px 4px;
     border-radius: 3px;
     font-weight: bold;
-    animation: bounce 1s infinite;
+    border: 1px solid #ddd;
 }
 
-.new-fire-indicator-legend {
-    background: #FF3D00;
+.rx-symbol {
+    background: #ff6b6b;
     color: white;
+    padding: 0 3px;
+    border-radius: 2px;
     font-size: 10px;
+}
+
+.rx-fire-indicator-legend {
+    background: white;
     padding: 2px 4px;
     border-radius: 3px;
-    font-weight: bold;
+    border: 1px solid #ddd;
+}
+
+.rx-fire-indicator-legend .rx-symbol {
+    background: #ff6b6b;
+    color: white;
+    padding: 0 3px;
+    border-radius: 2px;
+    font-size: 10px;
 }
 
 @keyframes bounce {
