@@ -245,12 +245,12 @@ img[src*="02d"] {
 
 /* SOS Button styles */
 #sos-button {
-    border-radius: 10px; /* Rounded corners instead of circle */
-    width: 160px;
-    height: 60px;
-    font-size: 14px;
+    width: 120px;  /* Doubled from 60px */
+    height: 120px; /* Doubled from 60px */
+    font-size: 14px; /* Reduced from 16px */
+    line-height: 1.2; /* Better text wrapping */
     padding: 10px;
-    white-space: normal;
+    white-space: normal; /* Allows text to wrap */
 }
 
 #sos-button:hover {
