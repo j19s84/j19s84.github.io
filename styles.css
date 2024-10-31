@@ -98,11 +98,13 @@ img[src*="02d"] {
 }
 
 /* Map container styles */
-#map, #wildfire-map {
-    height: 400px;
-    width: 100%;
+#wildfire-map {
+    height: 300px;  /* Reduced from 400px */
+    width: 90%;     /* Reduced from 100% */
     border-radius: 10px;
-    margin: 20px 0;
+    margin: 20px auto;  /* Centers the map and adds vertical spacing */
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 /* Fire popup styles */
