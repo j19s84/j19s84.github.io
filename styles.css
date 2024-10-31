@@ -244,13 +244,25 @@ img[src*="02d"] {
 }
 
 /* SOS Button styles */
+/* SOS Button styles - corrected circle version */
 #sos-button {
-    width: 120px;  /* Doubled from 60px */
-    height: 120px; /* Doubled from 60px */
-    font-size: 14px; /* Reduced from 16px */
-    line-height: 1.2; /* Better text wrapping */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 50%;  /* This makes it circular */
+    width: 120px;
+    height: 120px;
+    font-size: 14px;
+    line-height: 1.2;
     padding: 10px;
-    white-space: normal; /* Allows text to wrap */
+    white-space: normal;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    z-index: 1000;
 }
 
 #sos-button:hover {
