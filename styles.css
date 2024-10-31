@@ -2,70 +2,95 @@
 .weather-container {
     display: flex;
     flex-wrap: nowrap;
-    gap: 10px;
-    justify-content: flex-start;
-    padding: 15px;
+    gap: 15px;
+    justify-content: center;
+    padding: 20px;
     margin: 10px auto;
     max-width: 800px;
     overflow-x: auto;
-    background: transparent; /* Remove the background */
+    -webkit-overflow-scrolling: touch;
 }
 
 .weather-card {
     background: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     text-align: center;
-    flex: 0 0 120px; /* Fixed width */
-    margin-right: 5px;
-    transition: transform 0.3s ease;
+    flex: 0 0 140px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.weather-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.weather-date-container {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.weather-day {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.1em;
+}
+
+.weather-date {
+    font-size: 0.85em;
+    color: #7f8c8d;
 }
 
 .weather-card img {
     width: 50px;
     height: 50px;
+    margin: 5px auto;
 }
 
-.weather-date-container {
-    margin-bottom: 10px;
-}
-
-.weather-day {
-    font-weight: bold;
-    color: #333;
-}
-
-.weather-date {
-    font-size: 0.8em;  /* Reduced from 0.9em */
-    color: #666;
+/* Make sun icons yellow */
+.weather-clear img,
+img[src*="01d"],
+img[src*="02d"] {
+    filter: sepia(100%) saturate(500%) brightness(1.2) hue-rotate(360deg);
 }
 
 .weather-temp {
-    font-size: 1.1em;  /* Reduced from 1.2em */
-    margin: 8px 0;  /* Reduced from 10px */
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 8px 0;
 }
 
 .temp-divider {
-    color: #999;
+    color: #bdc3c7;
+    margin: 0 4px;
 }
 
 .weather-desc {
     text-transform: capitalize;
+    color: #7f8c8d;
+    font-size: 0.9em;
     margin: 5px 0;
-    color: #444;
 }
 
 .weather-details {
     display: flex;
     justify-content: space-around;
-    margin-top: 8px;  /* Reduced from 10px */
-    font-size: 0.8em;  /* Reduced from 0.9em */
-    color: #666;
+    margin-top: 8px;
+    font-size: 0.8em;
+    color: #7f8c8d;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
 }
 
-/* Weather background variations */
-/* Remove any background gradients from weather conditions */
+/* Remove weather background variations */
 .weather-clear, .weather-clouds, .weather-rain, 
 .weather-snow, .weather-thunderstorm, .weather-mist, 
 .weather-fog {
@@ -92,7 +117,6 @@
     border-bottom: 1px solid #eee;
 }
 
-/* Pulsing fire marker styles */
 /* Fire marker styles */
 .fire-icon {
     display: flex;
