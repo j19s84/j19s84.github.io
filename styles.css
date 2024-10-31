@@ -1,4 +1,4 @@
-/* Weather card styles */
+/* Weather container and scrollbar styles */
 .weather-container {
     display: flex;
     flex-wrap: nowrap;
@@ -9,10 +9,10 @@
     max-width: 800px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;  /* For Firefox */
-    scrollbar-color: #bdc3c7 transparent;  /* For Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: #bdc3c7 transparent;
 }
-/* For Webkit browsers (Chrome, Safari) */
+
 .weather-container::-webkit-scrollbar {
     height: 6px;
 }
@@ -25,6 +25,8 @@
     background-color: #bdc3c7;
     border-radius: 3px;
 }
+
+/* Weather card styles */
 .weather-card {
     background: white;
     padding: 15px;
@@ -32,8 +34,8 @@
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     text-align: center;
-    flex: 0 0 130px;  /* Made cards more square */
-    height: 180px;    /* Fixed height for square appearance */
+    flex: 0 0 130px;
+    height: 180px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -62,17 +64,18 @@
     color: #7f8c8d;
 }
 
+/* Updated weather icon styles */
 .weather-card img {
     width: 50px;
     height: 50px;
     margin: 5px auto;
 }
 
-/* Make sun icons yellow */
+/* Improved sun icon coloring */
 .weather-clear img,
 img[src*="01d"],
 img[src*="02d"] {
-    filter: sepia(100%) saturate(500%) brightness(1.2) hue-rotate(360deg);
+    filter: invert(80%) sepia(58%) saturate(481%) hue-rotate(359deg) brightness(105%) contrast(104%);
 }
 
 .weather-temp {
@@ -80,11 +83,6 @@ img[src*="02d"] {
     font-weight: 600;
     color: #2c3e50;
     margin: 8px 0;
-}
-
-.temp-divider {
-    color: #bdc3c7;
-    margin: 0 4px;
 }
 
 .weather-desc {
@@ -104,17 +102,10 @@ img[src*="02d"] {
     border-top: 1px solid #f0f0f0;
 }
 
-/* Remove weather background variations */
-.weather-clear, .weather-clouds, .weather-rain, 
-.weather-snow, .weather-thunderstorm, .weather-mist, 
-.weather-fog {
-    background: white !important;
-}
-
 /* Map container styles */
 #wildfire-map {
-    height: 350px;  /* Reduced height */
-    width: 90%;     /* Reduced width */
+    height: 350px;
+    width: 90%;
     max-width: 1000px;
     margin: 20px auto;
     border-radius: 12px;
@@ -127,16 +118,23 @@ img[src*="02d"] {
     max-width: 1200px;
 }
 
-/* Fire popup styles */
+/* Enhanced fire popup styles */
 .fire-popup {
-    padding: 10px;
-    max-width: 250px;
+    padding: 15px;
+    max-width: 300px;
+    font-size: 0.9em;
+    line-height: 1.4;
 }
 
 .fire-popup h3 {
     margin: 0 0 10px 0;
-    color: #FF0000;
+    color: #e74c3c;
     border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.fire-popup p {
+    margin: 5px 0;
 }
 
 /* Fire marker styles */
@@ -160,12 +158,10 @@ img[src*="02d"] {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
     }
-    
     70% {
         transform: scale(1);
         box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
     }
-    
     100% {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
@@ -196,22 +192,11 @@ img[src*="02d"] {
 }
 
 @keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-3px);
-    }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
 }
 
-/* Coordinates display */
-#coordinates {
-    text-align: center;
-    margin: 10px 0;
-    font-family: monospace;
-    color: #666;
-}
-
+/* User location styles */
 .user-location-dot {
     background-color: #4A90E2;
     border-radius: 50%;
@@ -243,6 +228,13 @@ img[src*="02d"] {
 }
 
 /* Legend styles */
+.legend-container {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
 .legend-color {
     width: 20px;
     height: 20px;
@@ -251,22 +243,15 @@ img[src*="02d"] {
     border: 1px solid rgba(0,0,0,0.2);
 }
 
-.legend-container {
-    background: white;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-}
-
 .legend-item {
-    margin: 5px 0;
+    margin: 8px 0;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 0.9em;
 }
 
 /* SOS Button styles */
-/* SOS Button styles - corrected circle version */
 #sos-button {
     position: fixed;
     bottom: 20px;
@@ -274,7 +259,7 @@ img[src*="02d"] {
     background-color: #ff4444;
     color: white;
     border: none;
-    border-radius: 50%;  /* This makes it circular */
+    border-radius: 50%;
     width: 120px;
     height: 120px;
     font-size: 14px;
