@@ -1,6 +1,35 @@
-// Define functions first
-function launchSOSPlan() {
-    alert('SOS Plan feature coming soon!');
+// Initialize maps and get location
+document.addEventListener('DOMContentLoaded', function() {
+    // Get user's location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
+    }
+
+    // Initialize the SOS button
+    document.getElementById('sos-button').addEventListener('click', launchSOSPlan);
+});
+
+// Success callback for geolocation
+function successLocation(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    
+    // Display coordinates
+    document.getElementById('coordinates').textContent = 
+        `Latitude: ${latitude}, Longitude: ${longitude}`;
+    
+    // Get weather data
+    fetchWeatherData(latitude, longitude);
+    
+    // Get wildfire data and initialize map with user location
+    fetchWildfireData(latitude, longitude);
+}
+
+// Error callback for geolocation
+function errorLocation() {
+    alert('Unable to retrieve your location');
+    // Initialize map with default US view if location fails
+    fetchWildfireData(39.8283, -98.5795);
 }
 
 async function fetchWeatherData(lat, lon) {
@@ -69,6 +98,7 @@ async function fetchWeatherData(lat, lon) {
             '<p>Weather data temporarily unavailable. Please try again later.</p>';
     }
 }
+
 async function fetchWildfireData(lat, lon) {
     try {
         const url = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/0/query?' +
@@ -202,36 +232,6 @@ async function fetchWildfireData(lat, lon) {
     }
 }
 
-// Success callback for geolocation
-function successLocation(position) {
-    const latitude = position.coords.latitude;
-    const longitude = position.coords.longitude;
-    
-    // Display coordinates
-    document.getElementById('coordinates').textContent = 
-        `Latitude: ${latitude}, Longitude: ${longitude}`;
-    
-    // Get weather data
-    fetchWeatherData(latitude, longitude);
-    
-    // Get wildfire data and initialize map with user location
-    fetchWildfireData(latitude, longitude);
+function launchSOSPlan() {
+    alert('SOS Plan feature coming soon!');
 }
-
-// Error callback for geolocation
-function errorLocation() {
-    alert('Unable to retrieve your location');
-    // Initialize map with default US view if location fails
-    fetchWildfireData(39.8283, -98.5795);
-}
-
-// Initialize maps and get location - MOVED TO THE END
-document.addEventListener('DOMContentLoaded', function() {
-    // Get user's location
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
-    }
-
-    // Initialize the SOS button
-    document.getElementById('sos-button').addEventListener('click', launchSOSPlan);
-});
