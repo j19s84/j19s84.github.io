@@ -16,7 +16,7 @@ function successLocation(position) {
     
     // Display coordinates
     document.getElementById('coordinates').textContent = 
-        `Latitude: ${latitude}, Longitude: ${longitude}`;
+        `Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}`;
     
     // Get weather data
     fetchWeatherData(latitude, longitude);
@@ -146,21 +146,23 @@ async function fetchWildfireData(lat, lon) {
                 const fireLat = feature.geometry.y;
                 const fireLon = feature.geometry.x;
                 
+                // Calculate fire age
                 const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
                 const isNew = discoveryDate && 
                            ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
                 
-                const acres = parseFloat(props.GISAcres) || 0;
+                // Get fire size and determine marker properties
+                const acres = parseFloat(props.DailyAcres) || parseFloat(props.GISAcres) || 0;
                 let color, size;
                 
                 if (acres > 10000) {
-                    color = '#FF0000';
+                    color = '#FF0000';  // Red for large fires
                     size = 30;
                 } else if (acres > 1000) {
-                    color = '#FFA500';
+                    color = '#FFA500';  // Orange for medium fires
                     size = 20;
                 } else {
-                    color = '#FFD700';
+                    color = '#FFD700';  // Yellow for small fires
                     size = 12;
                 }
 
@@ -176,16 +178,26 @@ async function fetchWildfireData(lat, lon) {
                     iconSize: [size, size]
                 });
 
+                // Format dates for popup
+                const discoveryDateTime = props.FireDiscoveryDateTime ? 
+                    new Date(props.FireDiscoveryDateTime).toLocaleString() : 'N/A';
+                const lastUpdated = props.ModifiedOnDateTime ? 
+                    new Date(props.ModifiedOnDateTime).toLocaleString() : 'N/A';
+
                 L.marker([fireLat, fireLon], { icon: fireIcon })
                     .addTo(wildfireMap)
                     .bindPopup(`
                         <div class="fire-popup">
                             <h3>${props.IncidentName || 'Active Fire'}</h3>
-                            <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
-                            <p><strong>Status:</strong> ${props.IncidentStatus || 'Active'}</p>
                             <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
+                            <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
+                            <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
+                            <p><strong>Discovered:</strong> ${discoveryDateTime}</p>
+                            <p><strong>Last Updated:</strong> ${lastUpdated}</p>
                             <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
                             <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
+                            ${props.IncidentManagementOrganization ? 
+                                `<p><strong>Management:</strong> ${props.IncidentManagementOrganization}</p>` : ''}
                             ${isNew ? '<p><strong><span class="new-fire-indicator">NEW</span></strong></p>' : ''}
                         </div>
                     `);
