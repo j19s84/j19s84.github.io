@@ -52,14 +52,12 @@ async function fetchWeatherData(lat, lon) {
                 </div>
                 <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
                 <div class="weather-temp">
-                    <span class="temp-c">${tempC}°C</span>
-                    <span class="temp-divider">|</span>
                     <span class="temp-f">${tempF}°F</span>
                 </div>
                 <div class="weather-desc">${description}</div>
                 <div class="weather-details">
                     <div class="humidity">💧${humidity}%</div>
-                    <div class="wind">💨${windSpeed}${windDir}</div>
+                    <div class="wind">🌬️${windSpeed}${windDir}</div>
                 </div>
             `;
             
@@ -71,7 +69,6 @@ async function fetchWeatherData(lat, lon) {
             '<p>Weather data temporarily unavailable. Please try again later.</p>';
     }
 }
-
 async function fetchWildfireData(lat, lon) {
     try {
         const url = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/0/query?' +
