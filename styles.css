@@ -245,21 +245,12 @@ img[src*="02d"] {
 
 /* SOS Button styles */
 #sos-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #ff4444;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 60px;
+    border-radius: 10px; /* Rounded corners instead of circle */
+    width: 160px;
     height: 60px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    z-index: 1000;
+    font-size: 14px;
+    padding: 10px;
+    white-space: normal;
 }
 
 #sos-button:hover {
