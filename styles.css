@@ -72,10 +72,11 @@
 }
 
 /* Improved sun icon coloring */
+/* Update the weather icon filter */
 .weather-clear img,
 img[src*="01d"],
 img[src*="02d"] {
-    filter: invert(80%) sepia(58%) saturate(481%) hue-rotate(359deg) brightness(105%) contrast(104%);
+    filter: invert(80%) sepia(75%) saturate(1000%) hue-rotate(360deg) brightness(105%) contrast(104%);
 }
 
 .weather-temp {
