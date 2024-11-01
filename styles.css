@@ -17,78 +17,70 @@ h2 {
     margin: 1rem 0;
 }
 
+/* Weather container and scrollbar styles */
 .weather-container {
     display: flex;
     flex-wrap: nowrap;
     gap: 8px;
+    justify-content: center;
     padding: 10px;
     margin: 10px auto;
-    max-width: 600px;  /* Reduced from 800px */
+    max-width: 600px;
     overflow-x: auto;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-#weather-section {
-    margin: 20px 0;
-}
-
+/* Updated Weather card styles */
 .weather-card {
     background: #f8f9fa;
-    padding: 12px;
+    padding: 8px;  /* Reduced padding */
     border-radius: 8px;
     text-align: center;
-    flex: 0 0 100px;  /* Reduced from 140px */
-    min-height: 160px;  /* Reduced from 200px */
+    flex: 0 0 80px;  /* Reduced width */
+    min-height: 140px;  /* Reduced height */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: transform 0.2s;
+    border: 1px solid #e0e0e0;
+}
+
+.weather-card:first-child {
+    background: linear-gradient(to bottom right, #f8f9fa, #ffffff);
+    border-left: 4px solid #4a90e2;
+}
+
+.weather-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .weather-date-container {
-    margin-bottom: 8px;
+    margin-bottom: 4px;  /* Reduced margin */
     padding-bottom: 4px;
     border-bottom: 1px solid #eee;
 }
 
 .weather-day {
-    font-size: 0.9em;
+    font-size: 0.8em;  /* Reduced font size */
     font-weight: 600;
 }
 
 .weather-date {
-    font-size: 0.75em;
+    font-size: 0.7em;  /* Reduced font size */
 }
 
 .weather-card img {
-    width: 40px;  /* Reduced from 50px */
-    height: 40px;
+    width: 30px;  /* Reduced size */
+    height: 30px;
     margin: 4px auto;
 }
 
 .weather-temp {
-    font-size: 1.2em;  /* Reduced from 1.5em */
-    margin: 8px 0;
-}
-
-.weather-desc {
-    font-size: 0.8em;
-    margin: 4px 0;
-}
-
-.weather-details {
-    font-size: 0.75em;
-    margin-top: 8px;
-    padding-top: 8px;
-}
+    font-size: 1em;  /* Reduced font size */
+    margin: 
 
 /* Map container styles */
 #wildfire-map {
