@@ -1,34 +1,22 @@
-// Initialize maps and get location
 document.addEventListener('DOMContentLoaded', function() {
-    // Get user's location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
     }
 
-    // Initialize the SOS button
     document.getElementById('sos-button').addEventListener('click', launchSOSPlan);
 });
 
-// Success callback for geolocation
 function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
-    
-    // Display coordinates
     document.getElementById('coordinates').textContent = 
         `Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}`;
-    
-    // Get weather data
     fetchWeatherData(latitude, longitude);
-    
-    // Get wildfire data and initialize map with user location
     fetchWildfireData(latitude, longitude);
 }
 
-// Error callback for geolocation
 function errorLocation() {
     alert('Unable to retrieve your location');
-    // Initialize map with default US view if location fails
     fetchWildfireData(39.8283, -98.5795);
 }
 
@@ -116,13 +104,11 @@ async function fetchWildfireData(lat, lon) {
             throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
         }
         
-        // Initialize wildfire map centered on user's location
         const wildfireMap = L.map('wildfire-map').setView([lat, lon], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        // Add user location marker with blue color and pulse effect
         const userIcon = L.divIcon({
             className: 'user-location-icon',
             html: `
@@ -146,23 +132,21 @@ async function fetchWildfireData(lat, lon) {
                 const fireLat = feature.geometry.y;
                 const fireLon = feature.geometry.x;
                 
-                // Calculate fire age
                 const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
                 const isNew = discoveryDate && 
                            ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
                 
-                // Get fire size and determine marker properties
                 const acres = parseFloat(props.DailyAcres) || parseFloat(props.GISAcres) || 0;
                 let color, size;
                 
                 if (acres > 10000) {
-                    color = '#FF0000';  // Red for large fires
+                    color = '#FF0000';
                     size = 30;
                 } else if (acres > 1000) {
-                    color = '#FFA500';  // Orange for medium fires
+                    color = '#FFA500';
                     size = 20;
                 } else {
-                    color = '#FFD700';  // Yellow for small fires
+                    color = '#FFD700';
                     size = 12;
                 }
 
@@ -180,7 +164,6 @@ async function fetchWildfireData(lat, lon) {
                     iconSize: [size, size]
                 });
 
-                // Format dates for popup
                 const discoveryDateTime = props.FireDiscoveryDateTime ? 
                     new Date(props.FireDiscoveryDateTime).toLocaleString() : 'N/A';
                 const lastUpdated = props.ModifiedOnDateTime ? 
@@ -205,7 +188,6 @@ async function fetchWildfireData(lat, lon) {
                     `);
             });
 
-            // Add legend
             const legend = L.control({position: 'bottomright'});
             legend.onAdd = function(map) {
                 const div = L.DomUtil.create('div', 'info legend');
