@@ -228,6 +228,52 @@ async function fetchWildfireData(lat, lon) {
     }
 }
 
+// Add this function to your script.js
+async function fetchNWSAlerts(lat, lon) {
+    try {
+        // First, get the grid coordinates for the location
+        const pointResponse = await fetch(
+            `https://api.weather.gov/points/${lat},${lon}`
+        );
+        const pointData = await pointResponse.json();
+        
+        // Then get active alerts for this area
+        const alertsResponse = await fetch(
+            `https://api.weather.gov/alerts/active?point=${lat},${lon}`
+        );
+        const alertsData = await alertsResponse.json();
+        
+        // Update the UI
+        const alertContainer = document.getElementById('alert-banner');
+        
+        if (alertsData.features && alertsData.features.length > 0) {
+            // Sort alerts by severity
+            const alerts = alertsData.features.sort((a, b) => {
+                const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
+                return severityOrder.indexOf(a.properties.severity) - 
+                       severityOrder.indexOf(b.properties.severity);
+            });
+            
+            // Display the most severe alert
+            const mostSevereAlert = alerts[0].properties;
+            alertContainer.innerHTML = `
+                <div class="alert-${mostSevereAlert.severity.toLowerCase()}">
+                    <strong>${mostSevereAlert.event}</strong> - 
+                    ${mostSevereAlert.headline}
+                </div>
+            `;
+        } else {
+            alertContainer.innerHTML = `
+                <div class="alert-none">
+                    No active weather alerts for your area
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching NWS alerts:', error);
+    }
+}
+
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
 }
