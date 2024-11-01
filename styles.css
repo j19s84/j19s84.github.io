@@ -17,7 +17,6 @@ h2 {
     margin: 1rem 0;
 }
 
-/* Weather container and scrollbar styles */
 .weather-container {
     display: flex;
     flex-wrap: nowrap;
@@ -32,14 +31,13 @@ h2 {
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Updated Weather card styles */
 .weather-card {
     background: #f8f9fa;
-    padding: 8px;  /* Reduced padding */
+    padding: 8px;
     border-radius: 8px;
     text-align: center;
-    flex: 0 0 80px;  /* Reduced width */
-    min-height: 140px;  /* Reduced height */
+    flex: 0 0 80px;
+    min-height: 140px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -58,31 +56,42 @@ h2 {
 }
 
 .weather-date-container {
-    margin-bottom: 4px;  /* Reduced margin */
+    margin-bottom: 4px;
     padding-bottom: 4px;
     border-bottom: 1px solid #eee;
 }
 
 .weather-day {
-    font-size: 0.8em;  /* Reduced font size */
+    font-size: 0.8em;
     font-weight: 600;
 }
 
 .weather-date {
-    font-size: 0.7em;  /* Reduced font size */
+    font-size: 0.7em;
 }
 
 .weather-card img {
-    width: 30px;  /* Reduced size */
+    width: 30px;
     height: 30px;
     margin: 4px auto;
 }
 
 .weather-temp {
-    font-size: 1em;  /* Reduced font size */
-    margin: 
+    font-size: 1em;
+    margin: 4px 0;
+}
 
-/* Map container styles */
+.weather-desc {
+    font-size: 0.7em;
+    margin: 4px 0;
+}
+
+.weather-details {
+    font-size: 0.7em;
+    margin-top: 4px;
+    padding-top: 4px;
+}
+
 #wildfire-map {
     height: 350px;
     width: 90%;
@@ -90,7 +99,7 @@ h2 {
     margin: 20px auto;
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    background: #e0e0e0; /* Add a background color to ensure visibility */
+    background: #e0e0e0;
 }
 
 #location-section {
@@ -99,7 +108,6 @@ h2 {
     max-width: 1200px;
 }
 
-/* Enhanced fire popup styles */
 .fire-popup {
     padding: 15px;
     max-width: 300px;
@@ -118,7 +126,6 @@ h2 {
     margin: 5px 0;
 }
 
-/* Fire marker styles */
 .fire-icon {
     display: flex;
     justify-content: center;
@@ -149,7 +156,6 @@ h2 {
     }
 }
 
-/* Prescribed fire indicator styles */
 .rx-fire-indicator {
     position: absolute;
     top: -15px;
@@ -189,7 +195,6 @@ h2 {
     50% { transform: translateY(-3px); }
 }
 
-/* User location styles */
 .user-location-dot {
     background-color: #4A90E2;
     border-radius: 50%;
@@ -220,7 +225,6 @@ h2 {
     }
 }
 
-/* Legend styles */
 .legend-container {
     background: white;
     padding: 12px;
@@ -244,7 +248,6 @@ h2 {
     font-size: 0.9em;
 }
 
-/* SOS Button styles */
 #sos-button {
     position: fixed;
     bottom: 20px;
