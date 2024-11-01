@@ -9,10 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
 function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
+    
     document.getElementById('coordinates').textContent = 
         `Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}`;
+    
     fetchWeatherData(latitude, longitude);
     fetchWildfireData(latitude, longitude);
+    fetchNWSAlerts(latitude, longitude);  // Add this line
 }
 
 function errorLocation() {
