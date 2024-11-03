@@ -1,6 +1,7 @@
 // Move the global wildfireMap declaration to the very top
 let wildfireMap;
 let userLocationMarker;
+let mapLegend;
 
 document.addEventListener('DOMContentLoaded', function() {
     if (navigator.geolocation) {
@@ -307,8 +308,11 @@ async function fetchWildfireData(lat, lon) {
                     });
             });
 
-            const legend = L.control({position: 'bottomright'});
-            legend.onAdd = function(map) {
+               if (mapLegend) {
+                mapLegend.remove();
+            }
+            mapLegend = L.control({position: 'bottomright'});
+            mapLegend.onAdd = function(map) {
                 const div = L.DomUtil.create('div', 'info legend');
                 div.innerHTML = `
                     <div class="legend-container">
