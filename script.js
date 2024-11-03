@@ -38,7 +38,21 @@ async function searchLocation() {
     if (!input) return;
 
     try {
-        // Use OpenStreetMap's Nominatim API for geocoding
+        // First try to match with known fire names from the current data
+        if (wildfireMap) {
+            const foundFire = findFireByName(input);
+            if (foundFire) {
+                wildfireMap.setView([foundFire.lat, foundFire.lon], 8);
+                // Update all the data for this location
+                fetchWeatherData(foundFire.lat, foundFire.lon);
+                fetchNWSAlerts(foundFire.lat, foundFire.lon);
+                document.getElementById('coordinates').textContent = 
+                    `Latitude: ${foundFire.lat.toFixed(4)}, Longitude: ${foundFire.lon.toFixed(4)}`;
+                return;
+            }
+        }
+
+        // If no fire found, try regular location search
         const response = await fetch(
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1&countrycodes=us`
         );
@@ -58,18 +72,39 @@ async function searchLocation() {
             fetchWildfireData(lat, lon);
             fetchNWSAlerts(lat, lon);
 
-            // If you have a map instance variable accessible here, update it
-            if (typeof wildfireMap !== 'undefined') {
-                wildfireMap.setView([lat, lon], 6);
+            // Update map view
+            if (wildfireMap) {
+                wildfireMap.setView([lat, lon], 8);
             }
         } else {
-            alert('Location not found. Please try a different search term.');
+            alert('Location or fire not found. Please try a different search term.');
         }
     } catch (error) {
         console.error('Error searching location:', error);
         alert('Error searching location. Please try again.');
     }
-} 
+}
+
+// Helper function to find fire by name
+function findFireByName(searchTerm) {
+    let foundFire = null;
+    searchTerm = searchTerm.toLowerCase();
+    
+    wildfireMap.eachLayer((layer) => {
+        if (layer instanceof L.Marker && layer.getPopup()) {
+            const popupContent = layer.getPopup().getContent();
+            if (popupContent.toLowerCase().includes(searchTerm)) {
+                const latLng = layer.getLatLng();
+                foundFire = {
+                    lat: latLng.lat,
+                    lon: latLng.lng
+                };
+            }
+        }
+    });
+    
+    return foundFire;
+}
 
 async function fetchWeatherData(lat, lon) {
     const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
