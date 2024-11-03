@@ -275,7 +275,23 @@ async function fetchWildfireData(lat, lon) {
                                 `<p><strong>Management:</strong> ${props.IncidentManagementOrganization}</p>` : ''}
                             ${isNew ? '<p><strong><span class="new-fire-indicator">NEW</span></strong></p>' : ''}
                         </div>
-                    `);
+                    `)
+                    .on('click', function(e) {
+                        // Update all data for the clicked fire's location
+                        const clickedLat = e.latlng.lat;
+                        const clickedLon = e.latlng.lng;
+                        
+                        // Update coordinates display
+                        document.getElementById('coordinates').textContent = 
+                            `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
+                            
+                        // Fetch new data for this location
+                        fetchWeatherData(clickedLat, clickedLon);
+                        fetchNWSAlerts(clickedLat, clickedLon);
+                        
+                        // Center map on fire
+                        wildfireMap.setView([clickedLat, clickedLon], 8);
+                    });
             });
 
             const legend = L.control({position: 'bottomright'});
