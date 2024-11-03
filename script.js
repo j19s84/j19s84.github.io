@@ -1,9 +1,19 @@
+// Move the global wildfireMap declaration to the very top
+let wildfireMap;
+
 document.addEventListener('DOMContentLoaded', function() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
     }
 
+    // All event listeners in one place
     document.getElementById('sos-button').addEventListener('click', launchSOSPlan);
+    document.getElementById('search-button').addEventListener('click', searchLocation);
+    document.getElementById('location-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchLocation();
+        }
+    });
 });
 
 function successLocation(position) {
@@ -22,6 +32,44 @@ function errorLocation() {
     alert('Unable to retrieve your location');
     fetchWildfireData(39.8283, -98.5795);
 }
+
+async function searchLocation() {
+    const input = document.getElementById('location-input').value;
+    if (!input) return;
+
+    try {
+        // Use OpenStreetMap's Nominatim API for geocoding
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1&countrycodes=us`
+        );
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const location = data[0];
+            const lat = parseFloat(location.lat);
+            const lon = parseFloat(location.lon);
+
+            // Update coordinates display
+            document.getElementById('coordinates').textContent = 
+                `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
+
+            // Fetch new data for this location
+            fetchWeatherData(lat, lon);
+            fetchWildfireData(lat, lon);
+            fetchNWSAlerts(lat, lon);
+
+            // If you have a map instance variable accessible here, update it
+            if (typeof wildfireMap !== 'undefined') {
+                wildfireMap.setView([lat, lon], 6);
+            }
+        } else {
+            alert('Location not found. Please try a different search term.');
+        }
+    } catch (error) {
+        console.error('Error searching location:', error);
+        alert('Error searching location. Please try again.');
+    }
+} 
 
 async function fetchWeatherData(lat, lon) {
     const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
@@ -107,10 +155,14 @@ async function fetchWildfireData(lat, lon) {
             throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
         }
         
-        const wildfireMap = L.map('wildfire-map').setView([lat, lon], 6);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(wildfireMap);
+        if (wildfireMap) {
+            wildfireMap.setView([lat, lon], 6);
+        } else {
+            wildfireMap = L.map('wildfire-map').setView([lat, lon], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(wildfireMap);
+        }
 
         const userIcon = L.divIcon({
             className: 'user-location-icon',
