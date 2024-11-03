@@ -1,5 +1,6 @@
 // Move the global wildfireMap declaration to the very top
 let wildfireMap;
+let userLocationMarker;
 
 document.addEventListener('DOMContentLoaded', function() {
     if (navigator.geolocation) {
@@ -209,7 +210,11 @@ async function fetchWildfireData(lat, lon) {
             iconSize: [20, 20]
         });
 
-        L.marker([lat, lon], { icon: userIcon })
+        // Updated user marker creation
+        if (userLocationMarker) {
+            userLocationMarker.remove(); // Remove existing marker
+        }
+        userLocationMarker = L.marker([lat, lon], { icon: userIcon })
             .addTo(wildfireMap)
             .bindPopup('Your Location')
             .openPopup();
@@ -277,7 +282,6 @@ async function fetchWildfireData(lat, lon) {
                         </div>
                     `)
                     .on('click', function(e) {
-                        // Update all data for the clicked fire's location
                         const clickedLat = e.latlng.lat;
                         const clickedLon = e.latlng.lng;
                         
@@ -285,6 +289,15 @@ async function fetchWildfireData(lat, lon) {
                         document.getElementById('coordinates').textContent = 
                             `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
                             
+                        // Move the user location marker
+                        if (userLocationMarker) {
+                            userLocationMarker.remove();
+                        }
+                        userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
+                            .addTo(wildfireMap)
+                            .bindPopup('Your Location')
+                            .openPopup();
+                        
                         // Fetch new data for this location
                         fetchWeatherData(clickedLat, clickedLon);
                         fetchNWSAlerts(clickedLat, clickedLon);
