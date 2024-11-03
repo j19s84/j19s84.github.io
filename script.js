@@ -341,7 +341,7 @@ async function fetchWildfireData(lat, lon) {
                 `;
                 return div;
             };
-            legend.addTo(wildfireMap);
+            mapLegend.addTo(wildfireMap);
         }
 
     } catch (error) {
