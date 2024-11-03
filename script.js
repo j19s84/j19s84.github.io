@@ -3,7 +3,7 @@ let wildfireMap;
 let userLocationMarker;
 let mapLegend;
 
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
     }
@@ -265,47 +265,62 @@ async function fetchWildfireData(lat, lon) {
                 const lastUpdated = props.ModifiedOnDateTime ? 
                     new Date(props.ModifiedOnDateTime).toLocaleString() : 'N/A';
 
-                L.marker([fireLat, fireLon], { icon: fireIcon })
-                    .addTo(wildfireMap)
-                    .bindPopup(`
-                        <div class="fire-popup">
-                            <h3>${props.IncidentName || 'Active Fire'}</h3>
-                            <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
-                            <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
-                            <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
-                            <p><strong>Discovered:</strong> ${discoveryDateTime}</p>
-                            <p><strong>Last Updated:</strong> ${lastUpdated}</p>
-                            <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
-                            <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
-                            ${props.IncidentManagementOrganization ? 
-                                `<p><strong>Management:</strong> ${props.IncidentManagementOrganization}</p>` : ''}
-                            ${isNew ? '<p><strong><span class="new-fire-indicator">NEW</span></strong></p>' : ''}
-                        </div>
-                    `)
-                    .on('click', function(e) {
-                        const clickedLat = e.latlng.lat;
-                        const clickedLon = e.latlng.lng;
-                        
-                        // Update coordinates display
-                        document.getElementById('coordinates').textContent = 
-                            `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
-                            
-                        // Move the user location marker
-                        if (userLocationMarker) {
-                            userLocationMarker.remove();
-                        }
-                        userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
-                            .addTo(wildfireMap)
-                            .bindPopup('Your Location')
-                            .openPopup();
-                        
-                        // Fetch new data for this location
-                        fetchWeatherData(clickedLat, clickedLon);
-                        fetchNWSAlerts(clickedLat, clickedLon);
-                        
-                        // Center map on fire
-                        wildfireMap.setView([clickedLat, clickedLon], 8);
-                    });
+    L.marker([fireLat, fireLon], { icon: fireIcon })
+            .addTo(wildfireMap)
+            .on('click', function(e) {
+            const clickedLat = e.latlng.lat;
+            const clickedLon = e.latlng.lng;
+        
+        // Update coordinates display
+                    document.getElementById('coordinates').textContent = 
+                    `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
+            
+        // Move the user location marker
+            if (userLocationMarker) {
+                userLocationMarker.remove();
+        }
+            userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
+                .addTo(wildfireMap)
+                .bindPopup('Your Location')
+                .openPopup();
+        
+        // Update fire details panel
+        const detailsPanel = document.getElementById('fire-details-content');
+        detailsPanel.innerHTML = `
+            <h2>${props.IncidentName || 'Active Fire'}</h2>
+            <div class="fire-details-grid">
+                <div class="detail-item">
+                    <h3>Fire Information</h3>
+                    <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
+                    <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
+                    <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
+                </div>
+                <div class="detail-item">
+                    <h3>Timing</h3>
+                    <p><strong>Discovered:</strong> ${discoveryDateTime}</p>
+                    <p><strong>Last Updated:</strong> ${lastUpdated}</p>
+                </div>
+                <div class="detail-item">
+                    <h3>Management</h3>
+                    <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
+                    <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
+                    ${props.IncidentManagementOrganization ? 
+                        `<p><strong>Management:</strong> ${props.IncidentManagementOrganization}</p>` : ''}
+                </div>
+            </div>
+        `;
+        
+        // Show the panel
+        document.getElementById('fire-details-panel').classList.add('active');
+        
+        // Fetch new data for this location
+        fetchWeatherData(clickedLat, clickedLon);
+        fetchNWSAlerts(clickedLat, clickedLon);
+        
+        // Center map on fire
+        wildfireMap.setView([clickedLat, clickedLon], 8);
+    });
+                
             });
 
                if (mapLegend) {
@@ -354,35 +369,29 @@ async function fetchWildfireData(lat, lon) {
 // Add this function to your script.js
 async function fetchNWSAlerts(lat, lon) {
     try {
-        // First, get the grid coordinates for the location
-        const pointResponse = await fetch(
-            `https://api.weather.gov/points/${lat},${lon}`
-        );
-        const pointData = await pointResponse.json();
-        
-        // Then get active alerts for this area
         const alertsResponse = await fetch(
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
         const alertsData = await alertsResponse.json();
         
-        // Update the UI
         const alertContainer = document.getElementById('alert-banner');
         
         if (alertsData.features && alertsData.features.length > 0) {
-            // Sort alerts by severity
             const alerts = alertsData.features.sort((a, b) => {
                 const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
                 return severityOrder.indexOf(a.properties.severity) - 
                        severityOrder.indexOf(b.properties.severity);
             });
             
-            // Display the most severe alert
-            const mostSevereAlert = alerts[0].properties;
+            const alert = alerts[0].properties;
             alertContainer.innerHTML = `
-                <div class="alert-${mostSevereAlert.severity.toLowerCase()}">
-                    <strong>${mostSevereAlert.event}</strong> - 
-                    ${mostSevereAlert.headline}
+                <div class="alert-${alert.severity.toLowerCase()}">
+                    <h3>${alert.event}</h3>
+                    <p><strong>Time:</strong> ${new Date(alert.effective).toLocaleString()} to ${new Date(alert.expires).toLocaleString()}</p>
+                    <p><strong>What:</strong> ${alert.description}</p>
+                    <p><strong>Where:</strong> ${alert.areaDesc}</p>
+                    ${alert.instruction ? `<p><strong>Instructions:</strong> ${alert.instruction}</p>` : ''}
+                    <p><em>Issued by ${alert.senderName}</em></p>
                 </div>
             `;
         } else {
