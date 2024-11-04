@@ -451,6 +451,26 @@ h2 {
     transform: rotate(180deg);
 }
 
+.location-title-container {
+    background: white;
+    padding: 15px 20px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 15px;
+}
+
+.location-title-container h2 {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: 1.4rem;
+}
+
+.location-title-container p {
+    margin: 5px 0 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
     .content-container {
