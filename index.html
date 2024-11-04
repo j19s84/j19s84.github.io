@@ -13,34 +13,40 @@
     </header>
 
     <main>
-         <section id="evacuation-section">
-            <h2>Evacuation Status</h2>
-            <div id="alert-banner"></div>
-            <div id="evacuation-info">No current evacuation orders</div>
-        </section>
-     
-        <section id="location-section">
-            <div class="location-search">
+        <div class="location-search">
             <input type="text" id="location-input" placeholder="Enter address, city, or zip code">
             <button id="search-button">Search Location</button>
+        </div>
+        
+        <p id="coordinates"></p>
+
+        <!-- Main content container with map and right panel -->
+        <div class="content-container">
+            <!-- Left side: Map -->
+            <div id="wildfire-map"></div>
+
+            <!-- Right side: Scrollable container -->
+            <div class="right-panel-container">
+                <!-- Fire details panel -->
+                <div id="fire-details-panel" class="fire-details-panel">
+                    <div id="fire-details-content"></div>
+                </div>
+
+                <!-- Weather alerts -->
+                <div id="alert-banner"></div>
+
+                <!-- Weather forecast -->
+                <div id="weather-section">
+                    <h2>Weather Forecast</h2>
+                    <div id="weather-container"></div>
+                </div>
             </div>
-            <h2>Active Wildfires Near Your Location</h2>
-            <p id="coordinates"></p>
-            <div id="wildfire-map"></div>  
+        </div>
 
-            <!-- New fire details panel -->
-    <div id="fire-details-panel" class="fire-details-panel">
-        <div id="fire-details-content"></div>
-    </div>
-</div>
+        <section id="evacuation-section">
+            <h2>Evacuation Status</h2>
+            <div id="evacuation-info">No current evacuation orders</div>
         </section>
-
-        <section id="weather-section">
-            <h2>Weather Forecast</h2>
-            <div id="weather-container"></div>     
-        </section>
-
-       
 
         <button id="sos-button">Launch My SOS Plan</button>
     </main>
