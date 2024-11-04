@@ -282,29 +282,21 @@ h2 {
 
 /* Fire Details Panel */
 .fire-details-panel {
-    flex: 1;
     background: white;
-    padding: 20px;
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-sm);
-    overflow-y: auto;
-    max-height: 600px;
 }
 
 #fire-details-content {
-    flex: 1;
-    min-height: 200px;
-    overflow-y: auto;
     background: white;
     border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-sm);
+    padding: 20px;
 }
 
+/* UPDATE: Remove overflow from fire-details-grid */
 .fire-details-grid {
     display: grid;
     gap: 20px;
-    padding: 15px;
-    overflow-y: auto;
 }
 
 /* NEW - Add this */
