@@ -471,6 +471,35 @@ h2 {
     font-size: 0.9rem;
 }
 
+.fire-details-grid {
+    display: grid;
+    gap: 20px;
+    padding: 15px;
+    max-height: none; /* Remove height restriction */
+}
+
+.detail-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.location-title-container {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+
+.location-subtitle {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
     .content-container {
