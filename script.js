@@ -370,29 +370,32 @@ async function fetchWildfireData(lat, lon) {
                         }
 
                         detailsPanel.innerHTML = `
-                            <h2>${props.IncidentName || 'Active Fire'}</h2>
-                            <div class="fire-details-grid">
-                                <div class="detail-item">
-                                    <h3>Fire Information</h3>
-                                    <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
-                                    <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
-                                    <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
-                                </div>
-                                <div class="detail-item">
-                                    <h3>Timing</h3>
-                                    <p><strong>Discovered:</strong> ${discoveryDateTime}</p>
-                                    <p><strong>Last Updated:</strong> ${lastUpdated}</p>
-                                </div>
-                                <div class="detail-item">
-                                    <h3>Management</h3>
-                                    <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
-                                    <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
-                                    ${props.IncidentManagementOrganization ? 
-                                        `<p><strong>Management:</strong> ${props.IncidentManagementOrganization}</p>` : ''}
-                                </div>
-                                ${nifcInfo}
+                            <div class="location-title-container">
+                                <h2>${fireName}</h2>
+                                <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
                             </div>
-                        `;
+                            <div class="fire-details-grid">
+                            <div class="detail-item">
+                                <h3>Fire Information</h3>
+                                <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
+                                <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
+                                <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
+                            </div>
+                            <div class="detail-item">
+                                <h3>Timing</h3>
+                                <p><strong>Discovered:</strong> ${discoveryDateTime}</p>
+                                <p><strong>Last Updated:</strong> ${lastUpdated}</p>
+                            </div>
+                            <div class="detail-item">
+                                <h3>Management</h3>
+                                <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
+                                <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
+                                ${props.IncidentManagementOrganization ? 
+                                    `<p><strong>Management:</strong> ${props.IncidentManagementOrganization}</p>` : ''}
+                            </div>
+                            ${nifcInfo}
+                        </div>
+                    `;
                         
                         document.getElementById('fire-details-panel').classList.add('active');
                         
