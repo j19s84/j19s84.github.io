@@ -65,15 +65,15 @@ function successLocation(position) {
     const longitude = position.coords.longitude;
     
     const coordsDisplay = document.getElementById('coordinates');
-    if (coordsDisplay) {
-        coordsDisplay.textContent = 
-            `Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}`;
-    }
+    document.getElementById('location-title').textContent = 'Current Location';
+    document.getElementById('location-subtitle').textContent = 
+        `Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}`;
     
     fetchWeatherData(latitude, longitude);
     fetchWildfireData(latitude, longitude);
     fetchNWSAlerts(latitude, longitude);
     fetchNIFCData(latitude, longitude); 
+    checkEvacuationOrders(latitude, longitude);
 }
 
 function errorLocation() {
@@ -105,6 +105,7 @@ async function searchLocation() {
                 // Update all the data for this location
                 fetchWeatherData(foundFire.lat, foundFire.lon);
                 fetchNWSAlerts(foundFire.lat, foundFire.lon);
+                checkEvacuationOrders(foundFire.lat, foundFire.lon);
                  coordsDisplay.textContent = 
                     `Latitude: ${foundFire.lat.toFixed(4)}, Longitude: ${foundFire.lon.toFixed(4)}`;
                 return;
@@ -131,6 +132,7 @@ async function searchLocation() {
             fetchWildfireData(lat, lon);
             fetchNWSAlerts(lat, lon);
             fetchNIFCData(lat, lon); 
+            checkEvacuationOrders(lat, lon);
 
             // Update map view
             if (wildfireMap) {
@@ -597,6 +599,39 @@ async function fetchNIFCData(lat, lon) {
     } catch (error) {
         console.error('Error fetching NIFC data:', error);
         return null;
+    }
+}
+
+async function checkEvacuationOrders(lat, lon) {
+    try {
+        const response = await fetch(
+            `https://api.weather.gov/alerts/active?point=${lat},${lon}`
+        );
+        const data = await response.json();
+        
+        const evacuationAlerts = data.features?.filter(feature => {
+            const event = feature.properties.event.toLowerCase();
+            return event.includes('evacuation') || 
+                   event.includes('shelter in place') ||
+                   event.includes('civil danger');
+        });
+        
+        const evacuationContainer = document.getElementById('evacuation-info');
+        if (evacuationAlerts && evacuationAlerts.length > 0) {
+            const alertsHTML = evacuationAlerts.map(alert => `
+                <div class="evacuation-alert">
+                    <h3>${alert.properties.event}</h3>
+                    <p>${alert.properties.description}</p>
+                    <p><strong>Area:</strong> ${alert.properties.areaDesc}</p>
+                </div>
+            `).join('');
+            
+            evacuationContainer.innerHTML = alertsHTML;
+        } else {
+            evacuationContainer.innerHTML = 'No current evacuation orders';
+        }
+    } catch (error) {
+        console.error('Error checking evacuation orders:', error);
     }
 }
 
