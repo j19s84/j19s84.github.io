@@ -372,11 +372,21 @@ async function fetchWildfireData(lat, lon) {
                             return;
                         }
 
+                        let fireName = props.IncidentName || 'Active Fire';
+                        if (!fireName.toLowerCase().includes('fire')) {
+                            if (fireName.includes('RX') || fireName.includes('Rx')) {
+                                fireName = fireName.replace(/\s*RX\s*$/i, ' Fire Rx');
+                            } else {
+                                fireName += ' Fire';
+                            }
+                        }
+
                         detailsPanel.innerHTML = `
                             <div class="location-title-container">
                                 <h2>${fireName}</h2>
                                 <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
-                            </div>
+                                </div>
+    
                             <div class="fire-details-grid">
                             <div class="detail-item">
                                 <h3>Fire Information</h3>
