@@ -369,6 +369,13 @@ async function fetchWildfireData(lat, lon) {
 // Add this function to your script.js
 async function fetchNWSAlerts(lat, lon) {
     try {
+        // First, get the grid coordinates for the location
+        const pointResponse = await fetch(
+            `https://api.weather.gov/points/${lat},${lon}`
+        );
+        const pointData = await pointResponse.json();
+        
+        // Get active alerts
         const alertsResponse = await fetch(
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
@@ -377,32 +384,75 @@ async function fetchNWSAlerts(lat, lon) {
         const alertContainer = document.getElementById('alert-banner');
         
         if (alertsData.features && alertsData.features.length > 0) {
+            // Sort alerts by severity and then by start time
             const alerts = alertsData.features.sort((a, b) => {
                 const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
-                return severityOrder.indexOf(a.properties.severity) - 
-                       severityOrder.indexOf(b.properties.severity);
+                const severityDiff = 
+                    severityOrder.indexOf(a.properties.severity) - 
+                    severityOrder.indexOf(b.properties.severity);
+                
+                if (severityDiff === 0) {
+                    return new Date(b.properties.effective) - new Date(a.properties.effective);
+                }
+                return severityDiff;
             });
-            
-            const alert = alerts[0].properties;
+
+            // Create alerts HTML
+            const alertsHTML = alerts.map(feature => {
+                const alert = feature.properties;
+                return `
+                    <div class="alert-${alert.severity.toLowerCase()}">
+                        <h3>${alert.event}</h3>
+                        <div class="alert-timing">
+                            <p><strong>Effective:</strong> ${new Date(alert.effective).toLocaleString()}</p>
+                            <p><strong>Expires:</strong> ${new Date(alert.expires).toLocaleString()}</p>
+                        </div>
+                        <div class="alert-details">
+                            <div class="alert-what">
+                                <h4>What</h4>
+                                <p>${alert.description}</p>
+                            </div>
+                            ${alert.instruction ? `
+                                <div class="alert-instructions">
+                                    <h4>Instructions</h4>
+                                    <p>${alert.instruction}</p>
+                                </div>
+                            ` : ''}
+                            <div class="alert-where">
+                                <h4>Where</h4>
+                                <p>${alert.areaDesc}</p>
+                            </div>
+                        </div>
+                        <div class="alert-footer">
+                            <p>Issued by ${alert.senderName}</p>
+                            <p>Event ID: ${alert.id}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
             alertContainer.innerHTML = `
-                <div class="alert-${alert.severity.toLowerCase()}">
-                    <h3>${alert.event}</h3>
-                    <p><strong>Time:</strong> ${new Date(alert.effective).toLocaleString()} to ${new Date(alert.expires).toLocaleString()}</p>
-                    <p><strong>What:</strong> ${alert.description}</p>
-                    <p><strong>Where:</strong> ${alert.areaDesc}</p>
-                    ${alert.instruction ? `<p><strong>Instructions:</strong> ${alert.instruction}</p>` : ''}
-                    <p><em>Issued by ${alert.senderName}</em></p>
+                <div class="alerts-container">
+                    <h2>Active Weather Alerts (${alerts.length})</h2>
+                    ${alertsHTML}
                 </div>
             `;
         } else {
             alertContainer.innerHTML = `
                 <div class="alert-none">
-                    No active weather alerts for your area
+                    <h2>Weather Alerts</h2>
+                    <p>No active weather alerts for your area</p>
                 </div>
             `;
         }
     } catch (error) {
         console.error('Error fetching NWS alerts:', error);
+        alertContainer.innerHTML = `
+            <div class="alert-error">
+                <h2>Weather Alerts</h2>
+                <p>Unable to fetch weather alerts. Please try again later.</p>
+            </div>
+        `;
     }
 }
 
