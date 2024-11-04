@@ -64,13 +64,16 @@ function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
     
-     const titleContainer = document.getElementById('fire-details-content');
-    titleContainer.innerHTML = `
-        <div class="location-title-container">
-            <h2>Current Location</h2>
-            <p class="location-subtitle">Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</p>
-        </div>
-    `;
+    // Update only the fire-details-content panel
+    const detailsPanel = document.getElementById('fire-details-content');
+    if (detailsPanel) {
+        detailsPanel.innerHTML = `
+            <div class="location-title-container">
+                <h2>Current Location</h2>
+                <p class="location-subtitle">Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</p>
+            </div>
+        `;
+    }
     
     fetchWeatherData(latitude, longitude);
     fetchWildfireData(latitude, longitude);
