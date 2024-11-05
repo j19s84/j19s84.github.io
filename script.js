@@ -521,7 +521,6 @@ async function fetchNWSAlerts(lat, lon) {
         }
         const alertsData = await alertsResponse.json();
 
-        // Add the logging line here
         console.log('Alerts Data:', alertsData); // Log the alerts data
 
         if (alertsData.features && alertsData.features.length > 0) {
@@ -565,7 +564,7 @@ async function fetchNWSAlerts(lat, lon) {
                 `<span class="alert-tag">${tag}</span>`
             ).join('');
 
-            const riskLevel = calculateFireRisk(lat, lon, alertTags);
+            const riskLevel = await calculateFireRisk(lat, lon, alertTags); // Await the function
             const riskHTML = `
                 <span class="alert-tag risk-level risk-${riskLevel.toLowerCase()}">
                     🎯 Personal Risk: ${riskLevel}
@@ -731,12 +730,7 @@ async function calculateFireRisk(lat, lon, alertTags) {
     else if (riskScore >= 3) riskLevel = 'HIGH';
     else if (riskScore >= 2) riskLevel = 'MODERATE';
 
-    return riskLevel;
-}
-// Fetch urban area based on coordinates
-async function fetchUrbanArea(lat, lon) {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-    const data = await response.json();
-    return data.address ? data.address.city || data.address.town : null;
+    console.log('Calculated Risk Level:', riskLevel); // Log the risk level
+    return riskLevel; // Ensure this is a string
 }
 
