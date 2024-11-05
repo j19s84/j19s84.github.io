@@ -635,7 +635,6 @@ function updateSOSPlans(alertTags) {
             icon: '🚨'
         });
     }
-    // Add more conditions as needed
 
     const sosHTML = sosPlans.map(plan => `
         <button class="sos-plan-button sos-${plan.urgency}">
@@ -643,12 +642,12 @@ function updateSOSPlans(alertTags) {
         </button>
     `).join('');
 
+    // Replace entire content instead of appending
     sosContainer.innerHTML = `
-        <div class="evacuation-status">
-            ${sosContainer.innerHTML}
-        </div>
+        <h2>Evacuation Status</h2>
+        ${sosContainer.querySelector('.evacuation-status')?.innerHTML || 'No current evacuation orders'}
         <div class="sos-plans">
-            ${sosPlans.length ? sosHTML : '<p>No active SOS plans needed</p>'}
+            ${sosPlans.length ? sosHTML : ''}
         </div>
     `;
 }
