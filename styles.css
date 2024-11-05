@@ -639,3 +639,25 @@ h2 {
 .risk-moderate { background-color: #FF9800; }
 .risk-high { background-color: #f44336; }
 .risk-extreme { background-color: #9C27B0; }
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.risk-indicator {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease;
+}
+
+.risk-low { background-color: #4CAF50; }
+.risk-moderate { background-color: #FF9800; }
+.risk-high { background-color: #f44336; }
+.risk-extreme { background-color: #9C27B0; }
