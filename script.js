@@ -563,6 +563,10 @@ async function fetchNWSAlerts(lat, lon) {
                             ${summary}
                         </div>
                         <div class="alert-content collapsed">
+                            <div class="alert-source">
+                                <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
+                                <p>Issued by ${alert.senderName}</p>
+                            </div>
                             <div class="alert-details">
                                 <div class="alert-what">
                                     <h4>What</h4>
@@ -578,10 +582,6 @@ async function fetchNWSAlerts(lat, lon) {
                                     <h4>Where</h4>
                                     <p>${alert.areaDesc}</p>
                                 </div>
-                            </div>
-                            <div class="alert-footer">
-                                <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
-                                <p>Issued by ${alert.senderName}</p>
                             </div>
                         </div>
                     </div>
@@ -602,6 +602,7 @@ async function fetchNWSAlerts(lat, lon) {
         } else {
             alertContainer.innerHTML = `
                 <div class="alert-none">
+                    <h2>Weather Alerts</h2>
                     <p>No active weather alerts for your area</p>
                 </div>
             `;
@@ -658,3 +659,15 @@ function updateSOSPlans(alertTags) {
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
 }
+
+// Add this function if it's missing
+async function fetchNIFCData(lat, lon) {
+    // Placeholder function - can be enhanced later
+    return {
+        complexName: 'N/A',
+        incidentType: 'N/A',
+        totalPersonnel: 'N/A',
+        fuelType: 'N/A'
+    };
+}
+
