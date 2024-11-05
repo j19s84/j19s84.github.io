@@ -380,8 +380,6 @@ async function fetchWildfireData(lat, lon) {
                             </div>
                             
                             <div class="fire-details-grid">
-                                <div id="alert-banner"></div>
-                                
                                 <div class="detail-item fire-info-card">
                                     <h3>Fire Details</h3>
                                     <div class="fire-info-grid">
@@ -428,8 +426,6 @@ async function fetchWildfireData(lat, lon) {
                         document.getElementById('fire-details-panel').classList.add('active');
                         
                         fetchWeatherData(clickedLat, clickedLon);
-                        fetchNWSAlerts(clickedLat, clickedLon);
-                        
                         wildfireMap.setView([clickedLat, clickedLon], 8);
                     });
             });
@@ -543,6 +539,13 @@ async function fetchNWSAlerts(lat, lon) {
                 `<span class="alert-tag">${tag}</span>`
             ).join('');
 
+            const riskLevel = calculateFireRisk(lat, lon, alertTags);
+            const riskHTML = `
+                <span class="alert-tag risk-level risk-${riskLevel.toLowerCase()}">
+                    🎯 Personal Risk: ${riskLevel}
+                </span>
+            `;
+
             const alertsHTML = alerts.map(feature => {
                 const alert = feature.properties;
                 const summary = alert.headline || 
@@ -592,6 +595,7 @@ async function fetchNWSAlerts(lat, lon) {
                 <div class="alerts-container">
                     <div class="alert-tags-container">
                         ${tagsHTML}
+                        ${riskHTML}
                     </div>
                     ${alertsHTML}
                 </div>
@@ -669,5 +673,23 @@ async function fetchNIFCData(lat, lon) {
         totalPersonnel: 'N/A',
         fuelType: 'N/A'
     };
+}
+
+// Add this function near your other utility functions
+function calculateFireRisk(lat, lon, alertTags) {
+    let riskScore = 0;
+    
+    // Check weather alerts
+    if (alertTags.has('🔥 Fire Risk')) riskScore += 2;
+    if (alertTags.has('🌬️ High Winds')) riskScore += 1;
+    if (alertTags.has('💧 Low Humidity')) riskScore += 1;
+    
+    // Determine risk level
+    let riskLevel = 'LOW';
+    if (riskScore >= 4) riskLevel = 'EXTREME';
+    else if (riskScore >= 3) riskLevel = 'HIGH';
+    else if (riskScore >= 2) riskLevel = 'MODERATE';
+    
+    return riskLevel;
 }
 
