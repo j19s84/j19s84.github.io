@@ -108,8 +108,10 @@ async function searchLocation() {
                 wildfireMap.setView([foundFire.lat, foundFire.lon], 8);
                 // Update all the data for this location
                 fetchWeatherData(foundFire.lat, foundFire.lon);
+                fetchWildfireData(foundFire.lat, foundFire.lon);
                 fetchNWSAlerts(foundFire.lat, foundFire.lon);
-                 coordsDisplay.textContent = 
+                fetchNIFCData(foundFire.lat, foundFire.lon);
+                coordsDisplay.textContent = 
                     `Latitude: ${foundFire.lat.toFixed(4)}, Longitude: ${foundFire.lon.toFixed(4)}`;
                 return;
             }
@@ -509,8 +511,9 @@ async function fetchNWSAlerts(lat, lon) {
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
         if (!alertsResponse.ok) {
-            throw new Error('Failed to fetch NWS alerts');
-        }
+            const alertsData = await alertsResponse.json();
+
+            if (alertsData.features && alertsData.features.length > 0) {
         
         if (alertsData.features && alertsData.features.length > 0) {
             const alerts = alertsData.features.sort((a, b) => {
