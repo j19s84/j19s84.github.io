@@ -612,3 +612,30 @@ h2 {
 .alert-header:hover {
     opacity: 0.9;
 }
+
+.alert-source {
+    margin: 12px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.alert-source a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.alert-source a:hover {
+    text-decoration: underline;
+}
+
+.risk-level {
+    margin-left: auto;
+    font-weight: bold;
+}
+
+.risk-low { background-color: #4CAF50; }
+.risk-moderate { background-color: #FF9800; }
+.risk-high { background-color: #f44336; }
+.risk-extreme { background-color: #9C27B0; }
