@@ -1,9 +1,9 @@
-// Move the global wildfireMap declaration to the very top
+// Global variables
 let wildfireMap;
 let userLocationMarker;
 let mapLegend;
 
-// Add the debounce function before any other functions
+// Utility functions
 const debounce = (func, wait) => {
     let timeout;
     return function executedFunction(...args) {
@@ -19,18 +19,18 @@ const debounce = (func, wait) => {
 // Create a debounced version of searchLocation
 const debouncedSearch = debounce(searchLocation, 300);
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const sosButton = document.getElementById('sos-button');
-        const searchButton = document.getElementById('search-button');
-        const locationInput = document.getElementById('location-input');
+document.addEventListener('DOMContentLoaded', function() {
+    const sosButton = document.getElementById('sos-button');
+    const searchButton = document.getElementById('search-button');
+    const locationInput = document.getElementById('location-input');
 
-          // Check if all elements exist
-        if (!sosButton || !searchButton || !locationInput) {
+    // Check if all elements exist
+    if (!sosButton || !searchButton || !locationInput) {
         console.error('One or more required elements not found');
         return;
     }
-        
-        if (navigator.geolocation) {
+    
+    if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
     }
 
@@ -42,7 +42,6 @@ const debouncedSearch = debounce(searchLocation, 300);
             debouncedSearch();
         }
     });
-    
 });
 
 function setupAlertCollapse() {
@@ -89,7 +88,6 @@ function errorLocation() {
     fetchNWSAlerts(defaultLat, defaultLon);
     fetchNIFCData(defaultLat, defaultLon);
 }
-
 async function searchLocation() {
     const input = document.getElementById('location-input').value;
     if (!input) return;
@@ -106,7 +104,6 @@ async function searchLocation() {
             const foundFire = findFireByName(input);
             if (foundFire) {
                 wildfireMap.setView([foundFire.lat, foundFire.lon], 8);
-                // Update all the data for this location
                 fetchWeatherData(foundFire.lat, foundFire.lon);
                 fetchWildfireData(foundFire.lat, foundFire.lon);
                 fetchNWSAlerts(foundFire.lat, foundFire.lon);
@@ -128,17 +125,14 @@ async function searchLocation() {
             const lat = parseFloat(location.lat);
             const lon = parseFloat(location.lon);
 
-            // Update coordinates display
             coordsDisplay.textContent = 
                 `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
 
-            // Fetch new data for this location
             fetchWeatherData(lat, lon);
             fetchWildfireData(lat, lon);
             fetchNWSAlerts(lat, lon);
-            fetchNIFCData(lat, lon); 
+            fetchNIFCData(lat, lon);
 
-            // Update map view
             if (wildfireMap) {
                 wildfireMap.setView([lat, lon], 8);
             }
@@ -171,7 +165,6 @@ function findFireByName(searchTerm) {
     
     return foundFire;
 }
-
 async function fetchWeatherData(lat, lon) {
     const weatherContainer = document.getElementById('weather-container');
     if (!weatherContainer) {
@@ -266,8 +259,7 @@ async function fetchWildfireData(lat, lon) {
         if (data.error) {
             throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
         }
-        
-        if (wildfireMap) {
+                if (wildfireMap) {
             wildfireMap.setView([lat, lon], 6);
         } else {
             wildfireMap = L.map('wildfire-map').setView([lat, lon], 6);
@@ -333,8 +325,7 @@ async function fetchWildfireData(lat, lon) {
                     html: markerHtml,
                     iconSize: [size, size]
                 });
-
-                const discoveryDateTime = props.FireDiscoveryDateTime ? 
+                                const discoveryDateTime = props.FireDiscoveryDateTime ? 
                     new Date(props.FireDiscoveryDateTime).toLocaleString() : 'N/A';
                 const lastUpdated = props.ModifiedOnDateTime ? 
                     new Date(props.ModifiedOnDateTime).toLocaleString() : 'N/A';
@@ -382,58 +373,57 @@ async function fetchWildfireData(lat, lon) {
                             }
                         }
 
-                        // REPLACE this section in the click handler
-detailsPanel.innerHTML = `
-    <div class="location-title-container">
-        <h2>${fireName} 🔥</h2>
-        <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
-    </div>
-    
-    <div class="fire-details-grid">
-        <div id="alert-banner"></div>
-        
-        <div class="detail-item fire-info-card">
-            <h3>Fire Details</h3>
-            <div class="fire-info-grid">
-                <div class="fire-stat">
-                    <span class="stat-label">🏷️ Type</span>
-                    <span class="stat-value">${props.FireType || 'N/A'}</span>
-                </div>
-                <div class="fire-stat">
-                    <span class="stat-label">📏 Size</span>
-                    <span class="stat-value">${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</span>
-                </div>
-                <div class="fire-stat">
-                    <span class="stat-label">🎯 Containment</span>
-                    <span class="stat-value">${props.PercentContained || '0'}%</span>
-                </div>
-                <div class="fire-stat">
-                    <span class="stat-label">⏰ Discovered</span>
-                    <span class="stat-value">${discoveryDateTime}</span>
-                </div>
-                <div class="fire-stat">
-                    <span class="stat-label">🔄 Last Updated</span>
-                    <span class="stat-value">${lastUpdated}</span>
-                </div>
-                <div class="fire-stat">
-                    <span class="stat-label">🏛️ State</span>
-                    <span class="stat-value">${props.POOState || 'N/A'}</span>
-                </div>
-                <div class="fire-stat">
-                    <span class="stat-label">👥 Agency</span>
-                    <span class="stat-value">${props.POOAgency || 'N/A'}</span>
-                </div>
-                ${props.IncidentManagementOrganization ? `
-                    <div class="fire-stat">
-                        <span class="stat-label">⚡ Management</span>
-                        <span class="stat-value">${props.IncidentManagementOrganization}</span>
-                    </div>
-                ` : ''}
-            </div>
-        </div>
-        ${nifcInfo}
-    </div>
-`;
+                        detailsPanel.innerHTML = `
+                            <div class="location-title-container">
+                                <h2>${fireName} 🔥</h2>
+                                <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
+                            </div>
+                            
+                            <div class="fire-details-grid">
+                                <div id="alert-banner"></div>
+                                
+                                <div class="detail-item fire-info-card">
+                                    <h3>Fire Details</h3>
+                                    <div class="fire-info-grid">
+                                        <div class="fire-stat">
+                                            <span class="stat-label">🏷️ Type</span>
+                                            <span class="stat-value">${props.FireType || 'N/A'}</span>
+                                        </div>
+                                        <div class="fire-stat">
+                                            <span class="stat-label">📏 Size</span>
+                                            <span class="stat-value">${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</span>
+                                        </div>
+                                        <div class="fire-stat">
+                                            <span class="stat-label">🎯 Containment</span>
+                                            <span class="stat-value">${props.PercentContained || '0'}%</span>
+                                        </div>
+                                        <div class="fire-stat">
+                                            <span class="stat-label">⏰ Discovered</span>
+                                            <span class="stat-value">${discoveryDateTime}</span>
+                                        </div>
+                                        <div class="fire-stat">
+                                            <span class="stat-label">🔄 Last Updated</span>
+                                            <span class="stat-value">${lastUpdated}</span>
+                                        </div>
+                                        <div class="fire-stat">
+                                            <span class="stat-label">🏛️ State</span>
+                                            <span class="stat-value">${props.POOState || 'N/A'}</span>
+                                        </div>
+                                        <div class="fire-stat">
+                                            <span class="stat-label">👥 Agency</span>
+                                            <span class="stat-value">${props.POOAgency || 'N/A'}</span>
+                                        </div>
+                                        ${props.IncidentManagementOrganization ? `
+                                            <div class="fire-stat">
+                                                <span class="stat-label">⚡ Management</span>
+                                                <span class="stat-value">${props.IncidentManagementOrganization}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                ${nifcInfo}
+                            </div>
+                        `;
                         
                         document.getElementById('fire-details-panel').classList.add('active');
                         
@@ -443,8 +433,7 @@ detailsPanel.innerHTML = `
                         wildfireMap.setView([clickedLat, clickedLon], 8);
                     });
             });
-
-            if (mapLegend) {
+                        if (mapLegend) {
                 mapLegend.remove();
             }
             mapLegend = L.control({position: 'bottomright'});
@@ -489,7 +478,6 @@ detailsPanel.innerHTML = `
     }
 }
 
-// Add this function to your script.js
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
     if (!alertContainer) {
@@ -511,10 +499,10 @@ async function fetchNWSAlerts(lat, lon) {
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
         if (!alertsResponse.ok) {
-            const alertsData = await alertsResponse.json();
+            throw new Error('Failed to fetch alerts');
+        }
+        const alertsData = await alertsResponse.json();
 
-            if (alertsData.features && alertsData.features.length > 0) {
-        
         if (alertsData.features && alertsData.features.length > 0) {
             const alerts = alertsData.features.sort((a, b) => {
                 const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
@@ -527,14 +515,12 @@ async function fetchNWSAlerts(lat, lon) {
                 }
                 return severityDiff;
             });
-
-            const alertTags = new Set();
+                        const alertTags = new Set();
             alerts.forEach(feature => {
                 const alert = feature.properties;
                 const event = alert.event.toLowerCase();
                 const description = alert.description.toLowerCase();
                 
-                // Define conditions for tags
                 if (event.includes('fire') || event.includes('red flag')) {
                     alertTags.add('🔥 Fire Risk');
                 }
@@ -559,8 +545,6 @@ async function fetchNWSAlerts(lat, lon) {
 
             const alertsHTML = alerts.map(feature => {
                 const alert = feature.properties;
-                
-                // Create a brief summary from the headline or event
                 const summary = alert.headline || 
                     `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
                 
@@ -606,7 +590,6 @@ async function fetchNWSAlerts(lat, lon) {
 
             alertContainer.innerHTML = `
                 <div class="alerts-container">
-                    <h2>Active Weather Alerts (${alerts.length})</h2>
                     <div class="alert-tags-container">
                         ${tagsHTML}
                     </div>
@@ -614,23 +597,11 @@ async function fetchNWSAlerts(lat, lon) {
                 </div>
             `;
             
-            // Update SOS Plans based on tags
             updateSOSPlans(alertTags);
-
-            // Set up click handlers for collapsible sections
-            document.querySelectorAll('.alert-header').forEach(header => {
-                header.addEventListener('click', () => {
-                    const content = header.parentElement.querySelector('.alert-content');
-                    const icon = header.querySelector('.expand-icon');
-                    content.classList.toggle('collapsed');
-                    icon.style.transform = content.classList.contains('collapsed') ? 
-                        'rotate(0deg)' : 'rotate(180deg)';
-                });
-            });
+            setupAlertCollapse();
         } else {
             alertContainer.innerHTML = `
                 <div class="alert-none">
-                    <h2>Weather Alerts</h2>
                     <p>No active weather alerts for your area</p>
                 </div>
             `;
@@ -639,7 +610,6 @@ async function fetchNWSAlerts(lat, lon) {
         console.error('Error fetching NWS alerts:', error);
         alertContainer.innerHTML = `
             <div class="alert-error">
-                <h2>Weather Alerts</h2>
                 <p>Unable to fetch weather alerts. Please try again later.</p>
             </div>
         `;
@@ -648,7 +618,6 @@ async function fetchNWSAlerts(lat, lon) {
     }
 }
 
-// Add new function for SOS Plans
 function updateSOSPlans(alertTags) {
     const sosContainer = document.getElementById('evacuation-info');
     if (!sosContainer) return;
@@ -656,7 +625,6 @@ function updateSOSPlans(alertTags) {
     const tags = Array.from(alertTags);
     let sosPlans = [];
 
-    // Define SOS Plan logic
     if (tags.includes('🔥 Fire Risk') && tags.includes('🌬️ High Winds')) {
         sosPlans.push({
             status: 'READY',
@@ -680,67 +648,13 @@ function updateSOSPlans(alertTags) {
         </button>
     `).join('');
 
-    // Replace entire content instead of appending
     sosContainer.innerHTML = `
         <div class="sos-plans">
             ${sosPlans.length ? sosHTML : 'No active evacuation orders'}
         </div>
     `;
 }
-async function fetchNIFCData(lat, lon) {
-    try {
-        const nifcUrl = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Active_Fires/FeatureServer/0/query?' +
-            'where=1%3D1' +
-            '&outFields=*' +
-            '&geometryType=esriGeometryEnvelope' +
-            '&spatialRel=esriSpatialRelIntersects' +
-            '&returnGeometry=true' +
-            '&f=json';
-
-        const response = await fetch(nifcUrl);
-        const data = await response.json();
-
-        if (data.features) {
-            // Find the closest fire to the given coordinates
-            let closestFire = null;
-            let minDistance = Infinity;
-
-            data.features.forEach(feature => {
-                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-
-                const fireLat = feature.geometry.y;
-                const fireLon = feature.geometry.x;
-                
-                // Calculate distance to this fire
-                const distance = Math.sqrt(
-                    Math.pow(fireLat - lat, 2) + 
-                    Math.pow(fireLon - lon, 2)
-                );
-
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestFire = feature;
-                }
-            });
-
-            if (closestFire) {
-                const props = closestFire.attributes;
-                return {
-                    complexName: props.ComplexName || 'N/A',
-                    incidentType: props.IncidentType || 'N/A',
-                    totalPersonnel: props.TotalIncidentPersonnel || 'N/A',
-                    fuelType: props.PrimaryFuelType || 'N/A'
-                };
-            }
-        }
-        return null;
-    } catch (error) {
-        console.error('Error fetching NIFC data:', error);
-        return null;
-    }
-}
 
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
 }
-
