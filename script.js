@@ -42,6 +42,7 @@ const debouncedSearch = debounce(searchLocation, 300);
             debouncedSearch();
         }
     });
+    
 });
 
 function setupAlertCollapse() {
@@ -542,12 +543,48 @@ async function fetchNWSAlerts(lat, lon) {
                 `;
             }).join('');
 
+            // Add alert tag analysis
+            const alertTags = new Set();
+            alerts.forEach(feature => {
+                const alert = feature.properties;
+                const event = alert.event.toLowerCase();
+                const description = alert.description.toLowerCase();
+                
+                // Define conditions for tags
+                if (event.includes('fire') || event.includes('red flag')) {
+                    alertTags.add('🔥 Fire Risk');
+                }
+                if (event.includes('wind')) {
+                    alertTags.add('🌬️ High Winds');
+                }
+                if (description.includes('humidity') && 
+                    (description.includes('low') || description.includes('critical'))) {
+                    alertTags.add('💧 Low Humidity');
+                }
+                if (event.includes('heat')) {
+                    alertTags.add('🌡️ Extreme Heat');
+                }
+                if (event.includes('evacuation')) {
+                    alertTags.add('⚠️ Evacuation');
+                }
+            });
+
+            const tagsHTML = Array.from(alertTags).map(tag => 
+                `<span class="alert-tag">${tag}</span>`
+            ).join('');
+
             alertContainer.innerHTML = `
                 <div class="alerts-container">
                     <h2>Active Weather Alerts (${alerts.length})</h2>
+                    <div class="alert-tags-container">
+                        ${tagsHTML}
+                    </div>
                     ${alertsHTML}
                 </div>
             `;
+            
+            // Update SOS Plans based on tags
+            updateSOSPlans(alertTags);
 
             setupAlertCollapse();
         } else {
@@ -569,6 +606,49 @@ async function fetchNWSAlerts(lat, lon) {
     } finally {
         alertContainer.classList.remove('loading');
     }
+}
+
+// Add new function for SOS Plans
+function updateSOSPlans(alertTags) {
+    const sosContainer = document.getElementById('evacuation-info');
+    if (!sosContainer) return;
+
+    const tags = Array.from(alertTags);
+    let sosPlans = [];
+
+    // Define SOS Plan logic
+    if (tags.includes('🔥 Fire Risk') && tags.includes('🌬️ High Winds')) {
+        sosPlans.push({
+            status: 'READY',
+            type: 'Fire',
+            urgency: 'high',
+            icon: '🏃'
+        });
+    }
+    if (tags.includes('⚠️ Evacuation')) {
+        sosPlans.push({
+            status: 'GO',
+            type: 'Immediate Evacuation',
+            urgency: 'critical',
+            icon: '🚨'
+        });
+    }
+    // Add more conditions as needed
+
+    const sosHTML = sosPlans.map(plan => `
+        <button class="sos-plan-button sos-${plan.urgency}">
+            ${plan.icon} SOS Plan ${plan.status}: ${plan.type}
+        </button>
+    `).join('');
+
+    sosContainer.innerHTML = `
+        <div class="evacuation-status">
+            ${sosContainer.innerHTML}
+        </div>
+        <div class="sos-plans">
+            ${sosPlans.length ? sosHTML : '<p>No active SOS plans needed</p>'}
+        </div>
+    `;
 }
 
 async function fetchNIFCData(lat, lon) {
