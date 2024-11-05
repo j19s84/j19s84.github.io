@@ -48,15 +48,11 @@ const debouncedSearch = debounce(searchLocation, 300);
 function setupAlertCollapse() {
     document.querySelectorAll('.alert-header').forEach(header => {
         header.addEventListener('click', () => {
-            const content = header.nextElementSibling;
-            const container = header.parentElement;
-            
-            content.classList.toggle('expanded');
-            container.classList.toggle('expanded');
-            
-            if (content.classList.contains('expanded')) {
-                content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
+            const content = header.parentElement.querySelector('.alert-content');
+            const icon = header.querySelector('.expand-icon');
+            content.classList.toggle('collapsed');
+            icon.style.transform = content.classList.contains('collapsed') ? 
+                'rotate(0deg)' : 'rotate(180deg)';
         });
     });
 }
@@ -82,7 +78,6 @@ function successLocation(position) {
     fetchWildfireData(latitude, longitude);
     fetchNWSAlerts(latitude, longitude);
     fetchNIFCData(latitude, longitude); 
-    checkEvacuationOrders(latitude, longitude);
 }
 
 function errorLocation() {
@@ -114,7 +109,6 @@ async function searchLocation() {
                 // Update all the data for this location
                 fetchWeatherData(foundFire.lat, foundFire.lon);
                 fetchNWSAlerts(foundFire.lat, foundFire.lon);
-                checkEvacuationOrders(foundFire.lat, foundFire.lon);
                  coordsDisplay.textContent = 
                     `Latitude: ${foundFire.lat.toFixed(4)}, Longitude: ${foundFire.lon.toFixed(4)}`;
                 return;
@@ -141,7 +135,6 @@ async function searchLocation() {
             fetchWildfireData(lat, lon);
             fetchNWSAlerts(lat, lon);
             fetchNIFCData(lat, lon); 
-            checkEvacuationOrders(lat, lon);
 
             // Update map view
             if (wildfireMap) {
@@ -397,23 +390,44 @@ detailsPanel.innerHTML = `
     <div class="fire-details-grid">
         <div id="alert-banner"></div>
         
-        <div class="detail-item">
-            <h3>Fire Information</h3>
-            <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
-            <p><strong>Size:</strong> ${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</p>
-            <p><strong>Containment:</strong> ${props.PercentContained || '0'}%</p>
-        </div>
-        <div class="detail-item">
-            <h3>Timing</h3>
-            <p><strong>Discovered:</strong> ${discoveryDateTime}</p>
-            <p><strong>Last Updated:</strong> ${lastUpdated}</p>
-        </div>
-        <div class="detail-item">
-            <h3>Management</h3>
-            <p><strong>State:</strong> ${props.POOState || 'N/A'}</p>
-            <p><strong>Agency:</strong> ${props.POOAgency || 'N/A'}</p>
-            ${props.IncidentManagementOrganization ? 
-                `<p><strong>Management:</strong> ${props.IncidentManagementOrganization}</p>` : ''}
+        <div class="detail-item fire-info-card">
+            <h3>Fire Details</h3>
+            <div class="fire-info-grid">
+                <div class="fire-stat">
+                    <span class="stat-label">🏷️ Type</span>
+                    <span class="stat-value">${props.FireType || 'N/A'}</span>
+                </div>
+                <div class="fire-stat">
+                    <span class="stat-label">📏 Size</span>
+                    <span class="stat-value">${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</span>
+                </div>
+                <div class="fire-stat">
+                    <span class="stat-label">🎯 Containment</span>
+                    <span class="stat-value">${props.PercentContained || '0'}%</span>
+                </div>
+                <div class="fire-stat">
+                    <span class="stat-label">⏰ Discovered</span>
+                    <span class="stat-value">${discoveryDateTime}</span>
+                </div>
+                <div class="fire-stat">
+                    <span class="stat-label">🔄 Last Updated</span>
+                    <span class="stat-value">${lastUpdated}</span>
+                </div>
+                <div class="fire-stat">
+                    <span class="stat-label">🏛️ State</span>
+                    <span class="stat-value">${props.POOState || 'N/A'}</span>
+                </div>
+                <div class="fire-stat">
+                    <span class="stat-label">👥 Agency</span>
+                    <span class="stat-value">${props.POOAgency || 'N/A'}</span>
+                </div>
+                ${props.IncidentManagementOrganization ? `
+                    <div class="fire-stat">
+                        <span class="stat-label">⚡ Management</span>
+                        <span class="stat-value">${props.IncidentManagementOrganization}</span>
+                    </div>
+                ` : ''}
+            </div>
         </div>
         ${nifcInfo}
     </div>
@@ -486,12 +500,17 @@ async function fetchNWSAlerts(lat, lon) {
         const pointResponse = await fetch(
             `https://api.weather.gov/points/${lat},${lon}`
         );
+        if (!pointResponse.ok) {
+            throw new Error('Failed to fetch NWS point data');
+        }
         const pointData = await pointResponse.json();
         
         const alertsResponse = await fetch(
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
-        const alertsData = await alertsResponse.json();
+        if (!alertsResponse.ok) {
+            throw new Error('Failed to fetch NWS alerts');
+        }
         
         if (alertsData.features && alertsData.features.length > 0) {
             const alerts = alertsData.features.sort((a, b) => {
@@ -660,14 +679,11 @@ function updateSOSPlans(alertTags) {
 
     // Replace entire content instead of appending
     sosContainer.innerHTML = `
-        <h2>Evacuation Status</h2>
-        ${sosContainer.querySelector('.evacuation-status')?.innerHTML || 'No current evacuation orders'}
         <div class="sos-plans">
-            ${sosPlans.length ? sosHTML : ''}
+            ${sosPlans.length ? sosHTML : 'No active evacuation orders'}
         </div>
     `;
 }
-
 async function fetchNIFCData(lat, lon) {
     try {
         const nifcUrl = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Active_Fires/FeatureServer/0/query?' +
@@ -721,39 +737,7 @@ async function fetchNIFCData(lat, lon) {
     }
 }
 
-async function checkEvacuationOrders(lat, lon) {
-    try {
-        const response = await fetch(
-            `https://api.weather.gov/alerts/active?point=${lat},${lon}`
-        );
-        const data = await response.json();
-        
-        const evacuationAlerts = data.features?.filter(feature => {
-            const event = feature.properties.event.toLowerCase();
-            return event.includes('evacuation') || 
-                   event.includes('shelter in place') ||
-                   event.includes('civil danger');
-        });
-        
-        const evacuationContainer = document.getElementById('evacuation-info');
-        if (evacuationAlerts && evacuationAlerts.length > 0) {
-            const alertsHTML = evacuationAlerts.map(alert => `
-                <div class="evacuation-alert">
-                    <h3>${alert.properties.event}</h3>
-                    <p>${alert.properties.description}</p>
-                    <p><strong>Area:</strong> ${alert.properties.areaDesc}</p>
-                </div>
-            `).join('');
-            
-            evacuationContainer.innerHTML = alertsHTML;
-        } else {
-            evacuationContainer.innerHTML = 'No current evacuation orders';
-        }
-    } catch (error) {
-        console.error('Error checking evacuation orders:', error);
-    }
-}
-
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
 }
+
