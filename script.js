@@ -390,11 +390,13 @@ async function fetchWildfireData(lat, lon) {
                         // REPLACE this section in the click handler
 detailsPanel.innerHTML = `
     <div class="location-title-container">
-        <h2>${fireName}</h2>
+        <h2>${fireName} 🔥</h2>
         <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
     </div>
     
     <div class="fire-details-grid">
+        <div id="alert-banner"></div>
+        
         <div class="detail-item">
             <h3>Fire Information</h3>
             <p><strong>Type:</strong> ${props.FireType || 'N/A'}</p>
