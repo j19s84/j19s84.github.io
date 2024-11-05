@@ -521,6 +521,9 @@ async function fetchNWSAlerts(lat, lon) {
         }
         const alertsData = await alertsResponse.json();
 
+        // Add the logging line here
+        console.log('Alerts Data:', alertsData); // Log the alerts data
+
         if (alertsData.features && alertsData.features.length > 0) {
             const alerts = alertsData.features.sort((a, b) => {
                 const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
@@ -533,7 +536,8 @@ async function fetchNWSAlerts(lat, lon) {
                 }
                 return severityDiff;
             });
-                        const alertTags = new Set();
+
+            const alertTags = new Set();
             alerts.forEach(feature => {
                 const alert = feature.properties;
                 const event = alert.event.toLowerCase();
@@ -617,6 +621,7 @@ async function fetchNWSAlerts(lat, lon) {
                 <div class="alerts-container">
                     <div class="alert-tags-container">
                         ${tagsHTML}
+                        ${riskHTML}
                     </div>
                     ${alertsHTML}
                 </div>
@@ -650,7 +655,6 @@ async function fetchNWSAlerts(lat, lon) {
         alertContainer.classList.remove('loading');
     }
 }
-
 function updateSOSPlans(alertTags) {
     const sosContainer = document.getElementById('evacuation-info');
     if (!sosContainer) return;
@@ -735,3 +739,4 @@ async function fetchUrbanArea(lat, lon) {
     const data = await response.json();
     return data.address ? data.address.city || data.address.town : null;
 }
+
