@@ -704,20 +704,34 @@ async function fetchNIFCData(lat, lon) {
 }
 
 // Add this function near your other utility functions
-function calculateFireRisk(lat, lon, alertTags) {
+async function calculateFireRisk(lat, lon, alertTags) {
     let riskScore = 0;
-    
-    // Check weather alerts
+
+    // Check if in urban area
+    const urbanArea = await fetchUrbanArea(lat, lon);
+    const isUrban = urbanArea !== null;
+
+    // Adjust risk based on alerts
     if (alertTags.has('🔥 Fire Risk')) riskScore += 2;
     if (alertTags.has('🌬️ High Winds')) riskScore += 1;
     if (alertTags.has('💧 Low Humidity')) riskScore += 1;
-    
+
+    // Urban areas may have different risk levels
+    if (isUrban) {
+        riskScore -= 1; // Reduce risk for urban areas
+    }
+
     // Determine risk level
     let riskLevel = 'LOW';
     if (riskScore >= 4) riskLevel = 'EXTREME';
     else if (riskScore >= 3) riskLevel = 'HIGH';
     else if (riskScore >= 2) riskLevel = 'MODERATE';
-    
+
     return riskLevel;
 }
-
+// Fetch urban area based on coordinates
+async function fetchUrbanArea(lat, lon) {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+    const data = await response.json();
+    return data.address ? data.address.city || data.address.town : null;
+}
