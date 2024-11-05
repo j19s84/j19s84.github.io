@@ -506,46 +506,6 @@ async function fetchNWSAlerts(lat, lon) {
                 return severityDiff;
             });
 
-            const alertsHTML = alerts.map(feature => {
-                const alert = feature.properties;
-                return `
-                    <div class="alert-container alert-${alert.severity.toLowerCase()}">
-                        <div class="alert-header">
-                            <div>
-                                <h3>${alert.event}</h3>
-                                <span class="alert-timing">
-                                    Effective until ${new Date(alert.expires).toLocaleString()}
-                                </span>
-                            </div>
-                            <span class="expand-icon">▼</span>
-                        </div>
-                        <div class="alert-content">
-                            <div class="alert-details">
-                                <div class="alert-what">
-                                    <h4>What</h4>
-                                    <p>${alert.description}</p>
-                                </div>
-                                ${alert.instruction ? `
-                                    <div class="alert-instructions">
-                                        <h4>Instructions</h4>
-                                        <p>${alert.instruction}</p>
-                                    </div>
-                                ` : ''}
-                                <div class="alert-where">
-                                    <h4>Where</h4>
-                                    <p>${alert.areaDesc}</p>
-                                </div>
-                            </div>
-                            <div class="alert-footer">
-                                <p>Issued by ${alert.senderName}</p>
-                                <p>Event ID: ${alert.id}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            // Add alert tag analysis
             const alertTags = new Set();
             alerts.forEach(feature => {
                 const alert = feature.properties;
@@ -575,6 +535,53 @@ async function fetchNWSAlerts(lat, lon) {
                 `<span class="alert-tag">${tag}</span>`
             ).join('');
 
+            const alertsHTML = alerts.map(feature => {
+                const alert = feature.properties;
+                
+                // Create a brief summary from the headline or event
+                const summary = alert.headline || 
+                    `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
+                
+                return `
+                    <div class="alert-container alert-${alert.severity.toLowerCase()}">
+                        <div class="alert-header">
+                            <div>
+                                <h3>${alert.event}</h3>
+                                <span class="alert-timing">
+                                    Effective until ${new Date(alert.expires).toLocaleString()}
+                                </span>
+                            </div>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="alert-summary">
+                            ${summary}
+                        </div>
+                        <div class="alert-content collapsed">
+                            <div class="alert-details">
+                                <div class="alert-what">
+                                    <h4>What</h4>
+                                    <p>${alert.description}</p>
+                                </div>
+                                ${alert.instruction ? `
+                                    <div class="alert-instructions">
+                                        <h4>Instructions</h4>
+                                        <p>${alert.instruction}</p>
+                                    </div>
+                                ` : ''}
+                                <div class="alert-where">
+                                    <h4>Where</h4>
+                                    <p>${alert.areaDesc}</p>
+                                </div>
+                            </div>
+                            <div class="alert-footer">
+                                <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
+                                <p>Issued by ${alert.senderName}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
             alertContainer.innerHTML = `
                 <div class="alerts-container">
                     <h2>Active Weather Alerts (${alerts.length})</h2>
@@ -588,7 +595,16 @@ async function fetchNWSAlerts(lat, lon) {
             // Update SOS Plans based on tags
             updateSOSPlans(alertTags);
 
-            setupAlertCollapse();
+            // Set up click handlers for collapsible sections
+            document.querySelectorAll('.alert-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.parentElement.querySelector('.alert-content');
+                    const icon = header.querySelector('.expand-icon');
+                    content.classList.toggle('collapsed');
+                    icon.style.transform = content.classList.contains('collapsed') ? 
+                        'rotate(0deg)' : 'rotate(180deg)';
+                });
+            });
         } else {
             alertContainer.innerHTML = `
                 <div class="alert-none">
