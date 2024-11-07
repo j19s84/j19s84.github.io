@@ -505,144 +505,79 @@ async function fetchNWSAlerts(lat, lon) {
 
     alertContainer.classList.add('loading');
     try {
-        const pointResponse = await fetch(
-            `https://api.weather.gov/points/${lat},${lon}`
-        );
+        // Fetch point data for the given latitude and longitude
+        const pointResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
         if (!pointResponse.ok) {
             throw new Error('Failed to fetch NWS point data');
         }
         const pointData = await pointResponse.json();
-        
-        const alertsResponse = await fetch(
-            `https://api.weather.gov/alerts/active?point=${lat},${lon}`
-        );
+
+        // Fetch active alerts for the given point
+        const alertsResponse = await fetch(`https://api.weather.gov/alerts/active?point=${lat},${lon}`);
         if (!alertsResponse.ok) {
             throw new Error('Failed to fetch alerts');
         }
         const alertsData = await alertsResponse.json();
 
         console.log('Alerts Data:', alertsData); // Log the alerts data
-        console.log('Alerts Features:', alertsData.features); // Log the features array
 
         if (alertsData.features && alertsData.features.length > 0) {
-            const alerts = alertsData.features.sort((a, b) => {
-                const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
-                const severityDiff = 
-                    severityOrder.indexOf(a.properties.severity) - 
-                    severityOrder.indexOf(b.properties.severity);
-                
-                if (severityDiff === 0) {
-                    return new Date(b.properties.effective) - new Date(a.properties.effective);
-                }
-                return severityDiff;
-            });
-
-            const alertTags = new Set();
-            alerts.forEach(feature => {
+            // Process alerts and create HTML for each alert
+            const alertsHTML = alertsData.features.map(feature => {
                 const alert = feature.properties;
-                console.log('Processing Alert:', alert); // Log each alert being processed
-                const event = alert.event.toLowerCase();
-                const description = alert.description.toLowerCase();
+                const summary = alert.headline || 
+                    `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
                 
-                if (event.includes('fire') || event.includes('red flag')) {
-                    alertTags.add('🔥 Fire Risk');
-                }
-                if (event.includes('wind')) {
-                    alertTags.add('🌬️ High Winds');
-                }
-                if (description.includes('humidity') && 
-                    (description.includes('low') || description.includes('critical'))) {
-                    alertTags.add('💧 Low Humidity');
-                }
-                if (event.includes('heat')) {
-                    alertTags.add('🌡️ Extreme Heat');
-                }
-                if (event.includes('evacuation')) {
-                    alertTags.add('⚠️ Evacuation');
-                }
-            });
-
-            const tagsHTML = Array.from(alertTags).map(tag => 
-                `<span class="alert-tag">${tag}</span>`
-            ).join('');
-
-            const riskLevel = await calculateFireRisk(lat, lon, alertTags); // Await the function
-            const riskHTML = `
-                <span class="alert-tag risk-level risk-${riskLevel.toLowerCase()}">
-                    🎯 Personal Risk: ${riskLevel}
-                </span>
-            `;
-
-            // Inside the fetchNWSAlerts function or wherever this code is located
-const alertsHTML = alerts.map(feature => {
-    const alert = feature.properties;
-    const summary = alert.headline || 
-        `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
-    
-    return `
-        <div class="alert-container alert-${alert.severity.toLowerCase()}">
-            <div class="alert-header">
-                <div>
-                    <h3>${alert.event}</h3>
-                    <span class="alert-timing">
-                        Effective until ${new Date(alert.expires).toLocaleString()}
-                    </span>
-                </div>
-                <span class="expand-icon">▼</span>
-            </div>
-            <div class="alert-summary">
-                ${summary}
-            </div>
-            <div class="alert-content collapsed">
-                <div class="alert-source">
-                    <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
-                    <p>Issued by ${alert.senderName}</p>
-                </div>
-                <div class="alert-details">
-                    <div class="alert-what">
-                        <h4>What</h4>
-                        <p>${alert.description}</p>
-                    </div>
-                    ${alert.instruction ? `
-                        <div class="alert-instructions">
-                            <h4>Instructions</h4>
-                            <p>${alert.instruction}</p>
+                return `
+                    <div class="alert-container alert-${alert.severity.toLowerCase()}">
+                        <div class="alert-header">
+                            <div>
+                                <h3>${alert.event}</h3>
+                                <span class="alert-timing">
+                                    Effective until ${new Date(alert.expires).toLocaleString()}
+                                </span>
+                            </div>
+                            <span class="expand-icon">▼</span>
                         </div>
-                    ` : ''}
-                    <div class="alert-where">
-                        <h4>Where</h4>
-                        <p>${alert.areaDesc}</p> <!-- Ensure this is closed properly -->
+                        <div class="alert-summary">
+                            ${summary}
+                        </div>
+                        <div class="alert-content collapsed">
+                            <div class="alert-source">
+                                <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
+                                <p>Issued by ${alert.senderName}</p>
+                            </div>
+                            <div class="alert-details">
+                                <div class="alert-what">
+                                    <h4>What</h4>
+                                    <p>${alert.description}</p>
+                                </div>
+                                ${alert.instruction ? `
+                                    <div class="alert-instructions">
+                                        <h4>Instructions</h4>
+                                        <p>${alert.instruction}</p>
+                                    </div>
+                                ` : ''}
+                                <div class="alert-where">
+                                    <h4>Where</h4>
+                                    <p>${alert.areaDesc}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    `;
-}).join('');
-
-alertContainer.innerHTML = `
+                `;
+            }).join('');
+            alertContainer.innerHTML = `
                 <div class="alerts-container">
-                    <div class="alert-tags-container">
-                        ${tagsHTML}
-                        ${riskHTML}
-                    </div>
                     ${alertsHTML}
                 </div>
             `;
         } else {
-            alertContainer.innerHTML = `
-                <div class="alert-none">
-                    <h2>Weather Alerts</h2>
-                    <p>No active weather alerts for your area</p>
-                </div>
-            `;
+            alertContainer.innerHTML = '<p>No active weather alerts for your area.</p>';
         }
     } catch (error) {
         console.error('Error fetching NWS alerts:', error);
-        alertContainer.innerHTML = `
-            <div class="alert-error">
-                <p>Unable to fetch weather alerts. Please try again later.</p>
-            </div>
-        `;
+        alertContainer.innerHTML = '<p>Unable to fetch weather alerts. Please try again later.</p>';
     } finally {
         alertContainer.classList.remove('loading');
     }
