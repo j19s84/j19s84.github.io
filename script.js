@@ -573,43 +573,82 @@ async function fetchNWSAlerts(lat, lon) {
                 </span>
             `;
 
-            const alertsHTML = alerts.map(feature => {
-                const alert = feature.properties;
-                const summary = alert.headline || 
-                    `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
-                
-                return `
-                    <div class="alert-container alert-${alert.severity.toLowerCase()}">
-                        <div class="alert-header">
-                            <div>
-                                <h3>${alert.event}</h3>
-                                <span class="alert-timing">
-                                    Effective until ${new Date(alert.expires).toLocaleString()}
-                                </span>
-                            </div>
-                            <span class="expand-icon">▼</span>
+            // Inside the fetchNWSAlerts function or wherever this code is located
+const alertsHTML = alerts.map(feature => {
+    const alert = feature.properties;
+    const summary = alert.headline || 
+        `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
+    
+    return `
+        <div class="alert-container alert-${alert.severity.toLowerCase()}">
+            <div class="alert-header">
+                <div>
+                    <h3>${alert.event}</h3>
+                    <span class="alert-timing">
+                        Effective until ${new Date(alert.expires).toLocaleString()}
+                    </span>
+                </div>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="alert-summary">
+                ${summary}
+            </div>
+            <div class="alert-content collapsed">
+                <div class="alert-source">
+                    <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
+                    <p>Issued by ${alert.senderName}</p>
+                </div>
+                <div class="alert-details">
+                    <div class="alert-what">
+                        <h4>What</h4>
+                        <p>${alert.description}</p>
+                    </div>
+                    ${alert.instruction ? `
+                        <div class="alert-instructions">
+                            <h4>Instructions</h4>
+                            <p>${alert.instruction}</p>
                         </div>
-                        <div class="alert-summary">
-                            ${summary}
-                        </div>
-                        <div class="alert-content collapsed">
-                            <div class="alert-source">
-                                <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
-                                <p>Issued by ${alert.senderName}</p>
-                            </div>
-                            <div class="alert-details">
-                                <div class="alert-what">
-                                    <h4>What</h4>
-                                    <p>${alert.description}</p>
-                                </div>
-                                ${alert.instruction ? `
-                                    <div class="alert-instructions">
-                                        <h4>Instructions</h4>
-                                        <p>${alert.instruction}</p>
-                                    </div>
-                                ` : ''}
-                                <div class="alert-where">
-                                    <h4>Where</h4>
+                    ` : ''}
+                    <div class="alert-where">
+                        <h4>Where</h4>
+                        <p>${alert.areaDesc}</p> <!-- Ensure this is closed properly -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}).join('');
+
+alertContainer.innerHTML = `
+                <div class="alerts-container">
+                    <div class="alert-tags-container">
+                        ${tagsHTML}
+                        ${riskHTML}
+                    </div>
+                    ${alertsHTML}
+                </div>
+            `;
+        } else {
+            alertContainer.innerHTML = `
+                <div class="alert-none">
+                    <h2>Weather Alerts</h2>
+                    <p>No active weather alerts for your area</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching NWS alerts:', error);
+        alertContainer.innerHTML = `
+            <div class="alert-error">
+                <p>Unable to fetch weather alerts. Please try again later.</p>
+            </div>
+        `;
+    } finally {
+        alertContainer.classList.remove('loading');
+    }
+}
+
+// After closing the HTML block, you can define your function
 function updateSOSPlans(alertTags) {
     const sosContainer = document.getElementById('evacuation-info');
     if (!sosContainer) return;
@@ -639,6 +678,13 @@ function updateSOSPlans(alertTags) {
             ${plan.icon} SOS Plan ${plan.status}: ${plan.type}
         </button>
     `).join('');
+
+    sosContainer.innerHTML = `
+        <div class="sos-plans">
+            ${sosPlans.length ? sosHTML : 'No active evacuation orders'}
+        </div>
+    `;
+}
 
     sosContainer.innerHTML = `
         <div class="sos-plans">
