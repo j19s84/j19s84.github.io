@@ -691,7 +691,7 @@ function updateSOSPlans(alertTags) {
             ${sosPlans.length ? sosHTML : 'No active evacuation orders'}
         </div>
     `;
-}
+
 
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
