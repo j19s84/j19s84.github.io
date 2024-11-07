@@ -522,6 +522,7 @@ async function fetchNWSAlerts(lat, lon) {
         const alertsData = await alertsResponse.json();
 
         console.log('Alerts Data:', alertsData); // Log the alerts data
+        console.log('Alerts Features:', alertsData.features); // Log the features array
 
         if (alertsData.features && alertsData.features.length > 0) {
             const alerts = alertsData.features.sort((a, b) => {
@@ -539,6 +540,7 @@ async function fetchNWSAlerts(lat, lon) {
             const alertTags = new Set();
             alerts.forEach(feature => {
                 const alert = feature.properties;
+                console.log('Processing Alert:', alert); // Log each alert being processed
                 const event = alert.event.toLowerCase();
                 const description = alert.description.toLowerCase();
                 
@@ -608,52 +610,6 @@ async function fetchNWSAlerts(lat, lon) {
                                 ` : ''}
                                 <div class="alert-where">
                                     <h4>Where</h4>
-                                    <p>${alert.areaDesc}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            alertContainer.innerHTML = `
-                <div class="alerts-container">
-                    <div class="alert-tags-container">
-                        ${tagsHTML}
-                        ${riskHTML}
-                    </div>
-                    ${alertsHTML}
-                </div>
-            `;
-            
-            updateSOSPlans(alertTags);
-            setupAlertCollapse();
-
-            // Update the header risk indicator
-            const riskIndicator = document.getElementById('risk-indicator');
-            if (riskIndicator) {
-                riskIndicator.className = `risk-indicator risk-${riskLevel.toLowerCase()}`;
-                riskIndicator.textContent = `Personal Risk: ${riskLevel}`;
-            }
-        } else {
-            alertContainer.innerHTML = `
-                <div class="alert-none">
-                    <h2>Weather Alerts</h2>
-                    <p>No active weather alerts for your area</p>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error fetching NWS alerts:', error);
-        alertContainer.innerHTML = `
-            <div class="alert-error">
-                <p>Unable to fetch weather alerts. Please try again later.</p>
-            </div>
-        `;
-    } finally {
-        alertContainer.classList.remove('loading');
-    }
-}
 function updateSOSPlans(alertTags) {
     const sosContainer = document.getElementById('evacuation-info');
     if (!sosContainer) return;
