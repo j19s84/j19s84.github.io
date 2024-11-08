@@ -572,6 +572,9 @@ async function fetchNWSAlerts(lat, lon) {
                     ${alertsHTML}
                 </div>
             `;
+            
+            // Call the setupAlertCollapse function after rendering alerts
+            setupAlertCollapse(); // <-- Place it here
         } else {
             alertContainer.innerHTML = '<p>No active weather alerts for your area.</p>';
         }
