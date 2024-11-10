@@ -7,7 +7,6 @@ let mapLegend;
 const STORED_LAT = 'lastLatitude';
 const STORED_LON = 'lastLongitude';
 
-
 // Utility functions
 const debounce = (func, wait) => {
     let timeout;
