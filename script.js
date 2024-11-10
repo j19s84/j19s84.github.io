@@ -518,42 +518,96 @@ async function fetchNWSAlerts(lat, lon) {
     }
 
     try {
-        if (!lat || !lon || isNaN(lat) || isNaN(lon)) {
-            throw new Error('Invalid coordinates');
-        }
-
         console.log('Fetching alerts for:', lat, lon);
         
-        const headers = {
-            'User-Agent': '(2Safety, contact@2safety.com)',
-            'Accept': 'application/geo+json'
-        };
-        
         // First get the grid data
-        const gridResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`, { headers });
-        if (!gridResponse.ok) throw new Error(`Grid API error: ${gridResponse.status}`);
+        const gridResponse = await fetch(
+            `https://api.weather.gov/points/${lat},${lon}`,
+            {
+                headers: {
+                    'User-Agent': '(2Safety Weather App, contact@2safety.com)',
+                }
+            }
+        );
+        
+        if (!gridResponse.ok) {
+            throw new Error(`Grid API error: ${gridResponse.status}`);
+        }
+        
         const gridData = await gridResponse.json();
         console.log('Grid Data:', gridData);
 
-        // Then get the alerts with expanded area
-        const alertsResponse = await fetch(
-            `https://api.weather.gov/alerts/active?point=${lat},${lon}&status=actual`,
-            { headers }
-        );
-        if (!alertsResponse.ok) throw new Error(`Alerts API error: ${alertsResponse.status}`);
+        // Get the alerts using the grid endpoint
+        const alertsUrl = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
+        console.log('Fetching alerts from:', alertsUrl);
+        
+        const alertsResponse = await fetch(alertsUrl, {
+            headers: {
+                'User-Agent': '(2Safety Weather App, contact@2safety.com)',
+            }
+        });
+
+        if (!alertsResponse.ok) {
+            throw new Error(`Alerts API error: ${alertsResponse.status}`);
+        }
+
         const alertsData = await alertsResponse.json();
         console.log('Alerts Data:', alertsData);
 
-        // Rest of your alert display code...
+        if (alertsData.features && alertsData.features.length > 0) {
+            alertContainer.innerHTML = alertsData.features.map(alert => {
+                const properties = alert.properties;
+                const severity = properties.severity.toLowerCase();
+                const headline = properties.headline || 'Weather Alert';
+                const description = properties.description || '';
+                const instruction = properties.instruction || '';
+                
+                return `
+                    <div class="alert-container alert-${severity}">
+                        <div class="alert-header">
+                            <span>${headline}</span>
+                            <span class="risk-level">${properties.severity}</span>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="alert-content">
+                            <div class="alert-summary">
+                                ${description}
+                            </div>
+                            ${instruction ? `
+                                <div class="alert-instruction">
+                                    <strong>Instructions:</strong><br>
+                                    ${instruction}
+                                </div>
+                            ` : ''}
+                            <div class="alert-source">
+                                Source: ${properties.senderName}<br>
+                                Effective: ${new Date(properties.effective).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Set up collapse functionality
+            setupAlertCollapse();
+        } else {
+            alertContainer.innerHTML = `
+                <div class="alert-container alert-none">
+                    <div class="alert-header">
+                        <span>No Active Alerts</span>
+                    </div>
+                </div>
+            `;
+        }
     } catch (error) {
         console.error('Error fetching weather alerts:', error);
         alertContainer.innerHTML = `
-            <div class="alert-minor">
+            <div class="alert-container alert-minor">
                 <div class="alert-header">
                     <span>Error Loading Alerts</span>
                 </div>
                 <div class="alert-content">
-                    Unable to fetch weather alerts: ${error.message}
+                    Unable to fetch weather alerts. Please try again later.
                 </div>
             </div>
         `;
