@@ -636,9 +636,9 @@ h2 {
 }
 
 .risk-low { background-color: #4CAF50; }
-.risk-moderate { background-color: #FF9800; }
-.risk-high { background-color: #f44336; }
-.risk-extreme { background-color: #9C27B0; }
+.risk-moderate { background-color: #f5df1c; }
+.risk-high { background-color: #d66e14; }
+.risk-extreme { background-color: #e40d0d; }
 
 .header-content {
     display: flex;
