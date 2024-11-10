@@ -241,6 +241,12 @@ h2 {
     max-width: 1200px;
     margin: 10px auto;
     padding: 0 20px;
+    z-index: 1000;
+}
+
+.alert-container {
+    margin-bottom: 10px;
+    background: white; /* Add this to ensure visibility */
 }
 
 .alert-extreme, .alert-severe, .alert-moderate, .alert-minor, .alert-none {
@@ -661,3 +667,4 @@ h2 {
 .risk-moderate { background-color: #FF9800; }
 .risk-high { background-color: #f44336; }
 .risk-extreme { background-color: #9C27B0; }
+
