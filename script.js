@@ -66,26 +66,30 @@ function setupAlertCollapse() {
 function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
+    
+    console.log('Location success:', latitude, longitude);
 
-    // Update only the fire-details-content panel
+    // Update the fire-details-content panel
     const detailsPanel = document.getElementById('fire-details-content');
     if (detailsPanel) {
         detailsPanel.innerHTML = `
-           <div class="fire-details-grid">
-               <div class="location-title-container">
-                   <h2>Current Location</h2>
-                   <p class="location-subtitle">Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</p>
-               </div>
-           </div>
-       `;
+            <div class="fire-details-grid">
+                <div class="location-title-container">
+                    <h2>Current Location</h2>
+                    <p class="location-subtitle">Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</p>
+                </div>
+            </div>
+        `;
     }
 
-    fetchWeatherData(latitude, longitude);
-    fetchWildfireData(latitude, longitude);
-    fetchNWSAlerts(latitude, longitude);
-    fetchNIFCData(latitude, longitude);
+    // Call APIs with proper error handling
+    Promise.all([
+        fetchWeatherData(latitude, longitude).catch(err => console.error('Weather error:', err)),
+        fetchWildfireData(latitude, longitude).catch(err => console.error('Wildfire error:', err)),
+        fetchNWSAlerts(latitude, longitude).catch(err => console.error('NWS error:', err)),
+        fetchNIFCData(latitude, longitude).catch(err => console.error('NIFC error:', err))
+    ]).catch(err => console.error('Error in API calls:', err));
 }
-
 
 function errorLocation() {
     alert('Unable to retrieve your location');
@@ -188,25 +192,17 @@ async function fetchWeatherData(lat, lon) {
         return;
     }
 
-
     weatherContainer.classList.add('loading');
 
-    const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-
-    function getWindDirection(degrees) {
-        const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-        const index = Math.round(degrees / 22.5) % 16;
-        return directions[index];
-    }
-
     try {
+        const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
+        const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`;
+
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Weather API error');
+        if (!response.ok) throw new Error(`Weather API error: ${response.status}`);
         const data = await response.json();
 
         weatherContainer.innerHTML = '';
-
         const dailyForecasts = {};
 
         data.list.forEach(forecast => {
@@ -220,44 +216,41 @@ async function fetchWeatherData(lat, lon) {
 
         Object.values(dailyForecasts).slice(0, 5).forEach(day => {
             const date = new Date(day.dt * 1000);
-            const tempC = Math.round(day.main.temp);
-            const tempF = Math.round((tempC * 9 / 5) + 32);
+            const tempF = Math.round(day.main.temp);
             const description = day.weather[0].description;
             const icon = day.weather[0].icon;
             const weatherMain = day.weather[0].main.toLowerCase();
             const humidity = day.main.humidity;
-            const windSpeed = Math.round(day.wind.speed * 2.237);
+            const windSpeed = Math.round(day.wind.speed);
             const windDir = getWindDirection(day.wind.deg);
 
             const weatherCard = document.createElement('div');
             weatherCard.className = `weather-card weather-${weatherMain}`;
             weatherCard.innerHTML = `
-               <div class="weather-date-container">
-                   <div class="weather-day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                   <div class="weather-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
-               </div>
-               <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
-               <div class="weather-temp">
-                   <span class="temp-f">${tempF}°F</span>
-               </div>
-               <div class="weather-desc">${description}</div>
-               <div class="weather-details">
-                   <div class="humidity">💧${humidity}%</div>
-                   <div class="wind">🌬️${windSpeed}${windDir}</div>
-               </div>
-           `;
+                <div class="weather-date-container">
+                    <div class="weather-day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+                    <div class="weather-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                </div>
+                <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${description}">
+                <div class="weather-temp">
+                    <span class="temp-f">${tempF}°F</span>
+                </div>
+                <div class="weather-desc">${description}</div>
+                <div class="weather-details">
+                    <div class="humidity">💧${humidity}%</div>
+                    <div class="wind">🌬️${windSpeed}${windDir}</div>
+                </div>
+            `;
 
             weatherContainer.appendChild(weatherCard);
         });
     } catch (error) {
         console.error('Error fetching weather:', error);
-        weatherContainer.innerHTML =
-            '<p>Weather data temporarily unavailable. Please try again later.</p>';
+        weatherContainer.innerHTML = '<p>Weather data temporarily unavailable. Please try again later.</p>';
     } finally {
         weatherContainer.classList.remove('loading');
     }
 }
-
 
 async function fetchWildfireData(lat, lon) {
     const mapElement = document.getElementById('wildfire-map');
@@ -285,7 +278,6 @@ async function fetchWildfireData(lat, lon) {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(wildfireMap);
         }
-
 
         const userIcon = L.divIcon({
             className: 'user-location-icon',
@@ -496,18 +488,37 @@ async function fetchWildfireData(lat, lon) {
     }
 }
 
+// Add getWindDirection function here
+function getWindDirection(degrees) {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index];
+}
+
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
-    console.log('Fetching alerts for:', lat, lon); // This helps us debug
-    
+    if (!alertContainer) {
+        console.error('Alert container not found');
+        return;
+    }
+
     try {
-        // Get the grid data first
+        // Add error handling for invalid coordinates
+        if (!lat || !lon || isNaN(lat) || isNaN(lon)) {
+            throw new Error('Invalid coordinates');
+        }
+
+        console.log('Fetching alerts for:', lat, lon);
+        
+        // First get the grid data
         const gridResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+        if (!gridResponse.ok) throw new Error(`Grid API error: ${gridResponse.status}`);
         const gridData = await gridResponse.json();
         console.log('Grid Data:', gridData);
 
         // Then get the alerts
         const alertsResponse = await fetch(`https://api.weather.gov/alerts/active?point=${lat},${lon}`);
+        if (!alertsResponse.ok) throw new Error(`Alerts API error: ${alertsResponse.status}`);
         const alertsData = await alertsResponse.json();
         console.log('Alerts Data:', alertsData);
 
@@ -538,7 +549,7 @@ async function fetchNWSAlerts(lat, lon) {
                     </div>
                 `;
             }).join('');
-            setupAlertCollapse(); // Add it right here, after setting the innerHTML
+            setupAlertCollapse(); // Set up collapse functionality for new alerts
         } else {
             alertContainer.innerHTML = `
                 <div class="alert-none">
@@ -556,7 +567,7 @@ async function fetchNWSAlerts(lat, lon) {
                     <span>Error Loading Alerts</span>
                 </div>
                 <div class="alert-content">
-                    Unable to fetch weather alerts. Please try again later.
+                    Unable to fetch weather alerts: ${error.message}
                 </div>
             </div>
         `;
