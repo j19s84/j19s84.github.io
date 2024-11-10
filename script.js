@@ -6,15 +6,15 @@ let mapLegend;
 
 // Utility functions
 const debounce = (func, wait) => {
-   let timeout;
-   return function executedFunction(...args) {
-       const later = () => {
-           clearTimeout(timeout);
-           func(...args);
-       };
-       clearTimeout(timeout);
-       timeout = setTimeout(later, wait);
-   };
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 };
 
 
@@ -22,55 +22,55 @@ const debounce = (func, wait) => {
 const debouncedSearch = debounce(searchLocation, 300);
 
 
-document.addEventListener('DOMContentLoaded', function() {
-   const sosButton = document.getElementById('sos-button');
-   const searchButton = document.getElementById('search-button');
-   const locationInput = document.getElementById('location-input');
+document.addEventListener('DOMContentLoaded', function () {
+    const sosButton = document.getElementById('sos-button');
+    const searchButton = document.getElementById('search-button');
+    const locationInput = document.getElementById('location-input');
 
 
-   // Check if all elements exist
-   if (!sosButton || !searchButton || !locationInput) {
-       console.error('One or more required elements not found');
-       return;
-   }
-  
-   if (navigator.geolocation) {
-       navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
-   }
+    // Check if all elements exist
+    if (!sosButton || !searchButton || !locationInput) {
+        console.error('One or more required elements not found');
+        return;
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
+    }
 
 
-   // All event listeners in one place
-   sosButton.addEventListener('click', launchSOSPlan);
-   searchButton.addEventListener('click', debouncedSearch);
-   locationInput.addEventListener('keypress', function(e) {
-       if (e.key === 'Enter') {
-           debouncedSearch();
-       }
-   });
+    // All event listeners in one place
+    sosButton.addEventListener('click', launchSOSPlan);
+    searchButton.addEventListener('click', debouncedSearch);
+    locationInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            debouncedSearch();
+        }
+    });
 });
 
 
 function setupAlertCollapse() {
-   document.querySelectorAll('.alert-header').forEach(header => {
-       header.addEventListener('click', () => {
-           const content = header.parentElement.querySelector('.alert-content');
-           const icon = header.querySelector('.expand-icon');
-           content.classList.toggle('collapsed');
-           icon.style.transform = content.classList.contains('collapsed') ?
-               'rotate(0deg)' : 'rotate(180deg)';
-       });
-   });
+    document.querySelectorAll('.alert-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.parentElement.querySelector('.alert-content');
+            const icon = header.querySelector('.expand-icon');
+            content.classList.toggle('collapsed');
+            icon.style.transform = content.classList.contains('collapsed') ?
+                'rotate(0deg)' : 'rotate(180deg)';
+        });
+    });
 }
 
 
 function successLocation(position) {
-   const latitude = position.coords.latitude;
-   const longitude = position.coords.longitude;
-  
-   // Update only the fire-details-content panel
-   const detailsPanel = document.getElementById('fire-details-content');
-   if (detailsPanel) {
-       detailsPanel.innerHTML = `
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+
+    // Update only the fire-details-content panel
+    const detailsPanel = document.getElementById('fire-details-content');
+    if (detailsPanel) {
+        detailsPanel.innerHTML = `
            <div class="fire-details-grid">
                <div class="location-title-container">
                    <h2>Current Location</h2>
@@ -78,160 +78,160 @@ function successLocation(position) {
                </div>
            </div>
        `;
-   }
-  
-   fetchWeatherData(latitude, longitude);
-   fetchWildfireData(latitude, longitude);
-   fetchNWSAlerts(latitude, longitude);
-   fetchNIFCData(latitude, longitude);
+    }
+
+    fetchWeatherData(latitude, longitude);
+    fetchWildfireData(latitude, longitude);
+    fetchNWSAlerts(latitude, longitude);
+    fetchNIFCData(latitude, longitude);
 }
 
 
 function errorLocation() {
-   alert('Unable to retrieve your location');
-   const defaultLat = 39.8283;
-   const defaultLon = -98.5795;
-   fetchWildfireData(defaultLat, defaultLon);
-   fetchWeatherData(defaultLat, defaultLon);
-   fetchNWSAlerts(defaultLat, defaultLon);
-   fetchNIFCData(defaultLat, defaultLon);
+    alert('Unable to retrieve your location');
+    const defaultLat = 39.8283;
+    const defaultLon = -98.5795;
+    fetchWildfireData(defaultLat, defaultLon);
+    fetchWeatherData(defaultLat, defaultLon);
+    fetchNWSAlerts(defaultLat, defaultLon);
+    fetchNIFCData(defaultLat, defaultLon);
 }
 async function searchLocation() {
-   const input = document.getElementById('location-input').value;
-   if (!input) return;
+    const input = document.getElementById('location-input').value;
+    if (!input) return;
 
 
-   const coordsDisplay = document.getElementById('coordinates');
-   if (!coordsDisplay) {
-       console.error('Coordinates display element not found');
-       return;
-   }
+    const coordsDisplay = document.getElementById('coordinates');
+    if (!coordsDisplay) {
+        console.error('Coordinates display element not found');
+        return;
+    }
 
 
-   try {
-       // First try to match with known fire names from the current data
-       if (wildfireMap) {
-           const foundFire = findFireByName(input);
-           if (foundFire) {
-               wildfireMap.setView([foundFire.lat, foundFire.lon], 8);
-               fetchWeatherData(foundFire.lat, foundFire.lon);
-               fetchWildfireData(foundFire.lat, foundFire.lon);
-               fetchNWSAlerts(foundFire.lat, foundFire.lon);
-               fetchNIFCData(foundFire.lat, foundFire.lon);
-               coordsDisplay.textContent =
-                   `Latitude: ${foundFire.lat.toFixed(4)}, Longitude: ${foundFire.lon.toFixed(4)}`;
-               return;
-           }
-       }
+    try {
+        // First try to match with known fire names from the current data
+        if (wildfireMap) {
+            const foundFire = findFireByName(input);
+            if (foundFire) {
+                wildfireMap.setView([foundFire.lat, foundFire.lon], 8);
+                fetchWeatherData(foundFire.lat, foundFire.lon);
+                fetchWildfireData(foundFire.lat, foundFire.lon);
+                fetchNWSAlerts(foundFire.lat, foundFire.lon);
+                fetchNIFCData(foundFire.lat, foundFire.lon);
+                coordsDisplay.textContent =
+                    `Latitude: ${foundFire.lat.toFixed(4)}, Longitude: ${foundFire.lon.toFixed(4)}`;
+                return;
+            }
+        }
 
 
-       // If no fire found, try regular location search
-       const response = await fetch(
-           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1&countrycodes=us`
-       );
-       const data = await response.json();
+        // If no fire found, try regular location search
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1&countrycodes=us`
+        );
+        const data = await response.json();
 
 
-       if (data && data.length > 0) {
-           const location = data[0];
-           const lat = parseFloat(location.lat);
-           const lon = parseFloat(location.lon);
+        if (data && data.length > 0) {
+            const location = data[0];
+            const lat = parseFloat(location.lat);
+            const lon = parseFloat(location.lon);
 
 
-           coordsDisplay.textContent =
-               `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
+            coordsDisplay.textContent =
+                `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
 
 
-           fetchWeatherData(lat, lon);
-           fetchWildfireData(lat, lon);
-           fetchNWSAlerts(lat, lon);
-           fetchNIFCData(lat, lon);
+            fetchWeatherData(lat, lon);
+            fetchWildfireData(lat, lon);
+            fetchNWSAlerts(lat, lon);
+            fetchNIFCData(lat, lon);
 
 
-           if (wildfireMap) {
-               wildfireMap.setView([lat, lon], 8);
-           }
-       } else {
-           alert('Location or fire not found. Please try a different search term.');
-       }
-   } catch (error) {
-       console.error('Error searching location:', error);
-       alert('Error searching location. Please try again.');
-   }
+            if (wildfireMap) {
+                wildfireMap.setView([lat, lon], 8);
+            }
+        } else {
+            alert('Location or fire not found. Please try a different search term.');
+        }
+    } catch (error) {
+        console.error('Error searching location:', error);
+        alert('Error searching location. Please try again.');
+    }
 }
 
 
 // Helper function to find fire by name
 function findFireByName(searchTerm) {
-   let foundFire = null;
-   searchTerm = searchTerm.toLowerCase();
-  
-   wildfireMap.eachLayer((layer) => {
-       if (layer instanceof L.Marker && layer.getPopup()) {
-           const popupContent = layer.getPopup().getContent();
-           if (popupContent.toLowerCase().includes(searchTerm)) {
-               const latLng = layer.getLatLng();
-               foundFire = {
-                   lat: latLng.lat,
-                   lon: latLng.lng
-               };
-           }
-       }
-   });
-  
-   return foundFire;
+    let foundFire = null;
+    searchTerm = searchTerm.toLowerCase();
+
+    wildfireMap.eachLayer((layer) => {
+        if (layer instanceof L.Marker && layer.getPopup()) {
+            const popupContent = layer.getPopup().getContent();
+            if (popupContent.toLowerCase().includes(searchTerm)) {
+                const latLng = layer.getLatLng();
+                foundFire = {
+                    lat: latLng.lat,
+                    lon: latLng.lng
+                };
+            }
+        }
+    });
+
+    return foundFire;
 }
 async function fetchWeatherData(lat, lon) {
-   const weatherContainer = document.getElementById('weather-container');
-   if (!weatherContainer) {
-       console.error('Weather container element not found');
-       return;
-   }
+    const weatherContainer = document.getElementById('weather-container');
+    if (!weatherContainer) {
+        console.error('Weather container element not found');
+        return;
+    }
 
 
-   weatherContainer.classList.add('loading');
-  
-   const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
-   const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
-  
-   function getWindDirection(degrees) {
-       const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-       const index = Math.round(degrees / 22.5) % 16;
-       return directions[index];
-   }
-  
-   try {
-       const response = await fetch(url);
-       if (!response.ok) throw new Error('Weather API error');
-       const data = await response.json();
-      
-       weatherContainer.innerHTML = '';
-      
-       const dailyForecasts = {};
-      
-       data.list.forEach(forecast => {
-           const date = new Date(forecast.dt * 1000);
-           const dateString = date.toLocaleDateString();
-          
-           if (!dailyForecasts[dateString]) {
-               dailyForecasts[dateString] = forecast;
-           }
-       });
-      
-       Object.values(dailyForecasts).slice(0, 5).forEach(day => {
-           const date = new Date(day.dt * 1000);
-           const tempC = Math.round(day.main.temp);
-           const tempF = Math.round((tempC * 9/5) + 32);
-           const description = day.weather[0].description;
-           const icon = day.weather[0].icon;
-           const weatherMain = day.weather[0].main.toLowerCase();
-           const humidity = day.main.humidity;
-           const windSpeed = Math.round(day.wind.speed * 2.237);
-           const windDir = getWindDirection(day.wind.deg);
-          
-           const weatherCard = document.createElement('div');
-           weatherCard.className = `weather-card weather-${weatherMain}`;
-           weatherCard.innerHTML = `
+    weatherContainer.classList.add('loading');
+
+    const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`;
+
+    function getWindDirection(degrees) {
+        const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+        const index = Math.round(degrees / 22.5) % 16;
+        return directions[index];
+    }
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Weather API error');
+        const data = await response.json();
+
+        weatherContainer.innerHTML = '';
+
+        const dailyForecasts = {};
+
+        data.list.forEach(forecast => {
+            const date = new Date(forecast.dt * 1000);
+            const dateString = date.toLocaleDateString();
+
+            if (!dailyForecasts[dateString]) {
+                dailyForecasts[dateString] = forecast;
+            }
+        });
+
+        Object.values(dailyForecasts).slice(0, 5).forEach(day => {
+            const date = new Date(day.dt * 1000);
+            const tempC = Math.round(day.main.temp);
+            const tempF = Math.round((tempC * 9 / 5) + 32);
+            const description = day.weather[0].description;
+            const icon = day.weather[0].icon;
+            const weatherMain = day.weather[0].main.toLowerCase();
+            const humidity = day.main.humidity;
+            const windSpeed = Math.round(day.wind.speed * 2.237);
+            const windDir = getWindDirection(day.wind.deg);
+
+            const weatherCard = document.createElement('div');
+            weatherCard.className = `weather-card weather-${weatherMain}`;
+            weatherCard.innerHTML = `
                <div class="weather-date-container">
                    <div class="weather-day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div>
                    <div class="weather-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
@@ -246,121 +246,121 @@ async function fetchWeatherData(lat, lon) {
                    <div class="wind">🌬️${windSpeed}${windDir}</div>
                </div>
            `;
-          
-           weatherContainer.appendChild(weatherCard);
-       });
-   } catch (error) {
-       console.error('Error fetching weather:', error);
-       weatherContainer.innerHTML =
-           '<p>Weather data temporarily unavailable. Please try again later.</p>';
-   } finally {
-       weatherContainer.classList.remove('loading');
-   }
+
+            weatherContainer.appendChild(weatherCard);
+        });
+    } catch (error) {
+        console.error('Error fetching weather:', error);
+        weatherContainer.innerHTML =
+            '<p>Weather data temporarily unavailable. Please try again later.</p>';
+    } finally {
+        weatherContainer.classList.remove('loading');
+    }
 }
 
 
 async function fetchWildfireData(lat, lon) {
-   const mapElement = document.getElementById('wildfire-map');
-   mapElement.classList.add('loading');
-   try {
-       const url = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/0/query?' +
-           'where=1%3D1' +
-           '&outFields=*' +
-           '&geometryType=esriGeometryEnvelope' +
-           '&spatialRel=esriSpatialRelIntersects' +
-           '&returnGeometry=true' +
-           '&f=json';
-      
-       const response = await fetch(url);
-       const data = await response.json();
-      
-       if (data.error) {
-           throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
-       }
-               if (wildfireMap) {
-           wildfireMap.setView([lat, lon], 6);
-       } else {
-           wildfireMap = L.map('wildfire-map').setView([lat, lon], 6);
-           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-               attribution: '© OpenStreetMap contributors'
-           }).addTo(wildfireMap);
-       }
+    const mapElement = document.getElementById('wildfire-map');
+    mapElement.classList.add('loading');
+    try {
+        const url = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/0/query?' +
+            'where=1%3D1' +
+            '&outFields=*' +
+            '&geometryType=esriGeometryEnvelope' +
+            '&spatialRel=esriSpatialRelIntersects' +
+            '&returnGeometry=true' +
+            '&f=json';
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
+        }
+        if (wildfireMap) {
+            wildfireMap.setView([lat, lon], 6);
+        } else {
+            wildfireMap = L.map('wildfire-map').setView([lat, lon], 6);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(wildfireMap);
+        }
 
 
-       const userIcon = L.divIcon({
-           className: 'user-location-icon',
-           html: `
+        const userIcon = L.divIcon({
+            className: 'user-location-icon',
+            html: `
                <div class="user-location-dot">
                    <div class="user-location-pulse"></div>
                </div>
            `,
-           iconSize: [20, 20]
-       });
+            iconSize: [20, 20]
+        });
 
 
-       if (userLocationMarker) {
-           userLocationMarker.remove();
-       }
-       userLocationMarker = L.marker([lat, lon], { icon: userIcon })
-           .addTo(wildfireMap)
-           .bindPopup('Your Location')
-           .openPopup();
+        if (userLocationMarker) {
+            userLocationMarker.remove();
+        }
+        userLocationMarker = L.marker([lat, lon], { icon: userIcon })
+            .addTo(wildfireMap)
+            .bindPopup('Your Location')
+            .openPopup();
 
 
-       if (data.features && data.features.length > 0) {
-           data.features.forEach(feature => {
-               if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-              
-               const props = feature.attributes;
-               const fireLat = feature.geometry.y;
-               const fireLon = feature.geometry.x;
-              
-               const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
-               const isNew = discoveryDate &&
-                          ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
-              
-               const acres = parseFloat(props.DailyAcres) || parseFloat(props.GISAcres) || 0;
-               let color, size;
-              
-               if (acres > 10000) {
-                   color = '#FF0000';
-                   size = 30;
-               } else if (acres > 1000) {
-                   color = '#FFA500';
-                   size = 20;
-               } else {
-                   color = '#FFD700';
-                   size = 12;
-               }
+        if (data.features && data.features.length > 0) {
+            data.features.forEach(feature => {
+                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
+
+                const props = feature.attributes;
+                const fireLat = feature.geometry.y;
+                const fireLon = feature.geometry.x;
+
+                const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
+                const isNew = discoveryDate &&
+                    ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
+
+                const acres = parseFloat(props.DailyAcres) || parseFloat(props.GISAcres) || 0;
+                let color, size;
+
+                if (acres > 10000) {
+                    color = '#FF0000';
+                    size = 30;
+                } else if (acres > 1000) {
+                    color = '#FFA500';
+                    size = 20;
+                } else {
+                    color = '#FFD700';
+                    size = 12;
+                }
 
 
-               const isRx = props.IncidentName?.includes('RX') || props.FireType?.includes('RX');
-               const markerHtml = isNew || isRx ?
-                   `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
+                const isRx = props.IncidentName?.includes('RX') || props.FireType?.includes('RX');
+                const markerHtml = isNew || isRx ?
+                    `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
                        ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
                        ${isRx ? '<span class="rx-fire-indicator"><span class="rx-symbol">℞</span></span>' : ''}
                    </div>` :
-                   `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`;
+                    `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`;
 
                 const fireIcon = L.divIcon({
                     className: 'fire-icon',
                     html: markerHtml,
                     iconSize: [size, size]
                 });
-                                const discoveryDateTime = props.FireDiscoveryDateTime ? 
+                const discoveryDateTime = props.FireDiscoveryDateTime ?
                     new Date(props.FireDiscoveryDateTime).toLocaleString() : 'N/A';
-                const lastUpdated = props.ModifiedOnDateTime ? 
+                const lastUpdated = props.ModifiedOnDateTime ?
                     new Date(props.ModifiedOnDateTime).toLocaleString() : 'N/A';
 
                 L.marker([fireLat, fireLon], { icon: fireIcon })
                     .addTo(wildfireMap)
-                    .on('click', async function(e) {
+                    .on('click', async function (e) {
                         const clickedLat = e.latlng.lat;
                         const clickedLon = e.latlng.lng;
-                        
-                        document.getElementById('coordinates').textContent = 
+
+                        document.getElementById('coordinates').textContent =
                             `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
-                        
+
                         if (userLocationMarker) {
                             userLocationMarker.remove();
                         }
@@ -379,7 +379,7 @@ async function fetchWildfireData(lat, lon) {
                                 <p><strong>Fuel Type:</strong> ${nifcData.fuelType}</p>
                             </div>
                         ` : '';
-                        
+
                         const detailsPanel = document.getElementById('fire-details-content');
                         if (!detailsPanel) {
                             console.error('Fire details panel element not found');
@@ -444,18 +444,18 @@ async function fetchWildfireData(lat, lon) {
                                 ${nifcInfo}
                             </div>
                         `;
-                        
+
                         document.getElementById('fire-details-panel').classList.add('active');
-                        
+
                         fetchWeatherData(clickedLat, clickedLon);
                         wildfireMap.setView([clickedLat, clickedLon], 8);
                     });
             });
-                        if (mapLegend) {
+            if (mapLegend) {
                 mapLegend.remove();
             }
-            mapLegend = L.control({position: 'bottomright'});
-            mapLegend.onAdd = function(map) {
+            mapLegend = L.control({ position: 'bottomright' });
+            mapLegend.onAdd = function (map) {
                 const div = L.DomUtil.create('div', 'info legend');
                 div.innerHTML = `
                     <div class="legend-container">
@@ -489,7 +489,7 @@ async function fetchWildfireData(lat, lon) {
 
     } catch (error) {
         console.error('Error fetching wildfire data:', error);
-        document.getElementById('wildfire-map').innerHTML = 
+        document.getElementById('wildfire-map').innerHTML =
             '<p>Wildfire data temporarily unavailable. Please try again later.</p>';
     } finally {
         mapElement.classList.remove('loading');
@@ -498,95 +498,96 @@ async function fetchWildfireData(lat, lon) {
 
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
-    if (!alertContainer) {
-        console.error('Alert container element not found');
-        return;
-    }
-
-    alertContainer.classList.add('loading');
+    console.log('Fetching alerts for:', lat, lon); // This helps us debug
+    
     try {
-        // Fetch point data for the given latitude and longitude
-        const pointResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
-        if (!pointResponse.ok) {
-            throw new Error('Failed to fetch NWS point data');
-        }
-        const pointData = await pointResponse.json();
+        // Get the grid data first
+        const gridResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+        const gridData = await gridResponse.json();
+        console.log('Grid Data:', gridData);
 
-        // Fetch active alerts for the given point
+        // Then get the alerts
         const alertsResponse = await fetch(`https://api.weather.gov/alerts/active?point=${lat},${lon}`);
-        if (!alertsResponse.ok) {
-            throw new Error('Failed to fetch alerts');
-        }
         const alertsData = await alertsResponse.json();
+        console.log('Alerts Data:', alertsData);
 
-        console.log('Alerts Data:', alertsData); // Log the alerts data
-
+        // Check if we have any alerts
         if (alertsData.features && alertsData.features.length > 0) {
-            // Process alerts and create HTML for each alert
-            const alertsHTML = alertsData.features.map(feature => {
-                const alert = feature.properties;
-                const summary = alert.headline || 
-                    `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
-                
+            alertContainer.innerHTML = alertsData.features.map(alert => {
+                const severity = alert.properties.severity.toLowerCase();
                 return `
-                    <div class="alert-container alert-${alert.severity.toLowerCase()}">
-                        <div class="alert-header">
-                            <div>
-                                <h3>${alert.event}</h3>
-                                <span class="alert-timing">
-                                    Effective until ${new Date(alert.expires).toLocaleString()}
-                                </span>
-                            </div>
+                    <div class="alert-container alert-${severity}">
+                        <div class="alert-header" onclick="toggleAlert(this)">
+                            <span>${alert.properties.event}</span>
+                            <span class="risk-level">${alert.properties.severity}</span>
                             <span class="expand-icon">▼</span>
                         </div>
-                        <div class="alert-summary">
-                            ${summary}
-                        </div>
-                        <div class="alert-content collapsed">
-                            <div class="alert-source">
-                                <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
-                                <p>Issued by ${alert.senderName}</p>
+                        <div class="alert-content">
+                            <div class="alert-tags-container">
+                                ${generateAlertTags(alert.properties)}
                             </div>
-                            <div class="alert-details">
-                                <div class="alert-what">
-                                    <h4>What</h4>
-                                    <p>${alert.description}</p>
-                                </div>
-                                ${alert.instruction ? `
-                                    <div class="alert-instructions">
-                                        <h4>Instructions</h4>
-                                        <p>${alert.instruction}</p>
-                                    </div>
-                                ` : ''}
-                                <div class="alert-where">
-                                    <h4>Where</h4>
-                                    <p>${alert.areaDesc}</p>
-                                </div>
+                            <div class="alert-summary">
+                                ${alert.properties.headline || alert.properties.description}
+                            </div>
+                            <div class="alert-source">
+                                Source: ${alert.properties.senderName}
+                                <br>
+                                Effective: ${new Date(alert.properties.effective).toLocaleString()}
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
+            setupAlertCollapse(); // Add it right here, after setting the innerHTML
+        } else {
             alertContainer.innerHTML = `
-                <div class="alerts-container">
-                    ${alertsHTML}
+                <div class="alert-none">
+                    <div class="alert-header">
+                        <span>No Active Alerts</span>
+                    </div>
                 </div>
             `;
-            
-            // Call the setupAlertCollapse function after rendering alerts
-            setupAlertCollapse(); // <-- Place it here
-        } else {
-            alertContainer.innerHTML = '<p>No active weather alerts for your area.</p>';
         }
     } catch (error) {
-        console.error('Error fetching NWS alerts:', error);
-        alertContainer.innerHTML = '<p>Unable to fetch weather alerts. Please try again later.</p>';
-    } finally {
-        alertContainer.classList.remove('loading');
+        console.error('Error fetching weather alerts:', error);
+        alertContainer.innerHTML = `
+            <div class="alert-minor">
+                <div class="alert-header">
+                    <span>Error Loading Alerts</span>
+                </div>
+                <div class="alert-content">
+                    Unable to fetch weather alerts. Please try again later.
+                </div>
+            </div>
+        `;
     }
 }
 
-// After closing the HTML block, you can define your function
+function generateAlertTags(properties) {
+    const tags = [];
+    
+    if (properties.event) {
+        tags.push(`<span class="alert-tag">${properties.event}</span>`);
+    }
+    
+    if (properties.urgency) {
+        tags.push(`<span class="alert-tag">${properties.urgency}</span>`);
+    }
+
+    if (properties.severity) {
+        tags.push(`<span class="alert-tag">${properties.severity}</span>`);
+    }
+
+    return tags.join('');
+}
+
+function toggleAlert(header) {
+    const content = header.nextElementSibling;
+    content.classList.toggle('collapsed');
+    const icon = header.querySelector('.expand-icon');
+    icon.style.transform = content.classList.contains('collapsed') ? 'rotate(180deg)' : '';
+}
+
 function updateSOSPlans(alertTags) {
     const sosContainer = document.getElementById('evacuation-info');
     if (!sosContainer) return;
@@ -624,13 +625,6 @@ function updateSOSPlans(alertTags) {
     `;
 }
 
-    sosContainer.innerHTML = `
-        <div class="sos-plans">
-            ${sosPlans.length ? sosHTML : 'No active evacuation orders'}
-        </div>
-    `;
-
-
 function launchSOSPlan() {
     alert('SOS Plan feature coming soon!');
 }
@@ -646,6 +640,21 @@ async function fetchNIFCData(lat, lon) {
     };
 }
 
+function updateLocation(lat, lon) {
+    // Update coordinates display
+    const coordsElement = document.getElementById('coordinates');
+    if (coordsElement) {
+        coordsElement.textContent = `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
+    }
+
+    // Fetch weather alerts for the new location
+    fetchNWSAlerts(lat, lon);
+    
+    // Update map view (fixed variable name)
+    if (wildfireMap) {
+        wildfireMap.setView([lat, lon], 10);
+    }
+}
 // Add this function near your other utility functions
 async function calculateFireRisk(lat, lon, alertTags) {
     let riskScore = 0;
@@ -674,3 +683,13 @@ async function calculateFireRisk(lat, lon, alertTags) {
     return riskLevel; // Ensure this is a string
 }
 
+async function fetchUrbanArea(lat, lon) {
+    try {
+        const response = await fetch(`https://api.teleport.org/api/locations/${lat},${lon}/`);
+        const data = await response.json();
+        return data._embedded?.['location:nearest-urban-areas'] || null;
+    } catch (error) {
+        console.error('Error fetching urban area:', error);
+        return null;
+    }
+}
