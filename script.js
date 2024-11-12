@@ -517,68 +517,79 @@ function getWindDirection(degrees) {
 
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
-    if (!alertContainer) {
-        console.error('Alert container element not found');
-        return;
-    }
-
-    const headers = {
-        'User-Agent': '(2Safety Weather App, contact@2safety.com)',
-        'Accept': 'application/geo+json'
-    };
+    if (!alertContainer) return;
 
     try {
-        // First get the grid data
-        const pointResponse = await fetch(
-            `https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`,
-            { headers }
+        const response = await fetch(
+            `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
+        const alertsData = await response.json();
 
-        if (!pointResponse.ok) {
-            throw new Error(`NWS Points API error: ${pointResponse.status}`);
-        }
-
-        const pointData = await pointResponse.json();
-        
-        // Get the county/zone from the point data
-        const zoneResponse = await fetch(pointData.properties.forecastZone, { headers });
-        if (!zoneResponse.ok) {
-            throw new Error(`NWS Zone API error: ${zoneResponse.status}`);
-        }
-        const zoneData = await zoneResponse.json();
-
-        // Get alerts for the specific zone
-        const alertsResponse = await fetch(
-            `https://api.weather.gov/alerts/active/zone/${zoneData.properties.id}`,
-            { headers }
-        );
-
-        if (!alertsResponse.ok) {
-            throw new Error(`NWS Alerts API error: ${alertsResponse.status}`);
-        }
-
-        const alertsData = await alertsResponse.json();
-
-        // Rest of your existing alert processing code...
         if (alertsData.features && alertsData.features.length > 0) {
-            // Your existing alert processing code...
+            const alertsHTML = alertsData.features.map(feature => {
+                const props = feature.properties;
+                const severity = props.severity.toLowerCase();
+                const tags = generateAlertTags(props);
+                
+                return `
+                    <div class="alert-container alert-${severity}">
+                        <div class="alert-header" onclick="toggleAlert(this)">
+                            <h3>${props.event}</h3>
+                            <span class="expand-icon">▼</span>
+                        </div>
+                        <div class="alert-content collapsed">
+                            <div class="alert-tags-container">
+                                ${tags}
+                            </div>
+                            <div class="alert-summary">
+                                ${props.headline || 'No headline available'}
+                            </div>
+                            <p>${props.description || 'No description available'}</p>
+                            <div class="alert-source">
+                                Source: <a href="${props.url}" target="_blank">National Weather Service</a>
+                                <br>
+                                Effective: ${new Date(props.effective).toLocaleString()}
+                                <br>
+                                Expires: ${new Date(props.expires).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            alertContainer.innerHTML = `
+                <h2>Weather Alerts</h2>
+                ${alertsHTML}
+            `;
+
+            // Update SOS plans based on alert content
+            const alertTags = new Set();
+            alertsData.features.forEach(feature => {
+                const event = feature.properties.event.toLowerCase();
+                if (event.includes('fire')) alertTags.add('🔥 Fire Risk');
+                if (event.includes('wind')) alertTags.add('🌬️ High Winds');
+                if (event.includes('humidity')) alertTags.add('💧 Low Humidity');
+                if (event.includes('heat')) alertTags.add('🌡️ Extreme Heat');
+                if (event.includes('evacuation')) alertTags.add('⚠️ Evacuation');
+            });
+
+            updateSOSPlans(alertTags);
+            calculateFireRisk(lat, lon, alertTags);
         } else {
             alertContainer.innerHTML = `
-                <div class="alert-none">
-                    <h2>Weather Alerts</h2>
-                    <p>No active weather alerts for your area</p>
-                </div>
+                <h2>Weather Alerts</h2>
+                <p>No active alerts for this area.</p>
             `;
         }
     } catch (error) {
         console.error('Error fetching NWS alerts:', error);
         alertContainer.innerHTML = `
-            <div class="alert-error">
-                <p>Unable to fetch weather alerts: ${error.message}</p>
-            </div>
+            <h2>Weather Alerts</h2>
+            <p>Error loading alerts. Please try again later.</p>
         `;
     }
 }
+
 function generateAlertTags(properties) {
     const tags = [];
     
