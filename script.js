@@ -531,18 +531,23 @@ async function fetchNWSAlerts(lat, lon) {
                 }
             }
         );
+        console.log('NWS Point Response:', pointResponse);
         const pointData = await pointResponse.json();
+        console.log('NWS Point Data:', pointData);
 
-// Then get the alerts using the forecast zone
-const response = await fetch(
-    `https://api.weather.gov/alerts/active/zone/${pointData.properties.forecastZone}`,
-    {
-        headers: {
-            'Accept': 'application/geo+json',
-            'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
-        }
-    }
-);
+        // Extract just the zone ID from the forecastZone URL
+        const zoneId = pointData.properties.forecastZone.split('/').pop();
+
+        // Then get the alerts using just the zone ID
+        const response = await fetch(
+            `https://api.weather.gov/alerts/active/zone/${zoneId}`,
+            {
+                headers: {
+                    'Accept': 'application/geo+json',
+                    'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
+                }
+            }
+        );
         console.log('NWS Alert Response:', response);
         const alertsData = await response.json();
         console.log('NWS Alert Data:', alertsData);
