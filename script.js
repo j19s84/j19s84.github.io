@@ -520,10 +520,19 @@ async function fetchNWSAlerts(lat, lon) {
     if (!alertContainer) return;
 
     try {
+        console.log(`Fetching NWS alerts for ${lat}, ${lon}`);
         const response = await fetch(
-            `https://api.weather.gov/alerts/active?point=${lat},${lon}`
+            `https://api.weather.gov/alerts/active?point=${lat},${lon}`,
+            {
+                headers: {
+                    'Accept': 'application/geo+json',
+                    'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
+                }
+            }
         );
+        console.log('NWS Response:', response);
         const alertsData = await response.json();
+        console.log('NWS Data:', alertsData);
 
         if (alertsData.features && alertsData.features.length > 0) {
             const alertsHTML = alertsData.features.map(feature => {
