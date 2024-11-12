@@ -513,6 +513,11 @@ function getWindDirection(degrees) {
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
     if (!alertContainer) return;
+    
+    alertContainer.innerHTML = `
+    <h2>Weather Alerts</h2>
+    <p>Loading alerts...</p>
+`;
 
     try {
         console.log(`Fetching NWS alerts for ${lat}, ${lon}`);
