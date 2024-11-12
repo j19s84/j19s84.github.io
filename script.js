@@ -7,6 +7,7 @@ let mapLegend;
 const STORED_LAT = 'lastLatitude';
 const STORED_LON = 'lastLongitude';
 
+
 // Utility functions
 const debounce = (func, wait) => {
     let timeout;
@@ -210,6 +211,11 @@ async function fetchWeatherData(lat, lon) {
 
     try {
         const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
+        if (!API_KEY) {
+            console.error('Weather API key is missing');
+            return;
+        }
+
         const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`;
 
         const response = await fetch(url);
@@ -512,102 +518,152 @@ function getWindDirection(degrees) {
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
     if (!alertContainer) {
-        console.error('Alert container not found');
+        console.error('Alert container element not found');
         return;
     }
+
+    const headers = {
+        'User-Agent': '(2Safety Weather App, contact@2safety.com)',
+        'Accept': 'application/geo+json'
+    };
 
     try {
         console.log('Fetching alerts for:', lat, lon);
         
         // First get the grid data
-        const gridResponse = await fetch(
+        const pointResponse = await fetch(
             `https://api.weather.gov/points/${lat},${lon}`,
-            {
-                headers: {
-                    'User-Agent': '(2Safety Weather App, contact@2safety.com)',
-                }
-            }
+            { headers }
         );
-        
-        if (!gridResponse.ok) {
-            throw new Error(`Grid API error: ${gridResponse.status}`);
+
+        if (!pointResponse.ok) {
+            throw new Error(`NWS Points API error: ${pointResponse.status}`);
         }
-        
-        const gridData = await gridResponse.json();
-        console.log('Grid Data:', gridData);
+
+        const pointData = await pointResponse.json();
+        console.log('Point Data:', pointData);
 
         // Get the alerts using the grid endpoint
-        const alertsUrl = `https://api.weather.gov/alerts/active?point=${lat},${lon}`;
-        console.log('Fetching alerts from:', alertsUrl);
-        
-        const alertsResponse = await fetch(alertsUrl, {
-            headers: {
-                'User-Agent': '(2Safety Weather App, contact@2safety.com)',
-            }
-        });
+        const alertsResponse = await fetch(
+            `https://api.weather.gov/alerts/active/zone/${pointData.properties.forecastZone}`,
+            { headers }
+        );
 
         if (!alertsResponse.ok) {
-            throw new Error(`Alerts API error: ${alertsResponse.status}`);
+            throw new Error(`NWS Alerts API error: ${alertsResponse.status}`);
         }
 
         const alertsData = await alertsResponse.json();
         console.log('Alerts Data:', alertsData);
 
         if (alertsData.features && alertsData.features.length > 0) {
-            alertContainer.innerHTML = alertsData.features.map(alert => {
-                const properties = alert.properties;
-                const severity = properties.severity.toLowerCase();
-                const headline = properties.headline || 'Weather Alert';
-                const description = properties.description || '';
-                const instruction = properties.instruction || '';
+            const alerts = alertsData.features.sort((a, b) => {
+                const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
+                const severityDiff = 
+                    severityOrder.indexOf(a.properties.severity) - 
+                    severityOrder.indexOf(b.properties.severity);
+                
+                if (severityDiff === 0) {
+                    return new Date(b.properties.effective) - new Date(a.properties.effective);
+                }
+                return severityDiff;
+            });
+
+            const alertTags = new Set();
+            alerts.forEach(feature => {
+                const alert = feature.properties;
+                const event = alert.event.toLowerCase();
+                const description = alert.description.toLowerCase();
+                
+                if (event.includes('fire') || event.includes('red flag')) alertTags.add('🔥 Fire Risk');
+                if (event.includes('wind')) alertTags.add('🌬️ High Winds');
+                if (description.includes('humidity') && 
+                    (description.includes('low') || description.includes('critical'))) alertTags.add('💧 Low Humidity');
+                if (event.includes('heat')) alertTags.add('🌡️ Extreme Heat');
+                if (event.includes('evacuation')) alertTags.add('⚠️ Evacuation');
+            });
+
+            const tagsHTML = Array.from(alertTags).map(tag =>
+                `<span class="alert-tag">${tag}</span>`
+            ).join('');
+
+            const riskLevel = calculateFireRisk(lat, lon, alertTags);
+            const riskHTML = `
+                <span class="alert-tag risk-level risk-${riskLevel.toLowerCase()}">
+                    🎯 Personal Risk: ${riskLevel}
+                </span>
+            `;
+
+            const alertsHTML = alerts.map(feature => {
+                const alert = feature.properties;
+                const summary = alert.headline ||
+                    `${alert.event} in effect for ${alert.areaDesc} until ${new Date(alert.expires).toLocaleString()}`;
                 
                 return `
-                    <div class="alert-container alert-${severity}">
+                    <div class="alert-container alert-${alert.severity.toLowerCase()}">
                         <div class="alert-header">
-                            <span>${headline}</span>
-                            <span class="risk-level">${properties.severity}</span>
+                            <div>
+                                <h3>${alert.event}</h3>
+                                <span class="alert-timing">
+                                    Effective until ${new Date(alert.expires).toLocaleString()}
+                                </span>
+                            </div>
                             <span class="expand-icon">▼</span>
                         </div>
-                        <div class="alert-content">
-                            <div class="alert-summary">
-                                ${description}
-                            </div>
-                            ${instruction ? `
-                                <div class="alert-instruction">
-                                    <strong>Instructions:</strong><br>
-                                    ${instruction}
-                                </div>
-                            ` : ''}
+                        <div class="alert-summary">
+                            ${summary}
+                        </div>
+                        <div class="alert-content collapsed">
                             <div class="alert-source">
-                                Source: ${properties.senderName}<br>
-                                Effective: ${new Date(properties.effective).toLocaleString()}
+                                <p>Source: <a href="${alert.id}" target="_blank">National Weather Service</a></p>
+                                <p>Issued by ${alert.senderName}</p>
+                            </div>
+                            <div class="alert-details">
+                                <div class="alert-what">
+                                    <h4>What</h4>
+                                    <p>${alert.description}</p>
+                                </div>
+                                ${alert.instruction ? `
+                                    <div class="alert-instructions">
+                                        <h4>Instructions</h4>
+                                        <p>${alert.instruction}</p>
+                                    </div>
+                                ` : ''}
+                                <div class="alert-where">
+                                    <h4>Where</h4>
+                                    <p>${alert.areaDesc}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            // Set up collapse functionality
+            alertContainer.innerHTML = `
+                <div class="alerts-container">
+                    <div class="alert-tags-container">
+                        ${tagsHTML}
+                        ${riskHTML}
+                    </div>
+                    ${alertsHTML}
+                </div>
+            `;
+            
+            updateSOSPlans(alertTags);
             setupAlertCollapse();
         } else {
             alertContainer.innerHTML = `
-                <div class="alert-container alert-none">
-                    <div class="alert-header">
-                        <span>No Active Alerts</span>
-                    </div>
+                <div class="alert-none">
+                    <h2>Weather Alerts</h2>
+                    <p>No active weather alerts for your area</p>
                 </div>
             `;
         }
     } catch (error) {
-        console.error('Error fetching weather alerts:', error);
+        console.error('Error fetching NWS alerts:', error);
         alertContainer.innerHTML = `
-            <div class="alert-container alert-minor">
-                <div class="alert-header">
-                    <span>Error Loading Alerts</span>
-                </div>
-                <div class="alert-content">
-                    Unable to fetch weather alerts. Please try again later.
-                </div>
+            <div class="alert-error">
+                <p>Unable to fetch weather alerts: ${error.message}</p>
             </div>
         `;
     }
@@ -668,11 +724,7 @@ function updateSOSPlans(alertTags) {
         </button>
     `).join('');
 
-    sosContainer.innerHTML = `
-        <div class="sos-plans">
-            ${sosPlans.length ? sosHTML : 'No active evacuation orders'}
-        </div>
-    `;
+    sosContainer.innerHTML = sosPlans.length ? sosHTML : 'No active evacuation orders';
 }
 
 function launchSOSPlan() {
@@ -707,30 +759,44 @@ function updateLocation(lat, lon) {
 }
 // Add this function near your other utility functions
 async function calculateFireRisk(lat, lon, alertTags) {
+    // Add loading state at the start
+    const riskIndicator = document.getElementById('risk-indicator');
+    if (riskIndicator) {
+        riskIndicator.textContent = 'Calculating risk...';
+    }
+
     let riskScore = 0;
 
     // Check if in urban area
     const urbanArea = await fetchUrbanArea(lat, lon);
     const isUrban = urbanArea !== null;
 
-    // Adjust risk based on alerts
-    if (alertTags.has('🔥 Fire Risk')) riskScore += 2;
-    if (alertTags.has('🌬️ High Winds')) riskScore += 1;
-    if (alertTags.has('💧 Low Humidity')) riskScore += 1;
+    // Adjust risk based on alerts (using higher weights from suggested version)
+    if (alertTags.has('🔥 Fire Risk')) riskScore += 3;
+    if (alertTags.has('🌬️ High Winds')) riskScore += 2;
+    if (alertTags.has('💧 Low Humidity')) riskScore += 2;
+    if (alertTags.has('🌡️ Extreme Heat')) riskScore += 2;
+    if (alertTags.has('⚠️ Evacuation')) riskScore += 5;
 
     // Urban areas may have different risk levels
     if (isUrban) {
         riskScore -= 1; // Reduce risk for urban areas
     }
 
-    // Determine risk level
+    // Determine risk level (using higher thresholds)
     let riskLevel = 'LOW';
-    if (riskScore >= 4) riskLevel = 'EXTREME';
-    else if (riskScore >= 3) riskLevel = 'HIGH';
-    else if (riskScore >= 2) riskLevel = 'MODERATE';
+    if (riskScore >= 8) riskLevel = 'EXTREME';
+    else if (riskScore >= 5) riskLevel = 'HIGH';
+    else if (riskScore >= 3) riskLevel = 'MODERATE';
 
-    console.log('Calculated Risk Level:', riskLevel); // Log the risk level
-    return riskLevel; // Ensure this is a string
+    // Update risk indicator with final result
+    if (riskIndicator) {
+        riskIndicator.textContent = `Risk Level: ${riskLevel}`;
+        riskIndicator.className = `risk-indicator risk-${riskLevel.toLowerCase()}`;
+    }
+
+    console.log('Calculated Risk Level:', riskLevel); 
+    return riskLevel;
 }
 
 async function fetchUrbanArea(lat, lon) {
@@ -743,4 +809,13 @@ async function fetchUrbanArea(lat, lon) {
         return null;
     }
 }
-
+// Add this as the last function in your file
+function cleanupMapMarkers() {
+    if (wildfireMap) {
+        wildfireMap.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+                layer.remove();
+            }
+        });
+    }
+}
