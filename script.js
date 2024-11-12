@@ -119,19 +119,18 @@ async function searchLocation() {
     const input = document.getElementById('location-input').value;
     if (!input) return;
 
-
     const coordsDisplay = document.getElementById('coordinates');
     if (!coordsDisplay) {
         console.error('Coordinates display element not found');
         return;
     }
 
-
     try {
         // First try to match with known fire names from the current data
         if (wildfireMap) {
             const foundFire = findFireByName(input);
             if (foundFire) {
+                console.log('Found fire coordinates:', foundFire.lat, foundFire.lon);
                 wildfireMap.setView([foundFire.lat, foundFire.lon], 8);
                 fetchWeatherData(foundFire.lat, foundFire.lon);
                 fetchWildfireData(foundFire.lat, foundFire.lon);
@@ -143,29 +142,25 @@ async function searchLocation() {
             }
         }
 
-
         // If no fire found, try regular location search
         const response = await fetch(
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1&countrycodes=us`
         );
         const data = await response.json();
 
-
         if (data && data.length > 0) {
             const location = data[0];
             const lat = parseFloat(location.lat);
             const lon = parseFloat(location.lon);
 
-
+            console.log('Location search coordinates:', lat, lon);
             coordsDisplay.textContent =
                 `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
-
 
             fetchWeatherData(lat, lon);
             fetchWildfireData(lat, lon);
             fetchNWSAlerts(lat, lon);
             fetchNIFCData(lat, lon);
-
 
             if (wildfireMap) {
                 wildfireMap.setView([lat, lon], 8);
