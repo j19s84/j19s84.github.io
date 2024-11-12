@@ -545,7 +545,7 @@ async function fetchNWSAlerts(lat, lon) {
 
         // Get the alerts using the grid endpoint
         const alertsResponse = await fetch(
-            `https://api.weather.gov/alerts/active/zone/${pointData.properties.forecastZone}`,
+            `https://api.weather.gov/alerts/active?point=${lat},${lon}`,
             { headers }
         );
 
