@@ -30,14 +30,6 @@ header {
     box-shadow: var(--shadow-sm);
 }
 
-.header-content {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
 .content-container {
     display: flex;
     gap: 20px;
@@ -47,24 +39,6 @@ header {
     padding: 20px;
 }
 
-/* Map and Panel Layout */
-#wildfire-map {
-    height: 600px;
-    flex: 1;
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-md);
-}
-
-.right-panel-container {
-    width: 400px;
-    max-height: 800px;
-    overflow-y: auto;
-    padding: 20px;
-    background: white;
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-md);
-}
-
 /* Typography */
 h2 {
     color: var(--text-dark);
@@ -72,38 +46,8 @@ h2 {
     margin: 1rem 0;
 }
 
-/* Search Components */
-.location-search {
-    max-width: 600px;
-    margin: 20px auto;
-    display: flex;
-    gap: 10px;
-}
-
-#location-input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: var(--border-radius-sm);
-    font-size: 1em;
-}
-
-#search-button {
-    padding: 10px 20px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#search-button:hover {
-    background-color: #357abd;
-}
-
 /* Weather Components */
-#weather-container {
+.weather-container {
     display: flex;
     flex-wrap: nowrap;
     gap: 8px;
@@ -148,24 +92,123 @@ h2 {
     border-bottom: 1px solid #eee;
 }
 
-.weather-day { 
-    font-size: 0.8em; 
-    font-weight: 600; 
+.weather-day { font-size: 0.8em; font-weight: 600; }
+.weather-date { font-size: 0.7em; }
+.weather-desc { font-size: 0.7em; margin: 4px 0; }
+.weather-details { font-size: 0.7em; margin-top: 4px; padding-top: 4px; }
+
+.weather-card img {
+    width: 30px;
+    height: 30px;
+    margin: 4px auto;
 }
 
-.weather-date { 
-    font-size: 0.7em; 
+/* Map Components */
+#wildfire-map {
+    flex: 2;
+    height: 600px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    background: #e0e0e0;
 }
 
-.weather-desc { 
-    font-size: 0.7em; 
-    margin: 4px 0; 
+.fire-popup {
+    padding: 15px;
+    max-width: 300px;
+    font-size: 0.9em;
 }
 
-.weather-details { 
-    font-size: 0.7em; 
-    margin-top: 4px; 
-    padding-top: 4px; 
+.fire-popup h3 {
+    margin: 0 0 10px;
+    color: #e74c3c;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* Fire Indicators */
+.fire-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pulsing-dot {
+    border-radius: 50%;
+    position: relative;
+    animation: pulse 1.5s infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.rx-fire-indicator, .rx-fire-indicator-legend {
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    background: white;
+    padding: 2px 4px;
+    border-radius: var(--border-radius-sm);
+    font-weight: bold;
+    border: 1px solid #ddd;
+}
+
+.rx-symbol {
+    background: #ff6b6b;
+    color: white;
+    padding: 0 3px;
+    border-radius: 2px;
+    font-size: 10px;
+}
+
+/* User Location Styles */
+.user-location-dot {
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    position: relative;
+}
+
+.user-location-pulse {
+    background-color: rgba(74, 144, 226, 0.3);
+    border-radius: 50%;
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    width: 20px;
+    height: 20px;
+    animation: userPulse 2s infinite;
+}
+
+/* Search Components */
+.location-search {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+    display: flex;
+    gap: 10px;
+}
+
+#location-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius-sm);
+    font-size: 16px;
+}
+
+#search-button {
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#search-button:hover {
+    background-color: #357abd;
 }
 
 /* Legend Styles */
@@ -173,7 +216,7 @@ h2 {
     background: white;
     padding: 12px;
     border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
 .legend-item {
@@ -204,6 +247,7 @@ h2 {
     box-shadow: var(--shadow-sm);
 }
 
+/* Alert Container and Header */
 .alert-container {
     margin-bottom: 10px;
     background: white;
@@ -226,6 +270,13 @@ h2 {
 }
 
 /* Alert Severity Styles */
+.alert-extreme, .alert-severe, .alert-moderate, .alert-minor, .alert-none {
+    padding: 12px;
+    border-radius: var(--border-radius-md);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
 .alert-extreme {
     background-color: #ffebee;
     border: 1px solid #ef5350;
@@ -256,6 +307,27 @@ h2 {
     color: #616161;
 }
 
+/* Alert Header Types */
+.alert-extreme .alert-header {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.alert-severe .alert-header {
+    background-color: #fff3e0;
+    color: #e65100;
+}
+
+.alert-moderate .alert-header {
+    background-color: #fff8e1;
+    color: #f57f17;
+}
+
+.alert-minor .alert-header {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+}
+
 /* Alert Content */
 .alert-content {
     max-height: 500px;
@@ -272,6 +344,7 @@ h2 {
     overflow: hidden;
 }
 
+/* Alert Components */
 .alert-summary {
     padding: 12px 16px;
     background: rgba(0, 0, 0, 0.02);
@@ -297,7 +370,6 @@ h2 {
     text-decoration: underline;
 }
 
-/* Alert Tags */
 .alert-tags-container {
     display: flex;
     flex-wrap: wrap;
@@ -314,6 +386,7 @@ h2 {
 }
 
 /* Risk Indicators */
+/* Risk and Alert System - consolidate all risk-related styles here */
 .risk-indicator {
     padding: 8px 16px;
     border-radius: 20px;
@@ -321,113 +394,242 @@ h2 {
     color: white;
     font-size: 1.1em;
     transition: background-color 0.3s ease;
+    margin-left: 20px;
 }
 
-.risk-level {
-    margin-left: auto;
-    font-weight: bold;
-}
-
+/* Risk Level Colors - use these consistently */
 .risk-low { 
-    background-color: #4CAF50; 
+    background-color: #4CAF50; /* Green */ 
 }
-
 .risk-moderate { 
-    background-color: #FF9800; 
+    background-color: #FF9800; /* Orange */
 }
-
 .risk-high { 
-    background-color: #f44336; 
+    background-color: #f44336; /* Red */
 }
-
 .risk-extreme { 
-    background-color: #9C27B0; 
+    background-color: #9C27B0; /* Purple */
 }
 
-/* Fire Details Styles */
+/* Risk Level Text - for when you need just the text color */
+.risk-text-low { color: #4CAF50; }
+.risk-text-moderate { color: #FF9800; }
+.risk-text-high { color: #f44336; }
+.risk-text-extreme { color: #9C27B0; }
+
+/* Risk Level Borders - for subtle indicators */
+.risk-border-low { border-color: #4CAF50; }
+.risk-border-moderate { border-color: #FF9800; }
+.risk-border-high { border-color: #f44336; }
+.risk-border-extreme { border-color: #9C27B0; }
+
+/* Risk Level Backgrounds - for subtle backgrounds */
+.risk-bg-low { background-color: rgba(76, 175, 80, 0.1); }
+.risk-bg-moderate { background-color: rgba(255, 152, 0, 0.1); }
+.risk-bg-high { background-color: rgba(244, 67, 54, 0.1); }
+.risk-bg-extreme { background-color: rgba(156, 39, 176, 0.1); }
+
+/* Header with Risk Indicator */
+.header-content {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header-content h1 {
+    margin: 0;
+    color: var(--text-dark);
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+/* Fire Details Panel */
 .fire-details-panel {
     background: white;
     border-radius: var(--border-radius-md);
-    padding: 20px;
-    margin-bottom: 20px;
     box-shadow: var(--shadow-sm);
 }
 
-.fire-info-card {
+#fire-details-content {
     background: white;
     border-radius: var(--border-radius-md);
-    padding: 16px;
-    margin: 16px 0;
-    box-shadow: var(--shadow-sm);
+    padding: 20px;
 }
 
-.fire-info-grid {
+/* UPDATE: Remove overflow from fire-details-grid */
+.fire-details-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-top: 12px;
+    gap: 20px;
 }
 
-.fire-stat {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.stat-label {
+/* NEW - Add this */
+#coordinates {
     font-size: 0.9em;
     color: #666;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    margin: 5px 0;
+    padding: 5px 0;
 }
 
-.stat-value {
-    font-weight: 500;
-    color: var(--text-dark);
-    padding-left: 24px;
+.detail-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid #e0e0e0;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 15px;
 }
 
-/* SOS Button Styles */
+.detail-item h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+/* SOS Button */
 #sos-button {
-    display: block;
-    margin: 20px auto;
-    padding: 12px 24px;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
     background-color: var(--danger-color);
     color: white;
     border: none;
-    border-radius: var(--border-radius-md);
-    font-size: 1.1em;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    font-size: 14px;
+    line-height: 1.2;
+    padding: 10px;
+    white-space: normal;
     cursor: pointer;
-    transition: background-color 0.2s;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    z-index: 1000;
 }
 
 #sos-button:hover {
-    background-color: #ff1111;
+    background-color: #ff0000;
+    transform: scale(1.1);
 }
 
-/* Loading States */
-.loading {
-    position: relative;
-    opacity: 0.7;
-    pointer-events: none;
+#sos-button:active {
+    transform: scale(0.9);
 }
 
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 24px;
-    height: 24px;
-    margin: -12px 0 0 -12px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+/* Animations */
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+    }
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes userPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+/* Right Side Container */
+.right-panel-container {
+    flex: 1;
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Scrollbar Styling */
+.right-panel-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.right-panel-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.right-panel-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.alert-footer {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.alert-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.alert-footer a:hover {
+    text-decoration: underline;
+}
+
+.location-title-container {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 15px 20px;
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 15px;
+    z-index: 2;
+}
+
+.location-title-container h2 {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: 1.4rem;
+}
+
+.location-title-container p {
+    margin: 5px 0 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.location-subtitle {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .content-container {
+        flex-direction: column;
+    }
+    
+    #wildfire-map, .fire-details-panel {
+        width: 100%;
+        height: 400px;
+    }
 }
