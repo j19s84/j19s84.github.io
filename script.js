@@ -582,6 +582,13 @@ async function fetchNWSAlerts(lat, lon) {
                 const props = feature.properties;
                 const severity = props.severity.toLowerCase();
                 const tags = generateAlertTags(props);
+                const alertTags = new Set();
+
+                // Add these tag checks before your existing alert HTML generation
+                if (props.event.toLowerCase().includes('fire')) alertTags.add('🔥 Fire Risk');
+                if (props.event.toLowerCase().includes('wind')) alertTags.add('🌬️ High Winds');
+                if (props.event.toLowerCase().includes('heat')) alertTags.add('🌡️ Extreme Heat');
+                if (props.event.toLowerCase().includes('evacuation')) alertTags.add('⚠️ Evacuation');
 
                 return `
                     <div class="alert-container alert-${severity}">
@@ -609,11 +616,16 @@ async function fetchNWSAlerts(lat, lon) {
                 `;
             }).join('');
 
+            await calculateFireRisk(lat, lon, alertTags);
+
             alertContainer.innerHTML = `
                 <h2>Weather Alerts</h2>
                 ${alertsHTML}
             `;
         } else {
+
+            await calculateFireRisk(lat, lon, new Set());
+
             alertContainer.innerHTML = `
                 <h2>Weather Alerts</h2>
                 <p>No active alerts found for this location.</p>
@@ -623,6 +635,13 @@ async function fetchNWSAlerts(lat, lon) {
     } catch (error) {
         console.error('Error fetching alerts:', error);
         console.error('Error details:', error.stack);
+
+        const riskIndicator = document.getElementById('risk-indicator');
+        if (riskIndicator) {
+            riskIndicator.textContent = 'Risk: Unknown';
+            riskIndicator.className = 'risk-indicator';
+        }
+
         alertContainer.innerHTML = `
             <h2>Weather Alerts</h2>
             <p>Error loading alerts. Please try again later.</p>
@@ -780,4 +799,3 @@ function cleanupMapMarkers() {
         });
     }
 }
- 
