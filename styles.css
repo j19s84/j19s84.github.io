@@ -386,48 +386,58 @@ h2 {
 }
 
 /* Risk Indicators */
-/* Risk and Alert System - consolidate all risk-related styles here */
 .risk-indicator {
     padding: 8px 16px;
     border-radius: 20px;
     font-weight: bold;
     color: white;
     font-size: 1.1em;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
     margin-left: 20px;
 }
 
-/* Risk Level Colors - use these consistently */
+/* Risk Level Colors - updated with new colors and animation */
 .risk-low { 
     background-color: #4CAF50; /* Green */ 
 }
+
 .risk-moderate { 
-    background-color: #FF9800; /* Orange */
+    background-color: #FFA726; /* Orange */
 }
+
 .risk-high { 
-    background-color: #f44336; /* Red */
+    background-color: #F44336; /* Red */
 }
+
 .risk-extreme { 
-    background-color: #9C27B0; /* Purple */
+    background-color: #B71C1C; /* Dark Red */
+    animation: pulse 2s infinite;
+}
+
+/* Pulse animation for extreme risk */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
 /* Risk Level Text - for when you need just the text color */
 .risk-text-low { color: #4CAF50; }
-.risk-text-moderate { color: #FF9800; }
-.risk-text-high { color: #f44336; }
-.risk-text-extreme { color: #9C27B0; }
+.risk-text-moderate { color: #FFA726; }
+.risk-text-high { color: #F44336; }
+.risk-text-extreme { color: #B71C1C; }
 
 /* Risk Level Borders - for subtle indicators */
 .risk-border-low { border-color: #4CAF50; }
-.risk-border-moderate { border-color: #FF9800; }
-.risk-border-high { border-color: #f44336; }
-.risk-border-extreme { border-color: #9C27B0; }
+.risk-border-moderate { border-color: #FFA726; }
+.risk-border-high { border-color: #F44336; }
+.risk-border-extreme { border-color: #B71C1C; }
 
 /* Risk Level Backgrounds - for subtle backgrounds */
 .risk-bg-low { background-color: rgba(76, 175, 80, 0.1); }
-.risk-bg-moderate { background-color: rgba(255, 152, 0, 0.1); }
+.risk-bg-moderate { background-color: rgba(255, 167, 38, 0.1); }
 .risk-bg-high { background-color: rgba(244, 67, 54, 0.1); }
-.risk-bg-extreme { background-color: rgba(156, 39, 176, 0.1); }
+.risk-bg-extreme { background-color: rgba(183, 28, 28, 0.1); }
 
 /* Header with Risk Indicator */
 .header-content {
