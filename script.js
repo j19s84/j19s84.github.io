@@ -525,7 +525,6 @@ function getWindDirection(degrees) {
     return directions[index];
 }
 
-// Replace your entire fetchNWSAlerts function with this:
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
     if (!alertContainer) return;
@@ -536,24 +535,10 @@ async function fetchNWSAlerts(lat, lon) {
     `;
 
     try {
-        // New debug log #1
-        console.log('Fetching NWS alerts for coordinates:', lat, lon);
+        // Debug logs for troubleshooting
+        console.log('Starting alert fetch for:', lat, lon);
 
-        // First try the alerts endpoint
-        const alertsResponse = await fetch(
-            `https://api.weather.gov/alerts/active?point=${lat},${lon}`,
-            {
-                headers: {
-                    'Accept': 'application/geo+json',
-                    'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
-                }
-            }
-        );
-        
-        // New debug log #2
-        console.log('NWS Response Headers:', Object.fromEntries(alertsResponse.headers));
-        
-        // New debug section #3
+        // Try both direct point and zone endpoints
         const pointResponse = await fetch(
             `https://api.weather.gov/points/${lat},${lon}`,
             {
@@ -564,12 +549,34 @@ async function fetchNWSAlerts(lat, lon) {
             }
         );
         const pointData = await pointResponse.json();
-        console.log('NWS Points Data:', pointData);
+        console.log('Point Data:', pointData);
 
-        // Continue with existing alert processing
-        const alertsData = await alertsResponse.json();
-        console.log('Alerts Data:', alertsData);
+        // Get the forecast zone and county
+        const forecastZone = pointData.properties.forecastZone.split('/').pop();
+        const county = pointData.properties.county.split('/').pop();
+        console.log('Forecast Zone:', forecastZone);
+        console.log('County:', county);
 
+        // Try both zone and county endpoints
+        const [zoneAlerts, countyAlerts] = await Promise.all([
+            fetch(`https://api.weather.gov/alerts/active/zone/${forecastZone}`),
+            fetch(`https://api.weather.gov/alerts/active/zone/${county}`)
+        ]);
+
+        const zoneData = await zoneAlerts.json();
+        const countyData = await countyAlerts.json();
+        console.log('Zone Alerts:', zoneData);
+        console.log('County Alerts:', countyData);
+
+        // Combine alerts from both sources
+        const allFeatures = [...(zoneData.features || []), ...(countyData.features || [])];
+        const alertsData = {
+            features: Array.from(new Set(allFeatures))
+        };
+
+        console.log('Combined Alerts:', alertsData);
+
+        // Rest of your existing alert display code...
         if (alertsData.features && alertsData.features.length > 0) {
             const alertsHTML = alertsData.features.map(feature => {
                 const props = feature.properties;
@@ -606,27 +613,16 @@ async function fetchNWSAlerts(lat, lon) {
                 <h2>Weather Alerts</h2>
                 ${alertsHTML}
             `;
-
-            const alertTags = new Set();
-            alertsData.features.forEach(feature => {
-                const event = feature.properties.event.toLowerCase();
-                if (event.includes('fire')) alertTags.add('🔥 Fire Risk');
-                if (event.includes('wind')) alertTags.add('🌬️ High Winds');
-                if (event.includes('humidity')) alertTags.add('💧 Low Humidity');
-                if (event.includes('heat')) alertTags.add('🌡️ Extreme Heat');
-                if (event.includes('evacuation')) alertTags.add('⚠️ Evacuation');
-            });
-
-            updateSOSPlans(alertTags);
-            calculateFireRisk(lat, lon, alertTags);
         } else {
             alertContainer.innerHTML = `
                 <h2>Weather Alerts</h2>
                 <p>No active alerts found for this location.</p>
             `;
         }
+
     } catch (error) {
         console.error('Error fetching alerts:', error);
+        console.error('Error details:', error.stack);
         alertContainer.innerHTML = `
             <h2>Weather Alerts</h2>
             <p>Error loading alerts. Please try again later.</p>
