@@ -518,20 +518,21 @@ function getWindDirection(degrees) {
     return directions[index];
 }
 
+// Replace your entire fetchNWSAlerts function with this:
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
     if (!alertContainer) return;
 
     alertContainer.innerHTML = `
-    <h2>Weather Alerts</h2>
-    <p>Loading alerts...</p>
-`;
+        <h2>Weather Alerts</h2>
+        <p>Loading alerts...</p>
+    `;
 
     try {
-        console.log(`Fetching NWS alerts for ${lat}, ${lon}`);
-        // First, get the grid endpoint
-        const pointResponse = await fetch(
-            `https://api.weather.gov/points/${lat},${lon}`,
+        // New: Direct API call to alerts endpoint
+        console.log('Fetching alerts for:', lat, lon);
+        const alertsResponse = await fetch(
+            `https://api.weather.gov/alerts/active?point=${lat},${lon}`,
             {
                 headers: {
                     'Accept': 'application/geo+json',
@@ -539,27 +540,14 @@ async function fetchNWSAlerts(lat, lon) {
                 }
             }
         );
-        console.log('NWS Point Response:', pointResponse);
-        const pointData = await pointResponse.json();
-        console.log('NWS Point Data:', pointData);
+        
+        // New: Response status logging
+        console.log('Alert Response Status:', alertsResponse.status);
+        
+        const alertsData = await alertsResponse.json();
+        console.log('Alerts Data:', alertsData);
 
-        // Extract just the zone ID from the forecastZone URL
-        const zoneId = pointData.properties.forecastZone.split('/').pop();
-
-        // Then get the alerts using just the zone ID
-        const response = await fetch(
-            `https://api.weather.gov/alerts/active/zone/${zoneId}`,
-            {
-                headers: {
-                    'Accept': 'application/geo+json',
-                    'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
-                }
-            }
-        );
-        console.log('NWS Alert Response:', response);
-        const alertsData = await response.json();
-        console.log('NWS Alert Data:', alertsData);
-
+        // Your existing alert display logic starts here
         if (alertsData.features && alertsData.features.length > 0) {
             const alertsHTML = alertsData.features.map(feature => {
                 const props = feature.properties;
@@ -611,13 +599,15 @@ async function fetchNWSAlerts(lat, lon) {
             updateSOSPlans(alertTags);
             calculateFireRisk(lat, lon, alertTags);
         } else {
+            // New: Clear message when no alerts found
             alertContainer.innerHTML = `
                 <h2>Weather Alerts</h2>
-                <p>No active alerts for this area.</p>
+                <p>No active alerts found for this location.</p>
             `;
         }
     } catch (error) {
-        console.error('Error fetching NWS alerts:', error);
+        // Enhanced error logging
+        console.error('Error fetching alerts:', error);
         alertContainer.innerHTML = `
             <h2>Weather Alerts</h2>
             <p>Error loading alerts. Please try again later.</p>
