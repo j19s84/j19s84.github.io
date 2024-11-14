@@ -780,3 +780,4 @@ function cleanupMapMarkers() {
         });
     }
 }
+ 
