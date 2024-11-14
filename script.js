@@ -535,32 +535,28 @@ async function fetchNWSAlerts(lat, lon) {
     `;
 
     try {
-        // Debug logs for troubleshooting
         console.log('Starting alert fetch for:', lat, lon);
 
-        // Try both direct point and zone endpoints
+        const headers = {
+            'Accept': 'application/geo+json',
+            'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
+        };
+
         const pointResponse = await fetch(
             `https://api.weather.gov/points/${lat},${lon}`,
-            {
-                headers: {
-                    'Accept': 'application/geo+json',
-                    'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
-                }
-            }
+            { headers }
         );
         const pointData = await pointResponse.json();
         console.log('Point Data:', pointData);
 
-        // Get the forecast zone and county
         const forecastZone = pointData.properties.forecastZone.split('/').pop();
         const county = pointData.properties.county.split('/').pop();
         console.log('Forecast Zone:', forecastZone);
         console.log('County:', county);
 
-        // Try both zone and county endpoints
         const [zoneAlerts, countyAlerts] = await Promise.all([
-            fetch(`https://api.weather.gov/alerts/active/zone/${forecastZone}`),
-            fetch(`https://api.weather.gov/alerts/active/zone/${county}`)
+            fetch(`https://api.weather.gov/alerts/active/zone/${forecastZone}`, { headers }),
+            fetch(`https://api.weather.gov/alerts/active/zone/${county}`, { headers })
         ]);
 
         const zoneData = await zoneAlerts.json();
@@ -568,7 +564,6 @@ async function fetchNWSAlerts(lat, lon) {
         console.log('Zone Alerts:', zoneData);
         console.log('County Alerts:', countyData);
 
-        // Combine alerts from both sources
         const allFeatures = [...(zoneData.features || []), ...(countyData.features || [])];
         const alertsData = {
             features: Array.from(new Set(allFeatures))
@@ -576,15 +571,13 @@ async function fetchNWSAlerts(lat, lon) {
 
         console.log('Combined Alerts:', alertsData);
 
-        // Rest of your existing alert display code...
         if (alertsData.features && alertsData.features.length > 0) {
+            const alertTags = new Set();
             const alertsHTML = alertsData.features.map(feature => {
                 const props = feature.properties;
                 const severity = props.severity.toLowerCase();
                 const tags = generateAlertTags(props);
-                const alertTags = new Set();
 
-                // Add these tag checks before your existing alert HTML generation
                 if (props.event.toLowerCase().includes('fire')) alertTags.add('🔥 Fire Risk');
                 if (props.event.toLowerCase().includes('wind')) alertTags.add('🌬️ High Winds');
                 if (props.event.toLowerCase().includes('heat')) alertTags.add('🌡️ Extreme Heat');
@@ -623,7 +616,6 @@ async function fetchNWSAlerts(lat, lon) {
                 ${alertsHTML}
             `;
         } else {
-
             await calculateFireRisk(lat, lon, new Set());
 
             alertContainer.innerHTML = `
