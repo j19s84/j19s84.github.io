@@ -394,6 +394,9 @@ h2 {
     font-size: 1.1em;
     transition: all 0.3s ease;
     margin-left: 20px;
+    background-color: #666;
+    min-width: 150px;
+    text-align: center;
 }
 
 /* Risk Level Colors - updated with new colors and animation */
@@ -412,13 +415,6 @@ h2 {
 .risk-extreme { 
     background-color: #B71C1C; /* Dark Red */
     animation: pulse 2s infinite;
-}
-
-/* Pulse animation for extreme risk */
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
 }
 
 /* Risk Level Text - for when you need just the text color */
@@ -443,9 +439,10 @@ h2 {
 .header-content {
     display: flex;
     align-items: center;
-    padding: 10px 20px;
+    gap: 20px;
     max-width: 1200px;
     margin: 0 auto;
+    padding: 10px 20px;
 }
 
 .header-content h1 {
