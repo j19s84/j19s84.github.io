@@ -153,6 +153,13 @@ async function searchLocation() {
             const lat = parseFloat(location.lat);
             const lon = parseFloat(location.lon);
 
+            console.log('Nominatim returned coordinates:', {
+                searchTerm: input,
+                lat: lat,
+                lon: lon,
+                fullLocation: location.display_name
+            });
+
             console.log('Location search coordinates:', lat, lon);
             coordsDisplay.textContent =
                 `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
@@ -529,8 +536,10 @@ async function fetchNWSAlerts(lat, lon) {
     `;
 
     try {
-        // New: Direct API call to alerts endpoint
-        console.log('Fetching alerts for:', lat, lon);
+        // New debug log #1
+        console.log('Fetching NWS alerts for coordinates:', lat, lon);
+
+        // First try the alerts endpoint
         const alertsResponse = await fetch(
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`,
             {
@@ -541,13 +550,26 @@ async function fetchNWSAlerts(lat, lon) {
             }
         );
         
-        // New: Response status logging
-        console.log('Alert Response Status:', alertsResponse.status);
+        // New debug log #2
+        console.log('NWS Response Headers:', Object.fromEntries(alertsResponse.headers));
         
+        // New debug section #3
+        const pointResponse = await fetch(
+            `https://api.weather.gov/points/${lat},${lon}`,
+            {
+                headers: {
+                    'Accept': 'application/geo+json',
+                    'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
+                }
+            }
+        );
+        const pointData = await pointResponse.json();
+        console.log('NWS Points Data:', pointData);
+
+        // Continue with existing alert processing
         const alertsData = await alertsResponse.json();
         console.log('Alerts Data:', alertsData);
 
-        // Your existing alert display logic starts here
         if (alertsData.features && alertsData.features.length > 0) {
             const alertsHTML = alertsData.features.map(feature => {
                 const props = feature.properties;
@@ -585,7 +607,6 @@ async function fetchNWSAlerts(lat, lon) {
                 ${alertsHTML}
             `;
 
-            // Update SOS plans based on alert content
             const alertTags = new Set();
             alertsData.features.forEach(feature => {
                 const event = feature.properties.event.toLowerCase();
@@ -599,14 +620,12 @@ async function fetchNWSAlerts(lat, lon) {
             updateSOSPlans(alertTags);
             calculateFireRisk(lat, lon, alertTags);
         } else {
-            // New: Clear message when no alerts found
             alertContainer.innerHTML = `
                 <h2>Weather Alerts</h2>
                 <p>No active alerts found for this location.</p>
             `;
         }
     } catch (error) {
-        // Enhanced error logging
         console.error('Error fetching alerts:', error);
         alertContainer.innerHTML = `
             <h2>Weather Alerts</h2>
