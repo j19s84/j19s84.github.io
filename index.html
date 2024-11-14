@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2Safety - Your AI Assistant for Extreme Weather</title>
-    
+
     <!-- Leaflet CSS must come before any other CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin="anonymous">
-    
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+
     <!-- Your custom CSS -->
     <link rel="stylesheet" href="styles.css">
-    
+
     <!-- Leaflet JS must be loaded before your custom scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin="anonymous"></script>
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 </head>
+
 <body>
     <header>
         <div class="header-content">
             <h1>2Safety</h1>
-            <div id="risk-indicator" class="risk-indicator"></div>
+            <div id="risk-indicator" class="risk-indicator">Calculating Risk...</div>
         </div>
     </header>
 
@@ -31,7 +31,7 @@
             <input type="text" id="location-input" placeholder="Enter address, city, or zip code">
             <button id="search-button">Search Location</button>
         </div>
-        
+
         <p id="coordinates" style="text-align: center; margin: 10px 0;"></p>
 
         <!-- Main content container with map and right panel -->
@@ -67,5 +67,5 @@
     <!-- Your custom JavaScript should be loaded last -->
     <script src="script.js" defer></script>
 </body>
+
 </html>
- 
