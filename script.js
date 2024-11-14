@@ -41,10 +41,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Check for stored coordinates first
     const storedLat = localStorage.getItem(STORED_LAT);
     const storedLon = localStorage.getItem(STORED_LON);
-    
+
     if (storedLat && storedLon) {
         // Use stored coordinates
-        successLocation({ coords: { latitude: parseFloat(storedLat), longitude: parseFloat(storedLon) }});
+        successLocation({ coords: { latitude: parseFloat(storedLat), longitude: parseFloat(storedLon) } });
     } else if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
     }
@@ -77,11 +77,11 @@ function setupAlertCollapse() {
 function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
-    
+
     // Store the location
     localStorage.setItem(STORED_LAT, latitude);
     localStorage.setItem(STORED_LON, longitude);
-    
+
     console.log('Location success:', latitude, longitude);
 
     // Update the fire-details-content panel
@@ -365,6 +365,14 @@ async function fetchWildfireData(lat, lon) {
                         const clickedLat = e.latlng.lat;
                         const clickedLon = e.latlng.lng;
 
+                        const alertContainer = document.getElementById('alert-banner');
+                        if (alertContainer) {
+                            alertContainer.innerHTML = `
+                                <h2>Weather Alerts</h2>
+                                <p>Loading alerts...</p>
+                            `;
+                        }
+
                         document.getElementById('coordinates').textContent =
                             `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
 
@@ -513,7 +521,7 @@ function getWindDirection(degrees) {
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
     if (!alertContainer) return;
-    
+
     alertContainer.innerHTML = `
     <h2>Weather Alerts</h2>
     <p>Loading alerts...</p>
@@ -557,7 +565,7 @@ async function fetchNWSAlerts(lat, lon) {
                 const props = feature.properties;
                 const severity = props.severity.toLowerCase();
                 const tags = generateAlertTags(props);
-                
+
                 return `
                     <div class="alert-container alert-${severity}">
                         <div class="alert-header" onclick="toggleAlert(this)">
@@ -619,11 +627,11 @@ async function fetchNWSAlerts(lat, lon) {
 
 function generateAlertTags(properties) {
     const tags = [];
-    
+
     if (properties.event) {
         tags.push(`<span class="alert-tag">${properties.event}</span>`);
     }
-    
+
     if (properties.urgency) {
         tags.push(`<span class="alert-tag">${properties.urgency}</span>`);
     }
@@ -699,7 +707,7 @@ function updateLocation(lat, lon) {
 
     // Fetch weather alerts for the new location
     fetchNWSAlerts(lat, lon);
-    
+
     // Update map view (fixed variable name)
     if (wildfireMap) {
         wildfireMap.setView([lat, lon], 10);
@@ -743,7 +751,7 @@ async function calculateFireRisk(lat, lon, alertTags) {
         riskIndicator.className = `risk-indicator risk-${riskLevel.toLowerCase()}`;
     }
 
-    console.log('Calculated Risk Level:', riskLevel); 
+    console.log('Calculated Risk Level:', riskLevel);
     return riskLevel;
 }
 
