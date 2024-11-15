@@ -301,6 +301,10 @@ async function fetchWildfireData(lat, lon) {
             }).addTo(wildfireMap);
         }
 
+        wildfireMap.on('click', function(e) {
+            const clickedLat = e.latlng.lat;
+            const clickedLon = e.latlng.lng;
+
         const userIcon = L.divIcon({
             className: 'user-location-icon',
             html: `
@@ -311,15 +315,29 @@ async function fetchWildfireData(lat, lon) {
             iconSize: [20, 20]
         });
 
-
         if (userLocationMarker) {
             userLocationMarker.remove();
         }
-        userLocationMarker = L.marker([lat, lon], { icon: userIcon })
-            .addTo(wildfireMap)
+        userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
+        .addTo(wildfireMap)
             .bindPopup('Your Location')
             .openPopup();
 
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${clickedLat}&lon=${clickedLon}`)
+            .then(response => response.json())
+            .then(data => {
+                updateLocation(clickedLat, clickedLon);
+                console.log('Clicked location:', data.display_name);
+                
+                // Fetch all data for the new location
+                Promise.all([
+                    fetchWeatherData(clickedLat, clickedLon),
+                    fetchWildfireData(clickedLat, clickedLon),
+                    fetchNWSAlerts(clickedLat, clickedLon),
+                    fetchNIFCData(clickedLat, clickedLon)
+                ]).catch(err => console.error('Error updating data:', err));
+            });
+    });
 
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
@@ -721,10 +739,17 @@ function updateLocation(lat, lon) {
         coordsElement.textContent = `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
     }
 
-    // Fetch weather alerts for the new location
-    fetchNWSAlerts(lat, lon);
+    // Store the new location
+    localStorage.setItem(STORED_LAT, lat);
+    localStorage.setItem(STORED_LON, lon);
 
-    // Update map view (fixed variable name)
+    // Fetch all necessary data
+    fetchWeatherData(lat, lon).catch(err => console.error('Weather error:', err));
+    fetchWildfireData(lat, lon).catch(err => console.error('Wildfire error:', err));
+    fetchNWSAlerts(lat, lon).catch(err => console.error('NWS error:', err));
+    fetchNIFCData(lat, lon).catch(err => console.error('NIFC error:', err));
+
+    // Update map view
     if (wildfireMap) {
         wildfireMap.setView([lat, lon], 10);
     }
@@ -791,3 +816,144 @@ function cleanupMapMarkers() {
         });
     }
 }
+
+class SOSPlan {
+    constructor(location, alerts, risks) {
+        this.location = location;
+        this.alerts = alerts;
+        this.risks = risks;
+        this.evacuationRoutes = [];
+        this.safetyLocations = [];
+        this.userProfile = null;
+        this.femaData = null;
+    }
+
+    async initialize() {
+        try {
+            // Get state from coordinates using reverse geocoding
+            const stateResponse = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${this.location.lat}&lon=${this.location.lon}`
+            );
+            const stateData = await stateResponse.json();
+            const state = stateData.address.state;
+
+            // Fetch FEMA evacuation data
+            const femaResponse = await fetch(
+                `https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?` + 
+                `$filter=state eq '${state}' and incidentType eq 'Fire'&` +
+                `$orderby=declarationDate desc&$top=1`
+            );
+            this.femaData = await femaResponse.json();
+
+            // Calculate search area
+            const bbox = this.calculateBoundingBox(this.location.lat, this.location.lon, 25);
+
+            // Fetch emergency facilities
+            const overpassResponse = await fetch(`https://overpass-api.de/api/interpreter`, {
+                method: 'POST',
+                body: `[out:json][timeout:25];(
+                    node["amenity"="shelter"](${bbox});
+                    node["emergency"="assembly_point"](${bbox});
+                    node["amenity"="fire_station"](${bbox});
+                    node["amenity"="hospital"](${bbox});
+                    node["emergency"="evacuation_point"](${bbox});
+                );out body;>;out skel qt;`
+            });
+            const facilities = await overpassResponse.json();
+            
+            // Process facilities and evacuation routes
+            this.processEvacuationData(facilities);
+            
+        } catch (error) {
+            console.error('Error initializing SOS Plan:', error);
+            throw error;
+        }
+    }
+
+    processEvacuationData(facilities) {
+        // Process emergency facilities
+        this.safetyLocations = facilities.elements.map(facility => ({
+            type: facility.tags.amenity || facility.tags.emergency,
+            name: facility.tags.name || 'Unnamed Facility',
+            lat: facility.lat,
+            lon: facility.lon,
+            distance: this.calculateDistance(
+                this.location.lat, 
+                this.location.lon, 
+                facility.lat, 
+                facility.lon
+            )
+        }));
+
+        // Sort by distance
+        this.safetyLocations.sort((a, b) => a.distance - b.distance);
+    }
+
+    calculateDistance(lat1, lon1, lat2, lon2) {
+
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+
+calculateBoundingBox(lat, lon, radiusKm) {
+    const latChange = (radiusKm / 111.32); // 1 degree = 111.32km
+    const lonChange = (radiusKm / (111.32 * Math.cos(lat * Math.PI / 180)));
+    return `${lat - latChange},${lon - lonChange},${lat + latChange},${lon + lonChange}`;
+ }
+
+    generateEvacuationPlan() {
+        const plan = {
+            riskLevel: this.risks.current,
+            immediateActions: [],
+            evacuationRoutes: [],
+            safeLocations: [],
+            timeEstimates: {},
+            specialConsiderations: []
+        };
+
+        // Add immediate actions based on alerts
+        if (this.alerts.includes('🔥 Fire Risk')) {
+            plan.immediateActions.push({
+                priority: 1,
+                action: '🎒 Pack emergency kit',
+                details: 'Include water, non-perishable food, medications'
+            });
+        }
+
+        return plan;
+    }
+
+
+const userProfile = {
+    household: {
+        totalMembers: null,
+        minors: 0,
+        seniors: 0,
+        pets: {
+            dogs: 0,
+            cats: 0,
+            other: 0
+        }
+    },
+    mobility: {
+        hasDisabilities: false,
+        requiresAssistance: false
+    },
+    transportation: {
+        hasVehicle: true,
+        vehicleType: null,
+        fuelRange: null
+    },
+    evacuation: {
+        predefinedLocation: null,
+        maxTravelDistance: null
+    }
+};
