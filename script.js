@@ -830,21 +830,6 @@ class SOSPlan {
 
     async initialize() {
         try {
-            // Get state from coordinates using reverse geocoding
-            const stateResponse = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${this.location.lat}&lon=${this.location.lon}`
-            );
-            const stateData = await stateResponse.json();
-            const state = stateData.address.state;
-
-            // Fetch FEMA evacuation data
-            const femaResponse = await fetch(
-                `https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries?` + 
-                `$filter=state eq '${state}' and incidentType eq 'Fire'&` +
-                `$orderby=declarationDate desc&$top=1`
-            );
-            this.femaData = await femaResponse.json();
-
             // Calculate search area
             const bbox = this.calculateBoundingBox(this.location.lat, this.location.lon, 25);
 
@@ -890,7 +875,6 @@ class SOSPlan {
     }
 
     calculateDistance(lat1, lon1, lat2, lon2) {
-
         const R = 6371; // Earth's radius in km
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
@@ -902,12 +886,11 @@ class SOSPlan {
         return R * c;
     }
 
-
-calculateBoundingBox(lat, lon, radiusKm) {
-    const latChange = (radiusKm / 111.32); // 1 degree = 111.32km
-    const lonChange = (radiusKm / (111.32 * Math.cos(lat * Math.PI / 180)));
-    return `${lat - latChange},${lon - lonChange},${lat + latChange},${lon + lonChange}`;
- }
+    calculateBoundingBox(lat, lon, radiusKm) {
+        const latChange = (radiusKm / 111.32); // 1 degree = 111.32km
+        const lonChange = (radiusKm / (111.32 * Math.cos(lat * Math.PI / 180)));
+        return `${lat - latChange},${lon - lonChange},${lat + latChange},${lon + lonChange}`;
+    }
 
     generateEvacuationPlan() {
         const plan = {
@@ -930,8 +913,9 @@ calculateBoundingBox(lat, lon, radiusKm) {
 
         return plan;
     }
+}
 
-
+// User profile configuration (after the class definition)
 const userProfile = {
     household: {
         totalMembers: null,
