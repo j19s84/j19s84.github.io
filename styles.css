@@ -640,19 +640,4 @@ h2 {
         height: 400px;
     }
 }
-
-/* Loading and Error States */
-.loading {
-    padding: 20px;
-    text-align: center;
-    color: #666;
-}
-
-.error {
-    padding: 20px;
-    text-align: center;
-    color: #ff4444;
-    background: #ffebee;
-    border-radius: var(--border-radius-md);
-}
  
