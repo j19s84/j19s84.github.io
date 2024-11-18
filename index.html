@@ -64,6 +64,104 @@
         <button id="sos-button">Launch My SOS Plan</button>
     </main>
 
+    <div id="sos-plan-panel" class="panel">
+        <div class="panel-header">
+            <h2>🆘 SOS Plan Setup</h2>
+            <div id="sos-risk-summary"></div>
+        </div>
+        
+        <form id="sos-profile-form">
+            <div class="form-section">
+                <h3>👥 Household Information</h3>
+                <div class="form-group">
+                    <label for="adults">Number of Adults:</label>
+                    <input type="number" id="adults" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="minors">Children (under 14):</label>
+                    <input type="number" id="minors" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="seniors">Seniors (over 65):</label>
+                    <input type="number" id="seniors" min="0" value="0">
+                </div>
+            </div>
+    
+            <div class="form-section">
+                <h3>🐾 Pets</h3>
+                <div class="form-group">
+                    <label for="dogs">Dogs:</label>
+                    <input type="number" id="dogs" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="cats">Cats:</label>
+                    <input type="number" id="cats" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="other-pets">Other Pets:</label>
+                    <input type="number" id="other-pets" min="0" value="0">
+                </div>
+            </div>
+    
+            <div class="form-section">
+                <h3>🚗 Transportation</h3>
+                <div class="form-group">
+                    <label for="has-vehicle">Do you have a vehicle?</label>
+                    <select id="has-vehicle">
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div class="form-group vehicle-details">
+                    <label for="vehicle-type">Vehicle Type:</label>
+                    <select id="vehicle-type">
+                        <option value="sedan">Sedan</option>
+                        <option value="suv">SUV</option>
+                        <option value="truck">Truck</option>
+                        <option value="van">Van</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group vehicle-details">
+                    <label for="fuel-range">Estimated Fuel Range (miles):</label>
+                    <input type="number" id="fuel-range" min="0" step="10" value="300">
+                </div>
+            </div>
+    
+            <div class="form-section">
+                <h3>⚕️ Medical & Accessibility</h3>
+                <div class="form-group">
+                    <label for="has-disabilities">Does anyone require special assistance?</label>
+                    <select id="has-disabilities">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group disability-details" style="display: none;">
+                    <label for="assistance-details">Please specify needs:</label>
+                    <textarea id="assistance-details"></textarea>
+                </div>
+            </div>
+    
+            <div class="form-section">
+                <h3>🏠 Evacuation Location</h3>
+                <div class="form-group">
+                    <label for="has-evacuation-place">Do you have a predetermined evacuation location?</label>
+                    <select id="has-evacuation-place">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group evacuation-details" style="display: none;">
+                    <label for="evacuation-address">Address:</label>
+                    <input type="text" id="evacuation-address">
+                </div>
+            </div>
+    
+            <button type="submit" class="generate-plan-btn">Generate My SOS Plan</button>
+        </form>
+    </div>
+
     <!-- Your custom JavaScript should be loaded last -->
     <script src="script.js" defer></script>
 </body>
