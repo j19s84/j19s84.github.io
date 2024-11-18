@@ -289,6 +289,11 @@ async function fetchWildfireData(lat, lon) {
         const response = await fetch(url);
         const data = await response.json();
 
+        console.log('Wildfire API response:', {
+            status: response.status,
+            featureCount: data.features?.length || 0
+        });
+
         if (data.error) {
             throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
         }
@@ -384,9 +389,11 @@ async function fetchWildfireData(lat, lon) {
                 const lastUpdated = props.ModifiedOnDateTime ?
                     new Date(props.ModifiedOnDateTime).toLocaleString() : 'N/A';
 
+                // In the fetchWildfireData function, where you set up the marker click handler:
                 L.marker([fireLat, fireLon], { icon: fireIcon })
                     .addTo(wildfireMap)
                     .on('click', async function (e) {
+                        console.log('Fire clicked:', props.IncidentName);  // Add this line
                         const clickedLat = e.latlng.lat;
                         const clickedLon = e.latlng.lng;
 
@@ -535,7 +542,6 @@ async function fetchWildfireData(lat, lon) {
         mapElement.classList.remove('loading');
     }
 }
-
 // Add getWindDirection function here
 function getWindDirection(degrees) {
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
@@ -941,3 +947,4 @@ const userProfile = {
         maxTravelDistance: null
     }
 };
+
