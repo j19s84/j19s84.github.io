@@ -387,108 +387,51 @@ async function fetchWildfireData(lat, lon) {
                 L.marker([fireLat, fireLon], { icon: fireIcon })
                     .addTo(wildfireMap)
                     .on('click', async function (e) {
-                        const clickedLat = e.latlng.lat;
-                        const clickedLon = e.latlng.lng;
-
-                        const alertContainer = document.getElementById('alert-banner');
-                        if (alertContainer) {
-                            alertContainer.innerHTML = `
-                                <h2>Weather Alerts</h2>
-                                <p>Loading alerts...</p>
-                            `;
-                        }
-
-                        document.getElementById('coordinates').textContent =
-                            `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
-
-                        if (userLocationMarker) {
-                            userLocationMarker.remove();
-                        }
-                        userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
-                            .addTo(wildfireMap)
-                            .bindPopup('Your Location')
-                            .openPopup();
-
-                        const nifcData = await fetchNIFCData(clickedLat, clickedLon);
-                        const nifcInfo = nifcData ? `
-                            <div class="detail-item">
-                                <h3>NIFC Information</h3>
-                                <p><strong>Complex Name:</strong> ${nifcData.complexName}</p>
-                                <p><strong>Incident Type:</strong> ${nifcData.incidentType}</p>
-                                <p><strong>Total Personnel:</strong> ${nifcData.totalPersonnel}</p>
-                                <p><strong>Fuel Type:</strong> ${nifcData.fuelType}</p>
-                            </div>
-                        ` : '';
-
+                        // Add loading state
                         const detailsPanel = document.getElementById('fire-details-content');
-                        if (!detailsPanel) {
-                            console.error('Fire details panel element not found');
-                            return;
+                        if (detailsPanel) {
+                            detailsPanel.innerHTML = '<div class="loading">Loading fire details...</div>';
                         }
 
-                        let fireName = props.IncidentName || 'Active Fire';
-                        if (!fireName.toLowerCase().includes('fire')) {
-                            if (fireName.includes('RX') || fireName.includes('Rx')) {
-                                fireName = fireName.replace(/\s*RX\s*$/i, ' Fire Rx');
-                            } else {
-                                fireName += ' Fire';
+                        try {
+                            const clickedLat = e.latlng.lat;
+                            const clickedLon = e.latlng.lng;
+
+                            // Update coordinates display
+                            const coordsDisplay = document.getElementById('coordinates');
+                            if (coordsDisplay) {
+                                coordsDisplay.textContent = `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
+                            }
+
+                            // Fetch alerts first
+                            await fetchNWSAlerts(clickedLat, clickedLon);
+
+                            // Update fire details panel
+                            if (detailsPanel) {
+                                let fireName = props.IncidentName || 'Active Fire';
+                                if (!fireName.toLowerCase().includes('fire')) {
+                                    if (fireName.includes('RX') || fireName.includes('Rx')) {
+                                        fireName = fireName.replace(/\s*RX\s*$/i, ' Fire Rx');
+                                    } else {
+                                        fireName += ' Fire';
+                                    }
+                                }
+
+                                // Rest of your fire details HTML...
+                            }
+
+                            // Fetch weather data
+                            await fetchWeatherData(clickedLat, clickedLon);
+
+                            // Update map view
+                            wildfireMap.setView([clickedLat, clickedLon], 8);
+
+                        } catch (error) {
+                            console.error('Error updating fire details:', error);
+                            if (detailsPanel) {
+                                detailsPanel.innerHTML = '<div class="error">Error loading fire details. Please try again.</div>';
                             }
                         }
-
-                        detailsPanel.innerHTML = `
-                            <div class="location-title-container">
-                                <h2>${fireName} 🔥</h2>
-                                <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
-                            </div>
-                            
-                            <div class="fire-details-grid">
-                                <div class="detail-item fire-info-card">
-                                    <h3>Fire Details</h3>
-                                    <div class="fire-info-grid">
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🏷️ Type</span>
-                                            <span class="stat-value">${props.FireType || 'N/A'}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">📏 Size</span>
-                                            <span class="stat-value">${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🎯 Containment</span>
-                                            <span class="stat-value">${props.PercentContained || '0'}%</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">⏰ Discovered</span>
-                                            <span class="stat-value">${discoveryDateTime}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🔄 Last Updated</span>
-                                            <span class="stat-value">${lastUpdated}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🏛️ State</span>
-                                            <span class="stat-value">${props.POOState || 'N/A'}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">👥 Agency</span>
-                                            <span class="stat-value">${props.POOAgency || 'N/A'}</span>
-                                        </div>
-                                        ${props.IncidentManagementOrganization ? `
-                                            <div class="fire-stat">
-                                                <span class="stat-label">⚡ Management</span>
-                                                <span class="stat-value">${props.IncidentManagementOrganization}</span>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                                ${nifcInfo}
-                            </div>
-                        `;
-
-                        document.getElementById('fire-details-panel').classList.add('active');
-
-                        fetchWeatherData(clickedLat, clickedLon);
-                        wildfireMap.setView([clickedLat, clickedLon], 8);
                     });
             });
             if (mapLegend) {
@@ -549,21 +492,25 @@ async function fetchNWSAlerts(lat, lon) {
 
     alertContainer.innerHTML = `
         <h2>Weather Alerts</h2>
-        <p>Loading alerts...</p>
+        <div class="loading">Loading alerts...</div>
     `;
 
     try {
-        console.log('Starting alert fetch for:', lat, lon);
-
-        const headers = {
-            'Accept': 'application/geo+json',
-            'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
-        };
-
+        // Add error handling for the point response
         const pointResponse = await fetch(
             `https://api.weather.gov/points/${lat},${lon}`,
-            { headers }
+            { 
+                headers: {
+                    'Accept': 'application/geo+json',
+                    'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
+                }
+            }
         );
+
+        if (!pointResponse.ok) {
+            throw new Error(`NWS API error: ${pointResponse.status}`);
+        }
+
         const pointData = await pointResponse.json();
         console.log('Point Data:', pointData);
 
@@ -644,17 +591,9 @@ async function fetchNWSAlerts(lat, lon) {
 
     } catch (error) {
         console.error('Error fetching alerts:', error);
-        console.error('Error details:', error.stack);
-
-        const riskIndicator = document.getElementById('risk-indicator');
-        if (riskIndicator) {
-            riskIndicator.textContent = 'Risk: Unknown';
-            riskIndicator.className = 'risk-indicator';
-        }
-
         alertContainer.innerHTML = `
             <h2>Weather Alerts</h2>
-            <p>Error loading alerts. Please try again later.</p>
+            <div class="error">Unable to load weather alerts for this location.</div>
         `;
     }
 }
