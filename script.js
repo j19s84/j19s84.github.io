@@ -7,7 +7,16 @@ let mapLegend;
 const STORED_LAT = 'lastLatitude';
 const STORED_LON = 'lastLongitude';
 
-
+// Define userIcon globally
+const userIcon = L.divIcon({
+    className: 'user-location-icon',
+    html: `
+        <div class="user-location-dot">
+            <div class="user-location-pulse"></div>
+        </div>
+    `,
+    iconSize: [20, 20]
+});
 // Utility functions
 const debounce = (func, wait) => {
     let timeout;
@@ -310,39 +319,28 @@ async function fetchWildfireData(lat, lon) {
             const clickedLat = e.latlng.lat;
             const clickedLon = e.latlng.lng;
 
-        const userIcon = L.divIcon({
-            className: 'user-location-icon',
-            html: `
-               <div class="user-location-dot">
-                   <div class="user-location-pulse"></div>
-               </div>
-           `,
-            iconSize: [20, 20]
+            if (userLocationMarker) {
+                userLocationMarker.remove();
+            }
+            userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
+                .addTo(wildfireMap)
+                .bindPopup('Your Location')
+                .openPopup();
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${clickedLat}&lon=${clickedLon}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateLocation(clickedLat, clickedLon);
+                    console.log('Clicked location:', data.display_name);
+                    
+                    Promise.all([
+                        fetchWeatherData(clickedLat, clickedLon),
+                        fetchWildfireData(clickedLat, clickedLon),
+                        fetchNWSAlerts(clickedLat, clickedLon),
+                        fetchNIFCData(clickedLat, clickedLon)
+                    ]).catch(err => console.error('Error updating data:', err));
+                });
         });
-
-        if (userLocationMarker) {
-            userLocationMarker.remove();
-        }
-        userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
-        .addTo(wildfireMap)
-            .bindPopup('Your Location')
-            .openPopup();
-
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${clickedLat}&lon=${clickedLon}`)
-            .then(response => response.json())
-            .then(data => {
-                updateLocation(clickedLat, clickedLon);
-                console.log('Clicked location:', data.display_name);
-                
-                // Fetch all data for the new location
-                Promise.all([
-                    fetchWeatherData(clickedLat, clickedLon),
-                    fetchWildfireData(clickedLat, clickedLon),
-                    fetchNWSAlerts(clickedLat, clickedLon),
-                    fetchNIFCData(clickedLat, clickedLon)
-                ]).catch(err => console.error('Error updating data:', err));
-            });
-    });
 
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
@@ -370,7 +368,6 @@ async function fetchWildfireData(lat, lon) {
                     size = 12;
                 }
 
-
                 const isRx = props.IncidentName?.includes('RX') || props.FireType?.includes('RX');
                 const markerHtml = isNew || isRx ?
                     `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
@@ -384,30 +381,85 @@ async function fetchWildfireData(lat, lon) {
                     html: markerHtml,
                     iconSize: [size, size]
                 });
+
                 const discoveryDateTime = props.FireDiscoveryDateTime ?
                     new Date(props.FireDiscoveryDateTime).toLocaleString() : 'N/A';
                 const lastUpdated = props.ModifiedOnDateTime ?
                     new Date(props.ModifiedOnDateTime).toLocaleString() : 'N/A';
 
-                // In the fetchWildfireData function, where you set up the marker click handler:
+                // Updated fire marker click handler
                 L.marker([fireLat, fireLon], { icon: fireIcon })
                     .addTo(wildfireMap)
                     .on('click', async function (e) {
-                        console.log('Fire clicked:', props.IncidentName);  // Add this line
+                        console.log('Fire clicked:', props.IncidentName);
                         const clickedLat = e.latlng.lat;
                         const clickedLon = e.latlng.lng;
 
-                        const alertContainer = document.getElementById('alert-banner');
-                        if (alertContainer) {
-                            alertContainer.innerHTML = `
-                                <h2>Weather Alerts</h2>
-                                <p>Loading alerts...</p>
+                        // Update the details panel first
+                        const detailsPanel = document.getElementById('fire-details-content');
+                        if (detailsPanel) {
+                            let fireName = props.IncidentName || 'Active Fire';
+                            if (!fireName.toLowerCase().includes('fire')) {
+                                if (fireName.includes('RX') || fireName.includes('Rx')) {
+                                    fireName = fireName.replace(/\s*RX\s*$/i, ' Fire Rx');
+                                } else {
+                                    fireName += ' Fire';
+                                }
+                            }
+
+                            detailsPanel.innerHTML = `
+                                <div class="location-title-container">
+                                    <h2>${fireName} 🔥</h2>
+                                    <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
+                                </div>
+                                
+                                <div class="fire-details-grid">
+                                    <div class="detail-item fire-info-card">
+                                        <h3>Fire Details</h3>
+                                        <div class="fire-info-grid">
+                                            <div class="fire-stat">
+                                                <span class="stat-label">🏷️ Type</span>
+                                                <span class="stat-value">${props.FireType || 'N/A'}</span>
+                                            </div>
+                                            <div class="fire-stat">
+                                                <span class="stat-label">📏 Size</span>
+                                                <span class="stat-value">${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</span>
+                                            </div>
+                                            <div class="fire-stat">
+                                                <span class="stat-label">🎯 Containment</span>
+                                                <span class="stat-value">${props.PercentContained || '0'}%</span>
+                                            </div>
+                                            <div class="fire-stat">
+                                                <span class="stat-label">⏰ Discovered</span>
+                                                <span class="stat-value">${discoveryDateTime}</span>
+                                            </div>
+                                            <div class="fire-stat">
+                                                <span class="stat-label">🔄 Last Updated</span>
+                                                <span class="stat-value">${lastUpdated}</span>
+                                            </div>
+                                            <div class="fire-stat">
+                                                <span class="stat-label">🏛️ State</span>
+                                                <span class="stat-value">${props.POOState || 'N/A'}</span>
+                                            </div>
+                                            <div class="fire-stat">
+                                                <span class="stat-label">👥 Agency</span>
+                                                <span class="stat-value">${props.POOAgency || 'N/A'}</span>
+                                            </div>
+                                            ${props.IncidentManagementOrganization ? `
+                                                <div class="fire-stat">
+                                                    <span class="stat-label">⚡ Management</span>
+                                                    <span class="stat-value">${props.IncidentManagementOrganization}</span>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
                             `;
+
+                            document.getElementById('fire-details-panel').classList.add('active');
                         }
 
-                        document.getElementById('coordinates').textContent =
-                            `Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}`;
-
+                        // Update location marker
                         if (userLocationMarker) {
                             userLocationMarker.remove();
                         }
@@ -416,88 +468,17 @@ async function fetchWildfireData(lat, lon) {
                             .bindPopup('Your Location')
                             .openPopup();
 
-                        const nifcData = await fetchNIFCData(clickedLat, clickedLon);
-                        const nifcInfo = nifcData ? `
-                            <div class="detail-item">
-                                <h3>NIFC Information</h3>
-                                <p><strong>Complex Name:</strong> ${nifcData.complexName}</p>
-                                <p><strong>Incident Type:</strong> ${nifcData.incidentType}</p>
-                                <p><strong>Total Personnel:</strong> ${nifcData.totalPersonnel}</p>
-                                <p><strong>Fuel Type:</strong> ${nifcData.fuelType}</p>
-                            </div>
-                        ` : '';
+                        // Fetch all updated data
+                        await Promise.all([
+                            fetchWeatherData(clickedLat, clickedLon),
+                            fetchNWSAlerts(clickedLat, clickedLon),
+                            fetchNIFCData(clickedLat, clickedLon)
+                        ]).catch(err => console.error('Error updating data:', err));
 
-                        const detailsPanel = document.getElementById('fire-details-content');
-                        if (!detailsPanel) {
-                            console.error('Fire details panel element not found');
-                            return;
-                        }
-
-                        let fireName = props.IncidentName || 'Active Fire';
-                        if (!fireName.toLowerCase().includes('fire')) {
-                            if (fireName.includes('RX') || fireName.includes('Rx')) {
-                                fireName = fireName.replace(/\s*RX\s*$/i, ' Fire Rx');
-                            } else {
-                                fireName += ' Fire';
-                            }
-                        }
-
-                        detailsPanel.innerHTML = `
-                            <div class="location-title-container">
-                                <h2>${fireName} 🔥</h2>
-                                <p class="location-subtitle">Latitude: ${clickedLat.toFixed(4)}, Longitude: ${clickedLon.toFixed(4)}</p>
-                            </div>
-                            
-                            <div class="fire-details-grid">
-                                <div class="detail-item fire-info-card">
-                                    <h3>Fire Details</h3>
-                                    <div class="fire-info-grid">
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🏷️ Type</span>
-                                            <span class="stat-value">${props.FireType || 'N/A'}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">📏 Size</span>
-                                            <span class="stat-value">${acres ? Math.round(acres).toLocaleString() + ' acres' : 'N/A'}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🎯 Containment</span>
-                                            <span class="stat-value">${props.PercentContained || '0'}%</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">⏰ Discovered</span>
-                                            <span class="stat-value">${discoveryDateTime}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🔄 Last Updated</span>
-                                            <span class="stat-value">${lastUpdated}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">🏛️ State</span>
-                                            <span class="stat-value">${props.POOState || 'N/A'}</span>
-                                        </div>
-                                        <div class="fire-stat">
-                                            <span class="stat-label">👥 Agency</span>
-                                            <span class="stat-value">${props.POOAgency || 'N/A'}</span>
-                                        </div>
-                                        ${props.IncidentManagementOrganization ? `
-                                            <div class="fire-stat">
-                                                <span class="stat-label">⚡ Management</span>
-                                                <span class="stat-value">${props.IncidentManagementOrganization}</span>
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                                ${nifcInfo}
-                            </div>
-                        `;
-
-                        document.getElementById('fire-details-panel').classList.add('active');
-
-                        fetchWeatherData(clickedLat, clickedLon);
                         wildfireMap.setView([clickedLat, clickedLon], 8);
                     });
             });
+
             if (mapLegend) {
                 mapLegend.remove();
             }
@@ -947,4 +928,5 @@ const userProfile = {
         maxTravelDistance: null
     }
 };
+
 
