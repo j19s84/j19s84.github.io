@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchButton = document.getElementById('search-button');
     const locationInput = document.getElementById('location-input');
 
-    testRiskCalculation();
+
 
     // Check if all elements exist
     if (!sosButton || !searchButton || !locationInput) {
@@ -811,50 +811,57 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
     let riskLevel = 'LOW';
     const alertTags = new Set();
 
+    // First, check if there's an active fire in the area
+    const hasActiveFire = document.querySelector('.fire-details-grid') !== null;
+    
+    if (hasActiveFire) {
+        riskScore += 3; // Base score for active fire
+        alertTags.add('🔥 Active Fire');
+    }
+
     // Process alerts and create tags
     if (alerts && alerts.length > 0) {
         alerts.forEach(alert => {
-            // Red Flag Warning specific handling
-            if (alert.event.includes('Red Flag')) {
-                alertTags.add('🚩 Red Flag Warning');
-                riskScore += 3;
-            }
+            const eventLower = alert.event?.toLowerCase() || '';
             
-            // Process other alerts
-            if (alert.event.includes('Fire')) {
-                alertTags.add('🔥 Fire Alert');
+            // Red Flag Warning
+            if (eventLower.includes('red flag')) {
+                alertTags.add('🚩 Red Flag Warning');
                 riskScore += 2;
             }
-            if (alert.event.includes('Heat')) {
-                alertTags.add('🌡️ Heat Alert');
+            
+            // Wind alerts
+            if (eventLower.includes('wind')) {
+                alertTags.add('🌬️ High Winds');
                 riskScore += 1;
             }
-            if (alert.event.toLowerCase().includes('evacuation')) {
+
+            // Heat alerts
+            if (eventLower.includes('heat')) {
+                alertTags.add('🌡️ Extreme Heat');
+                riskScore += 1;
+            }
+
+            // Evacuation alerts
+            if (eventLower.includes('evacuation')) {
                 alertTags.add('⚠️ Evacuation');
                 riskScore += 5;
             }
         });
     }
 
-    // Modified risk scoring logic
-    if (alertTags.has('🚩 Red Flag Warning')) {
-        if (alertTags.size > 1) {
-            riskLevel = 'HIGH';
-        } else {
-            riskLevel = 'MODERATE';
-        }
-    }
-
-    // Evacuation override
-    if (alertTags.has('⚠️ Evacuation')) {
+    // Determine risk level based on score
+    if (riskScore >= 5) {
         riskLevel = 'EXTREME';
+    } else if (riskScore >= 3) {
+        riskLevel = 'HIGH';
+    } else if (riskScore >= 2) {
+        riskLevel = 'MODERATE';
     }
 
-    // Update risk indicator
-    const riskIndicator = document.getElementById('risk-indicator');
-    if (riskIndicator) {
-        riskIndicator.textContent = `Risk Level: ${riskLevel}`;
-        riskIndicator.className = `risk-indicator risk-${riskLevel.toLowerCase()}`;
+    // If there's an active fire, minimum risk should be MODERATE
+    if (hasActiveFire && riskLevel === 'LOW') {
+        riskLevel = 'MODERATE';
     }
 
     return {
@@ -862,38 +869,6 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
         level: riskLevel,
         tags: Array.from(alertTags)
     };
-}
-
-// Separate function for testing
-function testRiskCalculation() {
-    // Test Case 1: Red Flag Warning Only
-    console.log('Test 1: Red Flag Warning Only');
-    const test1 = calculateFireRisk(null, [{
-        event: 'Red Flag Warning',
-        description: 'Test Red Flag Warning'
-    }]);
-    console.log('Expected: MODERATE, Result:', test1);
-
-    // Test Case 2: Red Flag + Heat Warning
-    console.log('\nTest 2: Red Flag + Heat Warning');
-    const test2 = calculateFireRisk(null, [
-        { event: 'Red Flag Warning', description: 'Test Red Flag Warning' },
-        { event: 'Heat Advisory', description: 'Test Heat Warning' }
-    ]);
-    console.log('Expected: HIGH, Result:', test2);
-
-    // Test Case 3: Evacuation Notice
-    console.log('\nTest 3: Evacuation Notice');
-    const test3 = calculateFireRisk(null, [{
-        event: 'Evacuation Order',
-        description: 'Test Evacuation Order'
-    }]);
-    console.log('Expected: EXTREME, Result:', test3);
-
-    // Test Case 4: No Alerts
-    console.log('\nTest 4: No Alerts');
-    const test4 = calculateFireRisk(null, []);
-    console.log('Expected: LOW, Result:', test4);
 }
 
 async function fetchUrbanArea(lat, lon) {
@@ -1041,5 +1016,6 @@ const userProfile = {
         maxTravelDistance: null
     }
 };
+
 
 
