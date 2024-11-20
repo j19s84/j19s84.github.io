@@ -340,7 +340,7 @@ locationInput.addEventListener('keypress', function (e) {
         searchLocation();  // <- Changed
     }
 });
-
+}); 
 
 function setupAlertCollapse() {
     document.querySelectorAll('.alert-header').forEach(header => {
