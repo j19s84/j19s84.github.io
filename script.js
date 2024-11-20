@@ -403,9 +403,10 @@ async function fetchWildfireData(lat, lon) {
                         fetchNWSAlerts(clickedLat, clickedLon),
                         fetchNIFCData(clickedLat, clickedLon)
                     ]).catch(err => console.error('Error updating data:', err));
-                });
-        });
+                })
+                .catch(err => console.error('Error fetching location data:', err));
 
+        // Process wildfire features
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
                 if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
