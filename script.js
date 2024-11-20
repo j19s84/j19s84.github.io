@@ -7,6 +7,51 @@ let mapLegend;
 const STORED_LAT = 'lastLatitude';
 const STORED_LON = 'lastLongitude';
 
+// Emergency facilities configuration
+const emergencyFacilities = {
+    SHELTER: 'amenity=shelter',
+    FIRE_STATION: 'amenity=fire_station',
+    HOSPITAL: 'amenity=hospital',
+    EVACUATION_POINT: 'emergency=evacuation_point',
+    ASSEMBLY_POINT: 'emergency=assembly_point'
+};
+
+// User profile structure
+const userProfileAttributes = {
+    passive: {
+        location: null,
+        urbanDensity: null,
+        nearestFacilities: [],
+        currentRisks: [],
+        weatherConditions: []
+    },
+    active: {
+        household: {
+            adults: null,
+            minors: null,
+            seniors: null,
+            pets: {
+                dogs: null,
+                cats: null,
+                other: null
+            }
+        },
+        transportation: {
+            hasVehicle: null,
+            vehicleType: null,
+            fuelRange: null
+        },
+        medical: {
+            hasDisabilities: null,
+            requiresAssistance: null,
+            medications: null
+        },
+        evacuation: {
+            predefinedLocation: null,
+            maxTravelDistance: null
+        }
+    }
+};
 // Define userIcon globally
 const userIcon = L.divIcon({
     className: 'user-location-icon',
@@ -40,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchButton = document.getElementById('search-button');
     const locationInput = document.getElementById('location-input');
 
+    testRiskCalculation();
 
     // Check if all elements exist
     if (!sosButton || !searchButton || !locationInput) {
@@ -116,13 +162,32 @@ function successLocation(position) {
 }
 
 function errorLocation() {
-    alert('Unable to retrieve your location');
-    const defaultLat = 39.8283;
-    const defaultLon = -98.5795;
-    fetchWildfireData(defaultLat, defaultLon);
-    fetchWeatherData(defaultLat, defaultLon);
-    fetchNWSAlerts(defaultLat, defaultLon);
-    fetchNIFCData(defaultLat, defaultLon);
+    // Change from alert to console.warn for less intrusive messaging
+    console.warn('Unable to retrieve your location');
+    
+    // Check for stored coordinates first
+    const storedLat = localStorage.getItem(STORED_LAT);
+    const storedLon = localStorage.getItem(STORED_LON);
+    
+    if (storedLat && storedLon) {
+        // Use last known location
+        successLocation({ 
+            coords: { 
+                latitude: parseFloat(storedLat), 
+                longitude: parseFloat(storedLon) 
+            } 
+        });
+    } else {
+        // Default to continental US center instead of Honolulu
+        const defaultLat = 39.8283;
+        const defaultLon = -98.5795;
+        successLocation({ 
+            coords: { 
+                latitude: defaultLat, 
+                longitude: defaultLon 
+            } 
+        });
+    }
 }
 async function searchLocation() {
     const input = document.getElementById('location-input').value;
@@ -189,7 +254,6 @@ async function searchLocation() {
         alert('Error searching location. Please try again.');
     }
 }
-
 
 // Helper function to find fire by name
 function findFireByName(searchTerm) {
@@ -741,46 +805,95 @@ function updateLocation(lat, lon) {
         wildfireMap.setView([lat, lon], 10);
     }
 }
-// Add this function near your other utility functions
-async function calculateFireRisk(lat, lon, alertTags) {
-    // Add loading state at the start
-    const riskIndicator = document.getElementById('risk-indicator');
-    if (riskIndicator) {
-        riskIndicator.textContent = 'Calculating risk...';
-    }
 
+function calculateFireRisk(weatherData, alerts, isUrban = false) {
     let riskScore = 0;
+    let riskLevel = 'LOW';
+    const alertTags = new Set();
 
-    // Check if in urban area
-    const urbanArea = await fetchUrbanArea(lat, lon);
-    const isUrban = urbanArea !== null;
-
-    // Adjust risk based on alerts (using higher weights from suggested version)
-    if (alertTags.has('🔥 Fire Risk')) riskScore += 3;
-    if (alertTags.has('🌬️ High Winds')) riskScore += 2;
-    if (alertTags.has('💧 Low Humidity')) riskScore += 2;
-    if (alertTags.has('🌡️ Extreme Heat')) riskScore += 2;
-    if (alertTags.has('⚠️ Evacuation')) riskScore += 5;
-
-    // Urban areas may have different risk levels
-    if (isUrban) {
-        riskScore -= 1; // Reduce risk for urban areas
+    // Process alerts and create tags
+    if (alerts && alerts.length > 0) {
+        alerts.forEach(alert => {
+            // Red Flag Warning specific handling
+            if (alert.event.includes('Red Flag')) {
+                alertTags.add('🚩 Red Flag Warning');
+                riskScore += 3;
+            }
+            
+            // Process other alerts
+            if (alert.event.includes('Fire')) {
+                alertTags.add('🔥 Fire Alert');
+                riskScore += 2;
+            }
+            if (alert.event.includes('Heat')) {
+                alertTags.add('🌡️ Heat Alert');
+                riskScore += 1;
+            }
+            if (alert.event.toLowerCase().includes('evacuation')) {
+                alertTags.add('⚠️ Evacuation');
+                riskScore += 5;
+            }
+        });
     }
 
-    // Determine risk level (using higher thresholds)
-    let riskLevel = 'LOW';
-    if (riskScore >= 8) riskLevel = 'EXTREME';
-    else if (riskScore >= 5) riskLevel = 'HIGH';
-    else if (riskScore >= 3) riskLevel = 'MODERATE';
+    // Modified risk scoring logic
+    if (alertTags.has('🚩 Red Flag Warning')) {
+        if (alertTags.size > 1) {
+            riskLevel = 'HIGH';
+        } else {
+            riskLevel = 'MODERATE';
+        }
+    }
 
-    // Update risk indicator with final result
+    // Evacuation override
+    if (alertTags.has('⚠️ Evacuation')) {
+        riskLevel = 'EXTREME';
+    }
+
+    // Update risk indicator
+    const riskIndicator = document.getElementById('risk-indicator');
     if (riskIndicator) {
         riskIndicator.textContent = `Risk Level: ${riskLevel}`;
         riskIndicator.className = `risk-indicator risk-${riskLevel.toLowerCase()}`;
     }
 
-    console.log('Calculated Risk Level:', riskLevel);
-    return riskLevel;
+    return {
+        score: riskScore,
+        level: riskLevel,
+        tags: Array.from(alertTags)
+    };
+}
+
+// Separate function for testing
+function testRiskCalculation() {
+    // Test Case 1: Red Flag Warning Only
+    console.log('Test 1: Red Flag Warning Only');
+    const test1 = calculateFireRisk(null, [{
+        event: 'Red Flag Warning',
+        description: 'Test Red Flag Warning'
+    }]);
+    console.log('Expected: MODERATE, Result:', test1);
+
+    // Test Case 2: Red Flag + Heat Warning
+    console.log('\nTest 2: Red Flag + Heat Warning');
+    const test2 = calculateFireRisk(null, [
+        { event: 'Red Flag Warning', description: 'Test Red Flag Warning' },
+        { event: 'Heat Advisory', description: 'Test Heat Warning' }
+    ]);
+    console.log('Expected: HIGH, Result:', test2);
+
+    // Test Case 3: Evacuation Notice
+    console.log('\nTest 3: Evacuation Notice');
+    const test3 = calculateFireRisk(null, [{
+        event: 'Evacuation Order',
+        description: 'Test Evacuation Order'
+    }]);
+    console.log('Expected: EXTREME, Result:', test3);
+
+    // Test Case 4: No Alerts
+    console.log('\nTest 4: No Alerts');
+    const test4 = calculateFireRisk(null, []);
+    console.log('Expected: LOW, Result:', test4);
 }
 
 async function fetchUrbanArea(lat, lon) {
