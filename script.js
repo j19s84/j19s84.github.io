@@ -378,12 +378,6 @@ async function fetchWildfireData(lat, lon) {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(wildfireMap);
         }
-
-            userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
-                .addTo(wildfireMap)
-                .bindPopup('Your Location')
-                .openPopup();
-
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${clickedLat}&lon=${clickedLon}`)
                 .then(response => response.json())
                 .then(data => {
