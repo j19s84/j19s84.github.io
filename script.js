@@ -85,8 +85,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchButton = document.getElementById('search-button');
     const locationInput = document.getElementById('location-input');
 
-
-
     // Check if all elements exist
     if (!sosButton || !searchButton || !locationInput) {
         console.error('One or more required elements not found');
@@ -811,57 +809,38 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
     let riskLevel = 'LOW';
     const alertTags = new Set();
 
-    // First, check if there's an active fire in the area
-    const hasActiveFire = document.querySelector('.fire-details-grid') !== null;
-    
-    if (hasActiveFire) {
-        riskScore += 3; // Base score for active fire
-        alertTags.add('🔥 Active Fire');
-    }
-
     // Process alerts and create tags
-    if (alerts && alerts.length > 0) {
+    if (alerts && alerts.size > 0) {  // Using size since alerts is a Set
         alerts.forEach(alert => {
-            const eventLower = alert.event?.toLowerCase() || '';
-            
-            // Red Flag Warning
-            if (eventLower.includes('red flag')) {
+            // Red Flag Warning specific handling
+            if (alert.includes('Red Flag')) {
                 alertTags.add('🚩 Red Flag Warning');
-                riskScore += 2;
+                riskLevel = 'MODERATE';  // Base level for Red Flag
             }
             
-            // Wind alerts
-            if (eventLower.includes('wind')) {
-                alertTags.add('🌬️ High Winds');
-                riskScore += 1;
+            // Process other alerts
+            if (alert.includes('Fire')) {
+                alertTags.add('🔥 Fire Alert');
+                riskLevel = 'MODERATE';  // Active fire should be at least MODERATE
             }
-
-            // Heat alerts
-            if (eventLower.includes('heat')) {
-                alertTags.add('🌡️ Extreme Heat');
-                riskScore += 1;
+            if (alert.includes('Heat')) {
+                alertTags.add('🌡️ Heat Alert');
             }
-
-            // Evacuation alerts
-            if (eventLower.includes('evacuation')) {
+            if (alert.toLowerCase().includes('evacuation')) {
                 alertTags.add('⚠️ Evacuation');
-                riskScore += 5;
+                riskLevel = 'EXTREME';
             }
         });
     }
 
-    // Determine risk level based on score
-    if (riskScore >= 5) {
-        riskLevel = 'EXTREME';
-    } else if (riskScore >= 3) {
+    // If we have multiple conditions, increase risk
+    if (alertTags.size > 1) {
         riskLevel = 'HIGH';
-    } else if (riskScore >= 2) {
-        riskLevel = 'MODERATE';
     }
 
-    // If there's an active fire, minimum risk should be MODERATE
-    if (hasActiveFire && riskLevel === 'LOW') {
-        riskLevel = 'MODERATE';
+    // Evacuation always overrides to EXTREME
+    if (alertTags.has('⚠️ Evacuation')) {
+        riskLevel = 'EXTREME';
     }
 
     return {
@@ -1016,6 +995,5 @@ const userProfile = {
         maxTravelDistance: null
     }
 };
-
 
 
