@@ -602,8 +602,6 @@ async function fetchNWSAlerts(lat, lon) {
     `;
 
     try {
-        console.log('Starting alert fetch for:', lat, lon);
-
         const headers = {
             'Accept': 'application/geo+json',
             'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
@@ -614,12 +612,9 @@ async function fetchNWSAlerts(lat, lon) {
             { headers }
         );
         const pointData = await pointResponse.json();
-        console.log('Point Data:', pointData);
 
         const forecastZone = pointData.properties.forecastZone.split('/').pop();
         const county = pointData.properties.county.split('/').pop();
-        console.log('Forecast Zone:', forecastZone);
-        console.log('County:', county);
 
         const [zoneAlerts, countyAlerts] = await Promise.all([
             fetch(`https://api.weather.gov/alerts/active/zone/${forecastZone}`, { headers }),
@@ -628,15 +623,11 @@ async function fetchNWSAlerts(lat, lon) {
 
         const zoneData = await zoneAlerts.json();
         const countyData = await countyAlerts.json();
-        console.log('Zone Alerts:', zoneData);
-        console.log('County Alerts:', countyData);
 
         const allFeatures = [...(zoneData.features || []), ...(countyData.features || [])];
         const alertsData = {
             features: Array.from(new Set(allFeatures))
         };
-
-        console.log('Combined Alerts:', alertsData);
 
         if (alertsData.features && alertsData.features.length > 0) {
             const alertTags = new Set();
@@ -675,15 +666,25 @@ async function fetchNWSAlerts(lat, lon) {
                     </div>
                 `;
             }).join('');
-
-            await calculateFireRisk(lat, lon, alertTags);
+            
+            const riskResult = calculateFireRisk(null, alertsData.features, false);
+            const riskIndicator = document.getElementById('risk-indicator');
+            if (riskIndicator) {
+                riskIndicator.textContent = `Risk Level: ${riskResult.level}`;
+                riskIndicator.className = `risk-indicator risk-${riskResult.level.toLowerCase()}`;
+            }
 
             alertContainer.innerHTML = `
                 <h2>Weather Alerts</h2>
                 ${alertsHTML}
             `;
         } else {
-            await calculateFireRisk(lat, lon, new Set());
+            const riskResult = calculateFireRisk(null, [], false);
+            const riskIndicator = document.getElementById('risk-indicator');
+            if (riskIndicator) {
+                riskIndicator.textContent = `Risk Level: ${riskResult.level}`;
+                riskIndicator.className = `risk-indicator risk-${riskResult.level.toLowerCase()}`;
+            }
 
             alertContainer.innerHTML = `
                 <h2>Weather Alerts</h2>
@@ -695,10 +696,12 @@ async function fetchNWSAlerts(lat, lon) {
         console.error('Error fetching alerts:', error);
         console.error('Error details:', error.stack);
 
+        const riskResult = calculateFireRisk(null, [], false);
+        
         const riskIndicator = document.getElementById('risk-indicator');
         if (riskIndicator) {
-            riskIndicator.textContent = 'Risk: Unknown';
-            riskIndicator.className = 'risk-indicator';
+            riskIndicator.textContent = `Risk Level: ${riskResult.level}`;
+            riskIndicator.className = `risk-indicator risk-${riskResult.level.toLowerCase()}`;
         }
 
         alertContainer.innerHTML = `
