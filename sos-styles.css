@@ -1,0 +1,141 @@
+/* SOS Plan Panel Styles */
+#sos-plan-panel {
+    display: none;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+#sos-plan-panel.active {
+    display: block;
+}
+
+/* Form Sections */
+.form-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: var(--border-radius-md);
+    border: 1px solid #e9ecef;
+}
+
+.form-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--text-dark);
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: var(--border-radius-sm);
+    font-size: 16px;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+}
+
+/* Number Input Specific Styles */
+.form-group input[type="number"] {
+    width: 120px;
+}
+
+/* Textarea Specific Styles */
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Generate Plan Button */
+.generate-plan-btn {
+    background: var(--danger-color);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+    transition: background 0.3s, transform 0.1s;
+}
+
+.generate-plan-btn:hover {
+    background: #ff0000;
+}
+
+.generate-plan-btn:active {
+    transform: scale(0.98);
+}
+/* Conditional Field Animations */
+.vehicle-details,
+.disability-details,
+.evacuation-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.vehicle-details.active,
+.disability-details.active,
+.evacuation-details.active {
+    max-height: 200px;
+}
+
+#sos-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    font-size: 14px;
+    line-height: 1.2;
+    padding: 10px;
+    white-space: normal;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+#sos-button:hover {
+    background-color: #ff0000;
+    transform: scale(1.1);
+}
+
+#sos-button:active {
+    transform: scale(0.9);
+}
