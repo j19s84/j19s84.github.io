@@ -813,31 +813,33 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
     const alertTags = new Set();
 
     // Process alerts and create tags
-    if (alerts && alerts.length > 0) {  // Changed back to length
+    if (alerts && alerts.length > 0) {
         alerts.forEach(alert => {
+            const event = alert?.properties?.event || ''; // Safely access event property
+            
             // Red Flag Warning specific handling
-            if (alert.event.includes('Red Flag')) {
+            if (event.includes('Red Flag')) {
                 alertTags.add('🚩 Red Flag Warning');
                 riskScore += 3;
             }
             
             // Process other alerts
-            if (alert.event.includes('Fire')) {
+            if (event.includes('Fire')) {
                 alertTags.add('🔥 Fire Alert');
                 riskScore += 2;
             }
-            if (alert.event.includes('Heat')) {
+            if (event.includes('Heat')) {
                 alertTags.add('🌡️ Heat Alert');
                 riskScore += 1;
             }
-            if (alert.event.toLowerCase().includes('evacuation')) {
+            if (event.toLowerCase().includes('evacuation')) {
                 alertTags.add('⚠️ Evacuation');
                 riskScore += 5;
             }
         });
     }
 
-    // Determine risk level based on score
+    // Rest of the function remains the same
     if (riskScore >= 5) {
         riskLevel = 'EXTREME';
     } else if (riskScore >= 3) {
