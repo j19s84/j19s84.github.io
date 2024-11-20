@@ -811,41 +811,64 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
     let riskScore = 0;
     let riskLevel = 'LOW';
     const alertTags = new Set();
+    const EXTREME_RADIUS = 15; // miles
+    const HIGH_RADIUS = 20; // miles
+    const LOW_RADIUS = 40; // miles
 
     // Process alerts and create tags
     if (alerts && alerts.length > 0) {
+        let weatherAlertCount = 0;
         alerts.forEach(alert => {
-            const event = alert?.properties?.event || ''; // Safely access event property
+            const event = alert?.properties?.event || '';
+            const distance = alert?.properties?.distance || LOW_RADIUS + 1; // Default to outside range if unknown
             
-            // Red Flag Warning specific handling
+            // Immediate extreme conditions
+            if (distance <= EXTREME_RADIUS && 
+                (event.includes('Fire') || event.includes('Evacuation'))) {
+                riskLevel = 'EXTREME';
+                riskScore = 10; // Ensure it stays extreme
+                alertTags.add('⚠️ Immediate Threat');
+            }
+            
+            // Count contributing weather factors
             if (event.includes('Red Flag')) {
+                weatherAlertCount++;
                 alertTags.add('🚩 Red Flag Warning');
                 riskScore += 3;
             }
-            
-            // Process other alerts
-            if (event.includes('Fire')) {
-                alertTags.add('🔥 Fire Alert');
+            if (event.includes('Wind')) {
+                weatherAlertCount++;
+                alertTags.add('🌬️ High Winds');
                 riskScore += 2;
             }
             if (event.includes('Heat')) {
+                weatherAlertCount++;
                 alertTags.add('🌡️ Heat Alert');
-                riskScore += 1;
+                riskScore += 2;
             }
-            if (event.toLowerCase().includes('evacuation')) {
-                alertTags.add('⚠️ Evacuation');
-                riskScore += 5;
+            if (event.includes('Humidity')) {
+                weatherAlertCount++;
+                alertTags.add('💧 Low Humidity');
+                riskScore += 2;
             }
         });
+
+        // Adjust for multiple contributing factors
+        if (weatherAlertCount >= 3 && riskLevel !== 'EXTREME') {
+            riskLevel = 'HIGH';
+            riskScore = Math.max(riskScore, 7);
+        }
     }
 
-    // Rest of the function remains the same
-    if (riskScore >= 5) {
-        riskLevel = 'EXTREME';
-    } else if (riskScore >= 3) {
-        riskLevel = 'HIGH';
-    } else if (riskScore >= 2) {
-        riskLevel = 'MODERATE';
+    // Final risk level determination if not already extreme
+    if (riskLevel !== 'EXTREME') {
+        if (riskScore >= 7) {
+            riskLevel = 'HIGH';
+        } else if (riskScore >= 4) {
+            riskLevel = 'MODERATE';
+        } else {
+            riskLevel = 'LOW';
+        }
     }
 
     return {
