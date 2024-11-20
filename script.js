@@ -2,6 +2,8 @@
 let wildfireMap;
 let userLocationMarker;
 let mapLegend;
+let currentRiskLevel = 'LOW';
+let currentLocation = null;
 
 // Add these at the top with your other global variables
 const STORED_LAT = 'lastLatitude';
@@ -377,13 +379,13 @@ async function fetchWildfireData(lat, lon) {
             }).addTo(wildfireMap);
         }
 
-        wildfireMap.on('click', function(e) {
-            const clickedLat = e.latlng.lat;
-            const clickedLon = e.latlng.lng;
-
-            if (userLocationMarker) {
-                userLocationMarker.remove();
+        wildfireMap.on('moveend', function() {
+            if (!currentLocation) {
+                const center = wildfireMap.getCenter();
+                fetchWildfireData(center.lat, center.lng).catch(err => console.error('Wildfire error:', err));
             }
+        });
+
             userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
                 .addTo(wildfireMap)
                 .bindPopup('Your Location')
