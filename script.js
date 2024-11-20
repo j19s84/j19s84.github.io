@@ -379,13 +379,6 @@ async function fetchWildfireData(lat, lon) {
             }).addTo(wildfireMap);
         }
 
-        wildfireMap.on('moveend', function() {
-            if (!currentLocation) {
-                const center = wildfireMap.getCenter();
-                fetchWildfireData(center.lat, center.lng).catch(err => console.error('Wildfire error:', err));
-            }
-        });
-
             userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
                 .addTo(wildfireMap)
                 .bindPopup('Your Location')
@@ -538,6 +531,13 @@ async function fetchWildfireData(lat, lon) {
                                 level: 'EXTREME',
                                 tags: ['🔥 Active Fire']
                             };
+
+                        currentRiskLevel = 'EXTREME';
+                        currentLocation = {
+                                lat: clickedLat,
+                                lon: clickedLon,
+                                name: props.IncidentName
+                            };                            
                     
                         const riskIndicator = document.getElementById('risk-indicator');
                         if (riskIndicator) {
