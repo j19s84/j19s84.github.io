@@ -1,2 +1,2 @@
 # 2Safety
-Your AI-driven personal assistance to get to safety.
+Get to safety with an AI-driven personal assistant.
