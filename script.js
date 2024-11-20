@@ -810,37 +810,37 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
     const alertTags = new Set();
 
     // Process alerts and create tags
-    if (alerts && alerts.size > 0) {  // Using size since alerts is a Set
+    if (alerts && alerts.length > 0) {  // Changed back to length
         alerts.forEach(alert => {
             // Red Flag Warning specific handling
-            if (alert.includes('Red Flag')) {
+            if (alert.event.includes('Red Flag')) {
                 alertTags.add('🚩 Red Flag Warning');
-                riskLevel = 'MODERATE';  // Base level for Red Flag
+                riskScore += 3;
             }
             
             // Process other alerts
-            if (alert.includes('Fire')) {
+            if (alert.event.includes('Fire')) {
                 alertTags.add('🔥 Fire Alert');
-                riskLevel = 'MODERATE';  // Active fire should be at least MODERATE
+                riskScore += 2;
             }
-            if (alert.includes('Heat')) {
+            if (alert.event.includes('Heat')) {
                 alertTags.add('🌡️ Heat Alert');
+                riskScore += 1;
             }
-            if (alert.toLowerCase().includes('evacuation')) {
+            if (alert.event.toLowerCase().includes('evacuation')) {
                 alertTags.add('⚠️ Evacuation');
-                riskLevel = 'EXTREME';
+                riskScore += 5;
             }
         });
     }
 
-    // If we have multiple conditions, increase risk
-    if (alertTags.size > 1) {
-        riskLevel = 'HIGH';
-    }
-
-    // Evacuation always overrides to EXTREME
-    if (alertTags.has('⚠️ Evacuation')) {
+    // Determine risk level based on score
+    if (riskScore >= 5) {
         riskLevel = 'EXTREME';
+    } else if (riskScore >= 3) {
+        riskLevel = 'HIGH';
+    } else if (riskScore >= 2) {
+        riskLevel = 'MODERATE';
     }
 
     return {
