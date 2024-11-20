@@ -529,6 +529,18 @@ async function fetchWildfireData(lat, lon) {
                             .addTo(wildfireMap)
                             .bindPopup('Your Location')
                             .openPopup();
+                        
+                        const fireRisk = {
+                                score: 10,
+                                level: 'EXTREME',
+                                tags: ['🔥 Active Fire']
+                            };
+                    
+                        const riskIndicator = document.getElementById('risk-indicator');
+                        if (riskIndicator) {
+                            riskIndicator.textContent = `Risk Level: ${fireRisk.level}`;
+                            riskIndicator.className = `risk-indicator risk-${fireRisk.level.toLowerCase()}`;
+                        }
 
                         // Fetch all updated data
                         await Promise.all([
