@@ -666,7 +666,7 @@ async function fetchNWSAlerts(lat, lon) {
                     </div>
                 `;
             }).join('');
-            
+
             const riskResult = calculateFireRisk(null, alertsData.features, false);
             const riskIndicator = document.getElementById('risk-indicator');
             if (riskIndicator) {
@@ -691,23 +691,22 @@ async function fetchNWSAlerts(lat, lon) {
                 <p>No active alerts found for this location.</p>
             `;
         }
-
     } catch (error) {
         console.error('Error fetching alerts:', error);
         console.error('Error details:', error.stack);
-
-        const riskResult = calculateFireRisk(null, [], false);
-        
-        const riskIndicator = document.getElementById('risk-indicator');
-        if (riskIndicator) {
-            riskIndicator.textContent = `Risk Level: ${riskResult.level}`;
-            riskIndicator.className = `risk-indicator risk-${riskResult.level.toLowerCase()}`;
-        }
 
         alertContainer.innerHTML = `
             <h2>Weather Alerts</h2>
             <p>Error loading alerts. Please try again later.</p>
         `;
+
+        // Calculate and update risk even when alerts fail
+        const riskResult = calculateFireRisk(null, [], false);
+        const riskIndicator = document.getElementById('risk-indicator');
+        if (riskIndicator) {
+            riskIndicator.textContent = `Risk Level: ${riskResult.level}`;
+            riskIndicator.className = `risk-indicator risk-${riskResult.level.toLowerCase()}`;
+        }
     }
 }
 
@@ -733,7 +732,8 @@ function toggleAlert(header) {
     const content = header.nextElementSibling;
     content.classList.toggle('collapsed');
     const icon = header.querySelector('.expand-icon');
-    icon.style.transform = content.classList.contains('collapsed') ? 'rotate(180deg)' : '';
+    icon.style.transform = content.classList.contains('collapsed') ? 
+        'rotate(0deg)' : 'rotate(180deg)';
 }
 
 function updateSOSPlans(alertTags) {
