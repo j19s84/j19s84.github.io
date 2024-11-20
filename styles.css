@@ -327,7 +327,6 @@ h2 {
     background-color: #e3f2fd;
     color: #0d47a1;
 }
-
 /* Alert Content */
 .alert-content {
     max-height: 500px;
@@ -500,36 +499,6 @@ h2 {
     margin-bottom: 12px;
 }
 
-/* SOS Button */
-#sos-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: var(--danger-color);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    font-size: 14px;
-    line-height: 1.2;
-    padding: 10px;
-    white-space: normal;
-    cursor: pointer;
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
-    z-index: 1000;
-}
-
-#sos-button:hover {
-    background-color: #ff0000;
-    transform: scale(1.1);
-}
-
-#sos-button:active {
-    transform: scale(0.9);
-}
-
 /* Animations */
 @keyframes pulse {
     0% {
@@ -640,4 +609,4 @@ h2 {
         height: 400px;
     }
 }
- 
+
