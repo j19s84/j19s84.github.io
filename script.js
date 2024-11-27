@@ -112,7 +112,9 @@ async function fetchWildfireData(lat, lon) {
                 const clickedLat = e.latlng.lat;
                 const clickedLon = e.latlng.lng;
 
+            });
         }
+
         // Process wildfire features
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
