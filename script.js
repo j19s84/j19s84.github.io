@@ -123,11 +123,12 @@ async function fetchWildfireData(lat, lon) {
                 updateLocation(clickedLat, clickedLon);
             });
         }
+
         // Process wildfire features
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
                 if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-
+            
                 const props = feature.attributes;
                 const fireLat = feature.geometry.y;
                 const fireLon = feature.geometry.x;
@@ -153,16 +154,16 @@ async function fetchWildfireData(lat, lon) {
                 const isRx = props.IncidentName?.includes('RX') || props.FireType?.includes('RX');
                 const markerHtml = isNew || isRx ?
                     `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
-                       ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
-                       ${isRx ? '<span class="rx-fire-indicator"><span class="rx-symbol">℞</span></span>' : ''}
-                   </div>` :
+                        ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
+                        ${isRx ? '<span class="rx-fire-indicator"><span class="rx-symbol">℞</span></span>' : ''}
+                    </div>` :
                     `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`;
 
                 const fireIcon = L.divIcon({
                     className: 'fire-icon',
                     html: markerHtml,
                     iconSize: [size, size]
-                });
+                }); 
 
                 const discoveryDateTime = props.FireDiscoveryDateTime ?
                     new Date(props.FireDiscoveryDateTime).toLocaleString() : 'N/A';
@@ -248,39 +249,39 @@ async function fetchWildfireData(lat, lon) {
                             .bindPopup('Your Location')
                             .openPopup();
 
-                        updateLocation(clickedLat, clickedLon);  // Right here, after .openPopup();
+                        const fireRisk = {
+                            score: 10,
+                            level: 'EXTREME',
+                            tags: ['🔥 Active Fire']
+                        };
+
+                        currentRiskLevel = 'EXTREME';
+                        currentLocation = {
+                            lat: clickedLat,
+                            lon: clickedLon,
+                            name: props.IncidentName
+                        };
+
+                        const riskIndicator = document.getElementById('risk-indicator');
+                        if (riskIndicator) {
+                            riskIndicator.textContent = `Risk Level: ${fireRisk.level}`;
+                            riskIndicator.className = `risk-indicator risk-${fireRisk.level.toLowerCase()}`;
+                        }
+
+                        // Fetch all updated data
+                        (async () => {
+                            await Promise.all([
+                                fetchWeatherData(clickedLat, clickedLon),
+                                fetchNWSAlerts(clickedLat, clickedLon),
+                                fetchNIFCData(clickedLat, clickedLon)
+                            ]).catch(err => console.error('Error updating data:', err));
+
+                            wildfireMap.setView([clickedLat, clickedLon], 8);
+                        })();
+
+                        updateLocation(clickedLat, clickedLon); 
                     });
-
-                const fireRisk = {
-                    score: 10,
-                    level: 'EXTREME',
-                    tags: ['🔥 Active Fire']
-                };
-
-                currentRiskLevel = 'EXTREME';
-                currentLocation = {
-                    lat: clickedLat,
-                    lon: clickedLon,
-                    name: props.IncidentName
-                };
-
-                const riskIndicator = document.getElementById('risk-indicator');
-                if (riskIndicator) {
-                    riskIndicator.textContent = `Risk Level: ${fireRisk.level}`;
-                    riskIndicator.className = `risk-indicator risk-${fireRisk.level.toLowerCase()}`;
-                }
-                
-                // Fetch all updated data
-                (async () => {
-                    await Promise.all([
-                        fetchWeatherData(clickedLat, clickedLon),
-                        fetchNWSAlerts(clickedLat, clickedLon),
-                        fetchNIFCData(clickedLat, clickedLon)
-                    ]).catch(err => console.error('Error updating data:', err));
-
-                    wildfireMap.setView([clickedLat, clickedLon], 8);
-                })();
-            });
+            }); 
 
             if (mapLegend) {
                 mapLegend.remove();
@@ -1030,4 +1031,3 @@ const userProfile = {
 };
 
 
- 
