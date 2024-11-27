@@ -510,7 +510,13 @@ function setupAlertCollapse() {
 
 async function findEvacuationRoutes(startLat, startLon, fireLocation) {
     try {
-        // Find safe points (emergency facilities) outside the danger zone
+
+        wildfireMap.eachLayer((layer) => {
+            if (layer instanceof L.GeoJSON) {
+                layer.remove();
+            }
+        });
+
         const safePoints = await findSafeEvacuationPoints(startLat, startLon, fireLocation);
         
         if (safePoints.length === 0) {
@@ -528,8 +534,9 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
         }));
 
         // Draw routes on map
-        routes.forEach((route, index) => {
+                routes.forEach((route, index) => {
             const colors = ['#2ecc71', '#3498db', '#9b59b6'];
+            
             const routeLine = L.geoJSON(route.geometry, {
                 className: `route-line route-${index}`,
                 style: {
@@ -538,19 +545,31 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
                     opacity: 0.7
                 }
             }).addTo(wildfireMap);
-        
-            // Add click handler to the route line
+
             routeLine.on('click', () => {
-                // Remove active class from all routes and options
-                document.querySelectorAll('.route-line').forEach(r => r.setStyle({ weight: 4, opacity: 0.7 }));
-                document.querySelectorAll('.route-option').forEach(opt => opt.classList.remove('active'));
+                routes.forEach(r => {
+                    if (r.line && r.line.setStyle) {
+                        r.line.setStyle({
+                            weight: 4,
+                            opacity: 0.7
+                        });
+                    }
+                });
                 
-                // Highlight clicked route and corresponding option
-                routeLine.setStyle({ weight: 6, opacity: 1 });
-                document.querySelector(`.route-option:nth-child(${index + 1})`).classList.add('active');
+                document.querySelectorAll('.route-option').forEach(opt => 
+                    opt.classList.remove('active'));
+                
+                routeLine.setStyle({
+                    weight: 6,
+                    opacity: 1
+                });
+                
+                const routeOption = document.querySelector(`.route-option:nth-child(${index + 1})`);
+                if (routeOption) {
+                    routeOption.classList.add('active');
+                }
             });
-        
-            // Store reference to the line
+
             route.line = routeLine;
         });
         
