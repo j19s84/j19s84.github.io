@@ -591,7 +591,7 @@ async function fetchNWSAlerts(lat, lon) {
     try {
         const headers = {
             'Accept': 'application/geo+json',
-            'User-Agent': '(2Safety, https://j19s84.github.io/, contact@example.com)'
+            'User-Agent': '(2Safety, https://j19s84.github.io/, contact@2safety.app)'
         };
 
         const pointResponse = await fetch(
@@ -599,6 +599,7 @@ async function fetchNWSAlerts(lat, lon) {
             { headers }
         );
         const pointData = await pointResponse.json();
+        console.log('NWS Point Response:', pointData); 
 
         const forecastZone = pointData.properties.forecastZone.split('/').pop();
         const county = pointData.properties.county.split('/').pop();
