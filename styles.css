@@ -638,6 +638,24 @@ h2 {
     margin-right: 8px;
 }
 
+.route-option {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.route-option.active {
+    background: #f0f0f0;
+    transform: translateX(5px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.route-line {
+    transition: all 0.2s ease;
+}
+
+.route-line.active {
+    opacity: 1;
+}
 /* Media Queries */
 @media (max-width: 768px) {
     .content-container {
