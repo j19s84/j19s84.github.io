@@ -171,42 +171,16 @@ async function fetchRoute(startLat, startLon, endLat, endLon) {
 function drawRoute(route, color) {
     if (!route || !route.geometry) return;
 
-    L.geoJSON(route.geometry, {
+    const routeLine = L.geoJSON(route.geometry, {
         style: {
             color: color,
             weight: 4,
             opacity: 0.7
         }
     }).addTo(wildfireMap);
-}
 
-async function findEvacuationRoutes(startLat, startLon, fireLocation) {
-    try {
-        const safePoints = await findSafeEvacuationPoints(startLat, startLon, fireLocation);
-        
-        if (safePoints.length === 0) {
-            console.warn('No safe evacuation points found');
-            return [];
-        }
-
-        const routes = await Promise.all(safePoints.slice(0, 3).map(async point => {
-            const route = await fetchRoute(startLat, startLon, point.lat, point.lon);
-            return {
-                ...route,
-                destination: point
-            };
-        }));
-
-        routes.forEach((route, index) => {
-            const colors = ['#2ecc71', '#3498db', '#9b59b6'];
-            drawRoute(route, colors[index]);
-        });
-
-        return routes;
-    } catch (error) {
-        console.error('Error finding evacuation routes:', error);
-        return [];
-    }
+    route.line = routeLine; // Store reference to the layer
+    return routeLine;
 }
 
 async function fetchWildfireData(lat, lon) {
