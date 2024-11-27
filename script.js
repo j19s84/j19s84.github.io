@@ -108,8 +108,11 @@ async function fetchWildfireData(lat, lon) {
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(wildfireMap);
-        }
+            wildfireMap.on('click', function(e) {
+                const clickedLat = e.latlng.lat;
+                const clickedLon = e.latlng.lng;
 
+        }
         // Process wildfire features
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
@@ -234,6 +237,9 @@ async function fetchWildfireData(lat, lon) {
                             .addTo(wildfireMap)
                             .bindPopup('Your Location')
                             .openPopup();
+
+                        updateLocation(clickedLat, clickedLon);  // Right here, after .openPopup();
+                        });
 
                         const fireRisk = {
                             score: 10,
