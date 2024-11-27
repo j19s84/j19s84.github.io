@@ -112,9 +112,17 @@ async function fetchWildfireData(lat, lon) {
                 const clickedLat = e.latlng.lat;
                 const clickedLon = e.latlng.lng;
 
+                if (userLocationMarker) {
+                    userLocationMarker.remove();
+                }
+                userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
+                    .addTo(wildfireMap)
+                    .bindPopup('Your Location')
+                    .openPopup();
+
+                updateLocation(clickedLat, clickedLon);
             });
         }
-
         // Process wildfire features
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
@@ -241,36 +249,37 @@ async function fetchWildfireData(lat, lon) {
                             .openPopup();
 
                         updateLocation(clickedLat, clickedLon);  // Right here, after .openPopup();
-                        });
-
-                        const fireRisk = {
-                            score: 10,
-                            level: 'EXTREME',
-                            tags: ['🔥 Active Fire']
-                        };
-
-                        currentRiskLevel = 'EXTREME';
-                        currentLocation = {
-                            lat: clickedLat,
-                            lon: clickedLon,
-                            name: props.IncidentName
-                        };
-
-                        const riskIndicator = document.getElementById('risk-indicator');
-                        if (riskIndicator) {
-                            riskIndicator.textContent = `Risk Level: ${fireRisk.level}`;
-                            riskIndicator.className = `risk-indicator risk-${fireRisk.level.toLowerCase()}`;
-                        }
-
-                        // Fetch all updated data
-                        await Promise.all([
-                            fetchWeatherData(clickedLat, clickedLon),
-                            fetchNWSAlerts(clickedLat, clickedLon),
-                            fetchNIFCData(clickedLat, clickedLon)
-                        ]).catch(err => console.error('Error updating data:', err));
-
-                        wildfireMap.setView([clickedLat, clickedLon], 8);
                     });
+
+                const fireRisk = {
+                    score: 10,
+                    level: 'EXTREME',
+                    tags: ['🔥 Active Fire']
+                };
+
+                currentRiskLevel = 'EXTREME';
+                currentLocation = {
+                    lat: clickedLat,
+                    lon: clickedLon,
+                    name: props.IncidentName
+                };
+
+                const riskIndicator = document.getElementById('risk-indicator');
+                if (riskIndicator) {
+                    riskIndicator.textContent = `Risk Level: ${fireRisk.level}`;
+                    riskIndicator.className = `risk-indicator risk-${fireRisk.level.toLowerCase()}`;
+                }
+                
+                // Fetch all updated data
+                (async () => {
+                    await Promise.all([
+                        fetchWeatherData(clickedLat, clickedLon),
+                        fetchNWSAlerts(clickedLat, clickedLon),
+                        fetchNIFCData(clickedLat, clickedLon)
+                    ]).catch(err => console.error('Error updating data:', err));
+
+                    wildfireMap.setView([clickedLat, clickedLon], 8);
+                })();
             });
 
             if (mapLegend) {
