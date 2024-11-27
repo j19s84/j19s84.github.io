@@ -77,6 +77,138 @@ const debounce = (func, wait) => {
     };
 };
 
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function calculateBoundingBox(lat, lon, radiusKm) {
+    const latChange = (radiusKm / 111.32); // 1 degree = 111.32km
+    const lonChange = (radiusKm / (111.32 * Math.cos(lat * Math.PI / 180)));
+    return `${lat - latChange},${lon - lonChange},${lat + latChange},${lon + lonChange}`;
+}
+function createEvacuationZones(fireLat, fireLon, acres) {
+    const baseRadius = Math.sqrt(acres) * 100;
+    const dangerRadius = Math.max(baseRadius, 5000);
+    const warningRadius = dangerRadius * 2;
+
+    const dangerZone = L.circle([fireLat, fireLon], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.15,
+        radius: dangerRadius
+    }).addTo(wildfireMap);
+
+    const warningZone = L.circle([fireLat, fireLon], {
+        color: 'orange',
+        fillColor: '#ff0',
+        fillOpacity: 0.1,
+        radius: warningRadius
+    }).addTo(wildfireMap);
+
+    return { dangerZone, warningZone };
+}
+
+async function findSafeEvacuationPoints(startLat, startLon, fireLocation) {
+    const bbox = calculateBoundingBox(startLat, startLon, 50);
+
+    try {
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: `[out:json][timeout:25];(
+                node["amenity"="shelter"](${bbox});
+                node["emergency"="assembly_point"](${bbox});
+                node["amenity"="hospital"](${bbox});
+            );out body;>;out skel qt;`
+        });
+
+        const data = await response.json();
+        
+        return data.elements
+            .filter(element => {
+                const distance = calculateDistance(
+                    fireLocation.lat,
+                    fireLocation.lon,
+                    element.lat,
+                    element.lon
+                );
+                return distance > 20;
+            })
+            .map(element => ({
+                type: element.tags.amenity || element.tags.emergency,
+                name: element.tags.name || 'Emergency Facility',
+                lat: element.lat,
+                lon: element.lon
+            }));
+    } catch (error) {
+        console.error('Error fetching safe points:', error);
+        return [];
+    }
+}
+
+async function fetchRoute(startLat, startLon, endLat, endLon) {
+    try {
+        const response = await fetch(
+            `https://router.project-osrm.org/route/v1/driving/` +
+            `${startLon},${startLat};${endLon},${endLat}` +
+            `?overview=full&geometries=geojson`
+        );
+        const data = await response.json();
+        return data.routes[0];
+    } catch (error) {
+        console.error('Error fetching route:', error);
+        return null;
+    }
+}
+
+function drawRoute(route, color) {
+    if (!route || !route.geometry) return;
+
+    L.geoJSON(route.geometry, {
+        style: {
+            color: color,
+            weight: 4,
+            opacity: 0.7
+        }
+    }).addTo(wildfireMap);
+}
+
+async function findEvacuationRoutes(startLat, startLon, fireLocation) {
+    try {
+        const safePoints = await findSafeEvacuationPoints(startLat, startLon, fireLocation);
+        
+        if (safePoints.length === 0) {
+            console.warn('No safe evacuation points found');
+            return [];
+        }
+
+        const routes = await Promise.all(safePoints.slice(0, 3).map(async point => {
+            const route = await fetchRoute(startLat, startLon, point.lat, point.lon);
+            return {
+                ...route,
+                destination: point
+            };
+        }));
+
+        routes.forEach((route, index) => {
+            const colors = ['#2ecc71', '#3498db', '#9b59b6'];
+            drawRoute(route, colors[index]);
+        });
+
+        return routes;
+    } catch (error) {
+        console.error('Error finding evacuation routes:', error);
+        return [];
+    }
+}
+
 async function fetchWildfireData(lat, lon) {
     const mapElement = document.getElementById('wildfire-map');
     mapElement.classList.add('loading');
@@ -236,9 +368,28 @@ async function fetchWildfireData(lat, lon) {
                                     </div>
                                 </div>
                             `;
-
-                            document.getElementById('fire-details-panel').classList.add('active');
+                    const zones = createEvacuationZones(fireLat, fireLon, acres);
+            findEvacuationRoutes(clickedLat, clickedLon, { lat: fireLat, lon: fireLon })
+                .then(routes => {
+                        if (routes.length > 0) {
+                        detailsPanel.innerHTML += `
+                            <div class="evacuation-routes">
+                                <h3>🚗 Evacuation Routes</h3>
+                                ${routes.map((route, index) => `
+                                    <div class="route-option">
+                                        <strong>Option ${index + 1}:</strong> 
+                                        To ${route.destination.name}
+                                        (${Math.round(route.distance / 1000)}km, 
+                                        ~${Math.round(route.duration / 60)} mins)
+                                    </div>
+                                `).join('')}
+                        </div>
+                            `;
                         }
+                    });
+
+                document.getElementById('fire-details-panel').classList.add('active');
+            }
 
                         // Update location marker
                         if (userLocationMarker) {
@@ -370,6 +521,105 @@ function setupAlertCollapse() {
                 'rotate(0deg)' : 'rotate(180deg)';
         });
     });
+}
+
+async function findEvacuationRoutes(startLat, startLon, fireLocation) {
+    try {
+        // Find safe points (emergency facilities) outside the danger zone
+        const safePoints = await findSafeEvacuationPoints(startLat, startLon, fireLocation);
+        
+        if (safePoints.length === 0) {
+            console.warn('No safe evacuation points found');
+            return [];
+        }
+
+        // Get routes to the closest safe points
+        const routes = await Promise.all(safePoints.slice(0, 3).map(async point => {
+            const route = await fetchRoute(startLat, startLon, point.lat, point.lon);
+            return {
+                ...route,
+                destination: point
+            };
+        }));
+
+        // Draw routes on map
+        routes.forEach((route, index) => {
+            const colors = ['#2ecc71', '#3498db', '#9b59b6'];
+            drawRoute(route, colors[index]);
+        });
+
+        return routes;
+    } catch (error) {
+        console.error('Error finding evacuation routes:', error);
+        return [];
+    }
+}
+
+async function findSafeEvacuationPoints(startLat, startLon, fireLocation) {
+    const bbox = calculateBoundingBox(startLat, startLon, 50); // 50km radius
+
+    try {
+        // Query emergency facilities using Overpass API
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: `[out:json][timeout:25];(
+                node["amenity"="shelter"](${bbox});
+                node["emergency"="assembly_point"](${bbox});
+                node["amenity"="hospital"](${bbox});
+            );out body;>;out skel qt;`
+        });
+
+        const data = await response.json();
+        
+        // Filter points outside danger zone
+        return data.elements
+            .filter(element => {
+                const distance = calculateDistance(
+                    fireLocation.lat,
+                    fireLocation.lon,
+                    element.lat,
+                    element.lon
+                );
+                return distance > 20; // More than 20km from fire
+            })
+            .map(element => ({
+                type: element.tags.amenity || element.tags.emergency,
+                name: element.tags.name || 'Emergency Facility',
+                lat: element.lat,
+                lon: element.lon
+            }));
+    } catch (error) {
+        console.error('Error fetching safe points:', error);
+        return [];
+    }
+}
+
+async function fetchRoute(startLat, startLon, endLat, endLon) {
+    try {
+        // Using OSRM for routing
+        const response = await fetch(
+            `https://router.project-osrm.org/route/v1/driving/` +
+            `${startLon},${startLat};${endLon},${endLat}` +
+            `?overview=full&geometries=geojson`
+        );
+        const data = await response.json();
+        return data.routes[0];
+    } catch (error) {
+        console.error('Error fetching route:', error);
+        return null;
+    }
+}
+
+function drawRoute(route, color) {
+    if (!route || !route.geometry) return;
+
+    L.geoJSON(route.geometry, {
+        style: {
+            color: color,
+            weight: 4,
+            opacity: 0.7
+        }
+    }).addTo(wildfireMap);
 }
 
 
@@ -918,9 +1168,8 @@ class SOSPlan {
 
     async initialize() {
         try {
-            // Calculate search area
-            const bbox = this.calculateBoundingBox(this.location.lat, this.location.lon, 25);
-
+            const bbox = calculateBoundingBox(this.location.lat, this.location.lon, 25);
+    
             // Fetch emergency facilities
             const overpassResponse = await fetch(`https://overpass-api.de/api/interpreter`, {
                 method: 'POST',
@@ -942,7 +1191,7 @@ class SOSPlan {
             throw error;
         }
     }
-
+    
     processEvacuationData(facilities) {
         // Process emergency facilities
         this.safetyLocations = facilities.elements.map(facility => ({
@@ -950,34 +1199,16 @@ class SOSPlan {
             name: facility.tags.name || 'Unnamed Facility',
             lat: facility.lat,
             lon: facility.lon,
-            distance: this.calculateDistance(
+            distance: calculateDistance(
                 this.location.lat, 
                 this.location.lon, 
                 facility.lat, 
                 facility.lon
             )
         }));
-
+    
         // Sort by distance
         this.safetyLocations.sort((a, b) => a.distance - b.distance);
-    }
-
-    calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Earth's radius in km
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    }
-
-    calculateBoundingBox(lat, lon, radiusKm) {
-        const latChange = (radiusKm / 111.32); // 1 degree = 111.32km
-        const lonChange = (radiusKm / (111.32 * Math.cos(lat * Math.PI / 180)));
-        return `${lat - latChange},${lon - lonChange},${lat + latChange},${lon + lonChange}`;
     }
 
     generateEvacuationPlan() {
