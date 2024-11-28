@@ -499,8 +499,6 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
             
             const routeLine = L.geoJSON(route.geometry, {
                 className: `route-line route-${index}`,
-                clickTolerance: 10,
-                interactive: true,
                 style: {
                     color: colors[index],
                     weight: 4,
@@ -535,7 +533,7 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
                 style: {
                     color: colors[index],
                     weight: 12,
-                    opacity: 0
+                    opacity: 0.3
                 }
             }).addTo(wildfireMap);
 
