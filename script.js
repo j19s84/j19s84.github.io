@@ -1106,6 +1106,14 @@ function updateLocation(lat, lon) {
 }
 
 function calculateFireRisk(weatherData, alerts, isUrban = false) {
+    if (currentRiskLevel === 'EXTREME') {
+        return {
+            score: 10,
+            level: 'EXTREME',
+            tags: ['🔥 Active Fire']
+        };
+    }
+    
     let riskScore = 0;
     let riskLevel = 'LOW';
     const alertTags = new Set();
@@ -1149,13 +1157,7 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
                 alertTags.add('💧 Low Humidity');
                 riskScore += 2;
             }
-            if (nearFire) {
-                return {
-                    score: 10,
-                    level: 'EXTREME',
-                    tags: ['🔥 Active Fire']
-                };
-            }
+           
         });
 
         // Adjust for multiple contributing factors
