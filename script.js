@@ -214,8 +214,13 @@ async function fetchWildfireData(lat, lon) {
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(wildfireMap);
-        }
 
+            const trafficLayer = L.tileLayer('https://{s}.api.tomtom.com/traffic/map/4/tile/flow/absolute/{z}/{x}/{y}.png?key=i9vOVwZL7OOMyuoMyZUWSYiGvsFq9NNV', {
+                maxZoom: 18,
+                opacity: 0.6
+            }).addTo(wildfireMap);
+        }
+        
         // Process wildfire features
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
@@ -342,8 +347,16 @@ async function fetchWildfireData(lat, lon) {
                                                     <div class="route-option">
                                                         <strong>Option ${index + 1}:</strong> 
                                                         To ${route.destination.name}
-                                                        (${Math.round(route.distance / 1000)}km, 
+                                                        (${Math.round(route.distance / 1609.34)}mi, 
                                                         ~${Math.round(route.duration / 60)} mins)
+                                                           <br>
+                                                        <small>
+                                                            <a href="https://www.openstreetmap.org/?mlat=${route.destination.lat}&mlon=${route.destination.lon}" 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer">
+                                                                View on OpenStreetMap 🔗
+                                                            </a>
+                                                        </small>
                                                     </div>
                                                 `).join('')}
                                             </div>
@@ -408,7 +421,6 @@ async function fetchWildfireData(lat, lon) {
                                 fetchNIFCData(clickedLat, clickedLon)
                             ]).catch(err => console.error('Error updating data:', err));
 
-                            wildfireMap.setView([clickedLat, clickedLon], 8);
                         })();
 
                         updateLocation(clickedLat, clickedLon);
