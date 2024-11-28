@@ -534,11 +534,13 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
         }));
 
         // Draw routes on map
-                routes.forEach((route, index) => {
+        routes.forEach((route, index) => {
             const colors = ['#2ecc71', '#3498db', '#9b59b6'];
             
             const routeLine = L.geoJSON(route.geometry, {
                 className: `route-line route-${index}`,
+                clickTolerance: 10,  // At this level
+                interactive: true,   // At this level
                 style: {
                     color: colors[index],
                     weight: 4,
@@ -546,7 +548,28 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
                 }
             }).addTo(wildfireMap);
 
-            routeLine.on('click', () => {
+            const destination = route.destination;
+            const markerIcon = L.divIcon({
+                className: `destination-marker-${destination.type}`,
+                html: `<div class="marker-icon ${destination.type}">
+                    ${destination.type === 'hospital' ? '🏥' : 
+                      destination.type === 'shelter' ? '🏘️' : 
+                      destination.type === 'assembly_point' ? '🚩' : '📍'}
+                </div>`,
+                iconSize: [32, 32]
+            });
+        
+            L.marker([destination.lat, destination.lon], {
+                icon: markerIcon
+            }).addTo(wildfireMap)
+            .bindPopup(`
+                <strong>${destination.name}</strong><br>
+                ${destination.type}<br>
+                Distance: ${(route.distance / 1000).toFixed(1)}km
+            `);
+
+            routeLine.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
                 routes.forEach(r => {
                     if (r.line && r.line.setStyle) {
                         r.line.setStyle({
@@ -554,6 +577,11 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
                             opacity: 0.7
                         });
                     }
+                });
+
+                clickableArea.on('click', (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    routeLine.fire('click');
                 });
                 
                 document.querySelectorAll('.route-option').forEach(opt => 
