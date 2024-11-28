@@ -214,27 +214,13 @@ async function fetchWildfireData(lat, lon) {
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(wildfireMap);
-            wildfireMap.on('click', function(e) {
-                const clickedLat = e.latlng.lat;
-                const clickedLon = e.latlng.lng;
-
-                if (userLocationMarker) {
-                    userLocationMarker.remove();
-                }
-                userLocationMarker = L.marker([clickedLat, clickedLon], { icon: userIcon })
-                    .addTo(wildfireMap)
-                    .bindPopup('Your Location')
-                    .openPopup();
-
-                updateLocation(clickedLat, clickedLon);
-            });
         }
 
         // Process wildfire features
         if (data.features && data.features.length > 0) {
             data.features.forEach(feature => {
                 if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-            
+                
                 const props = feature.attributes;
                 const fireLat = feature.geometry.y;
                 const fireLon = feature.geometry.x;
@@ -269,7 +255,7 @@ async function fetchWildfireData(lat, lon) {
                     className: 'fire-icon',
                     html: markerHtml,
                     iconSize: [size, size]
-                }); 
+                });
 
                 const discoveryDateTime = props.FireDiscoveryDateTime ?
                     new Date(props.FireDiscoveryDateTime).toLocaleString() : 'N/A';
@@ -342,39 +328,49 @@ async function fetchWildfireData(lat, lon) {
                                     </div>
                                 </div>
                             `;
-                    const zones = createEvacuationZones(fireLat, fireLon, acres);
-            findEvacuationRoutes(clickedLat, clickedLon, { lat: fireLat, lon: fireLon })
-                .then(routes => {
-                        if (routes.length > 0) {
-                        detailsPanel.innerHTML += `
-                            <div class="evacuation-routes">
-                                <h3>🚗 Evacuation Routes</h3>
-                                ${routes.map((route, index) => `
-                                    <div class="route-option">
-                                        <strong>Option ${index + 1}:</strong> 
-                                        To ${route.destination.name}
-                                        (${Math.round(route.distance / 1000)}km, 
-                                        ~${Math.round(route.duration / 60)} mins)
-                                    </div>
-                                `).join('')}
-                        </div>
-                            `;
-                            document.querySelectorAll('.route-option').forEach((option, index) => {
-                                option.addEventListener('click', () => {
-                                    // Remove active class from all routes and options
-                                    document.querySelectorAll('.route-line').forEach(r => r.setStyle({ weight: 4, opacity: 0.7 }));
-                                    document.querySelectorAll('.route-option').forEach(opt => opt.classList.remove('active'));
-                                    
-                                    // Highlight clicked option and corresponding route
-                                    option.classList.add('active');
-                                    routes[index].line.setStyle({ weight: 6, opacity: 1 });
-                                });
-                            });
-                        }
-                    });
 
-                document.getElementById('fire-details-panel').classList.add('active');
-            }
+                            const zones = createEvacuationZones(fireLat, fireLon, acres);
+
+                            // Find evacuation routes
+                            findEvacuationRoutes(clickedLat, clickedLon, { lat: fireLat, lon: fireLon })
+                                .then(routes => {
+                                    if (routes.length > 0) {
+                                        detailsPanel.innerHTML += `
+                                            <div class="evacuation-routes">
+                                                <h3>🚗 Evacuation Routes</h3>
+                                                ${routes.map((route, index) => `
+                                                    <div class="route-option">
+                                                        <strong>Option ${index + 1}:</strong> 
+                                                        To ${route.destination.name}
+                                                        (${Math.round(route.distance / 1000)}km, 
+                                                        ~${Math.round(route.duration / 60)} mins)
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        `;
+
+                                        // Add click handlers for route options
+                                        document.querySelectorAll('.route-option').forEach((option, index) => {
+                                            option.addEventListener('click', () => {
+                                               
+                                                document.querySelectorAll('.route-option').forEach(opt => 
+                                                    opt.classList.remove('active'));
+                                                
+                                                // Highlight this option and route
+                                                option.classList.add('active');
+                                                if (routes[index].line) {
+                                                    routes[index].line.setStyle({
+                                                        weight: 6,
+                                                        opacity: 1
+                                                    });
+                                                }
+                                            });
+                                        });
+                                    }
+                                });
+
+                            document.getElementById('fire-details-panel').classList.add('active');
+                        }
 
                         // Update location marker
                         if (userLocationMarker) {
@@ -415,52 +411,16 @@ async function fetchWildfireData(lat, lon) {
                             wildfireMap.setView([clickedLat, clickedLon], 8);
                         })();
 
-                        updateLocation(clickedLat, clickedLon); 
+                        updateLocation(clickedLat, clickedLon);
                     });
-            }); 
-
-            if (mapLegend) {
-                mapLegend.remove();
-            }
-            mapLegend = L.control({ position: 'bottomright' });
-            mapLegend.onAdd = function(map) {
-                const div = L.DomUtil.create('div', 'info legend');
-                div.innerHTML = `
-                    <div class="legend-container">
-                        <h4>Fire Size</h4>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background: #FF0000"></span>
-                            <span>Large (>10,000 acres)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background: #FFA500"></span>
-                            <span>Medium (1,000-10,000 acres)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background: #FFD700"></span>
-                            <span>Small (<1,000 acres)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="new-fire-indicator-legend">NEW</span>
-                            <span>Reported in last 24hrs</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background: #4A90E2"></span>
-                            <span>Your Location</span>
-                        </div>
-                    </div>
-                `;
-                return div;
-            };
-            mapLegend.addTo(wildfireMap);
+            });
         }
     } catch (error) {
         console.error('Error fetching wildfire data:', error);
-        document.getElementById('wildfire-map').innerHTML =
-            '<p>Wildfire data temporarily unavailable. Please try again later.</p>';
-    } finally {
         mapElement.classList.remove('loading');
+        throw error;
     }
+    mapElement.classList.remove('loading');
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -510,7 +470,7 @@ function setupAlertCollapse() {
 
 async function findEvacuationRoutes(startLat, startLon, fireLocation) {
     try {
-
+        // Clear existing routes
         wildfireMap.eachLayer((layer) => {
             if (layer instanceof L.GeoJSON) {
                 layer.remove();
@@ -539,8 +499,8 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
             
             const routeLine = L.geoJSON(route.geometry, {
                 className: `route-line route-${index}`,
-                clickTolerance: 10,  // At this level
-                interactive: true,   // At this level
+                clickTolerance: 10,
+                interactive: true,
                 style: {
                     color: colors[index],
                     weight: 4,
@@ -548,6 +508,7 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
                 }
             }).addTo(wildfireMap);
 
+            // Add destination marker
             const destination = route.destination;
             const markerIcon = L.divIcon({
                 className: `destination-marker-${destination.type}`,
@@ -558,56 +519,72 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
                 </div>`,
                 iconSize: [32, 32]
             });
-        
+
             L.marker([destination.lat, destination.lon], {
                 icon: markerIcon
-            }).addTo(wildfireMap)
+            })
+            .addTo(wildfireMap)
             .bindPopup(`
                 <strong>${destination.name}</strong><br>
                 ${destination.type}<br>
                 Distance: ${(route.distance / 1000).toFixed(1)}km
             `);
 
+            // Add clickable area
+            const clickableArea = L.geoJSON(route.geometry, {
+                style: {
+                    color: colors[index],
+                    weight: 12,
+                    opacity: 0
+                }
+            }).addTo(wildfireMap);
+
+            // Click handler for route line
             routeLine.on('click', (e) => {
                 L.DomEvent.stopPropagation(e);
+                
+                // Reset all routes
                 routes.forEach(r => {
-                    if (r.line && r.line.setStyle) {
+                    if (r.line) {
                         r.line.setStyle({
                             weight: 4,
                             opacity: 0.7
                         });
                     }
                 });
-
-                clickableArea.on('click', (e) => {
-                    L.DomEvent.stopPropagation(e);
-                    routeLine.fire('click');
-                });
                 
+                // Reset all route options
                 document.querySelectorAll('.route-option').forEach(opt => 
                     opt.classList.remove('active'));
                 
+                // Highlight this route
                 routeLine.setStyle({
                     weight: 6,
                     opacity: 1
                 });
                 
+                // Highlight corresponding option
                 const routeOption = document.querySelector(`.route-option:nth-child(${index + 1})`);
                 if (routeOption) {
                     routeOption.classList.add('active');
                 }
             });
 
+            // Click handler for clickable area
+            clickableArea.on('click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                routeLine.fire('click');
+            });
+
             route.line = routeLine;
         });
-        
-            return routes;  // Add this return statement
-        } catch (error) {
-            console.error('Error finding evacuation routes:', error);
+
+        return routes;
+    } catch (error) {
+        console.error('Error finding evacuation routes:', error);
         return [];
     }
-} 
-
+}
 
 async function findSafeEvacuationPoints(startLat, startLon, fireLocation) {
     const bbox = calculateBoundingBox(startLat, startLon, 50); // 50km radius
