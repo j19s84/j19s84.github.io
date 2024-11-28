@@ -116,6 +116,14 @@ function createEvacuationZones(fireLat, fireLon, acres) {
     return { dangerZone, warningZone };
 }
 
+function updateRiskLevel(level) {
+    const riskIndicator = document.getElementById('risk-indicator');
+    if (riskIndicator) {
+        riskIndicator.textContent = `Risk Level: ${level}`;
+        riskIndicator.className = `risk-indicator risk-${level.toLowerCase()}`;
+    }
+}
+
 async function findSafeEvacuationPoints(startLat, startLon, fireLocation) {
     const bbox = calculateBoundingBox(startLat, startLon, 50);
 
@@ -272,7 +280,8 @@ async function fetchWildfireData(lat, lon) {
                     .on('click', async function(e) {
                         const clickedLat = e.latlng.lat;
                         const clickedLon = e.latlng.lng;
-
+                        
+                        currentRiskLevel = 'HIGH';  // Update global risk level
                         // Update the details panel
                         const detailsPanel = document.getElementById('fire-details-content');
                         if (detailsPanel) {
@@ -407,11 +416,7 @@ async function fetchWildfireData(lat, lon) {
                             name: props.IncidentName
                         };
 
-                        const riskIndicator = document.getElementById('risk-indicator');
-                        if (riskIndicator) {
-                            riskIndicator.textContent = `Risk Level: ${fireRisk.level}`;
-                            riskIndicator.className = `risk-indicator risk-${fireRisk.level.toLowerCase()}`;
-                        }
+                        updateRiskLevel(fireRisk.level);
 
                         // Fetch all updated data
                         (async () => {
@@ -999,11 +1004,7 @@ async function fetchNWSAlerts(lat, lon) {
 
         // Calculate and update risk even when alerts fail
         const riskResult = calculateFireRisk(null, [], false);
-        const riskIndicator = document.getElementById('risk-indicator');
-        if (riskIndicator) {
-            riskIndicator.textContent = `Risk Level: ${riskResult.level}`;
-            riskIndicator.className = `risk-indicator risk-${riskResult.level.toLowerCase()}`;
-        }
+        updateRiskLevel(riskResult.level);
     }
 }
 
@@ -1300,4 +1301,5 @@ const userProfile = {
         predefinedLocation: null,
         maxTravelDistance: null
     }
-};
+}; 
+
