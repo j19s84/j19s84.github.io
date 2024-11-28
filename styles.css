@@ -656,6 +656,22 @@ h2 {
 .route-line.active {
     opacity: 1;
 }
+
+.marker-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    font-size: 20px;
+}
+
+.marker-icon.hospital { border: 3px solid #ff4444; }
+.marker-icon.shelter { border: 3px solid #4CAF50; }
+.marker-icon.assembly_point { border: 3px solid #2196F3; }
 /* Media Queries */
 @media (max-width: 768px) {
     .content-container {
@@ -669,4 +685,3 @@ h2 {
 }
 
 
- 
