@@ -25,50 +25,51 @@
 </head>
 
 <body>
-    <header>
-        <div class="header-content">
-            <h1>2Safety</h1>
-            <div id="risk-indicator" class="risk-indicator">Calculating Risk...</div>
-        </div>
-    </header>
+    <div class="app-container dark-theme">
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo">2Safety</div>
+            <div class="risk-display">
+                <div class="risk-score">Risk Level: HIGH</div>
+                <div class="location-coords">Lat: 34.0522° N, Long: 118.2437° W</div>
+            </div>
+        </header>
 
-    <main>
-        <div class="location-search">
-            <input type="text" id="location-input" placeholder="Enter address, city, or zip code">
-            <button id="search-button">Search Location</button>
-        </div>
-
-        <p id="coordinates" style="text-align: center; margin: 10px 0;"></p>
-
-        <!-- Main content container with map and right panel -->
-        <div class="content-container">
-            <!-- Left side: Map -->
+        <!-- Main Map Section -->
+        <div class="map-container">
             <div id="wildfire-map"></div>
-
-            <!-- Right side: Scrollable container -->
-            <div class="right-panel-container">
-                <div id="fire-details-panel" class="fire-details-panel">
-                    <div id="fire-details-content"></div>
-                </div>
-
-                <!-- Weather alerts -->
-                <div id="alert-banner"></div>
-
-                <!-- Weather forecast -->
-                <div id="weather-section">
-                    <h2>Weather Forecast</h2>
-                    <div id="weather-container"></div>
-                </div>
+            <div class="map-controls">
+                <!-- Your existing map controls -->
             </div>
         </div>
 
-        <section id="evacuation-section">
-            <h2>Evacuation Status</h2>
-            <div id="evacuation-info">No current evacuation orders</div>
-        </section>
+        <!-- Info Panels Container -->
+        <div class="info-panels">
+            <!-- Weather Forecast Panel -->
+            <div class="panel weather-panel">
+                <h3>5-Day Forecast</h3>
+                <div class="forecast-container">
+                    <!-- Weather cards will go here -->
+                </div>
+            </div>
 
-        <button id="sos-button">Launch My SOS Plan</button>
-    </main>
+            <!-- Event Details Panel -->
+            <div class="panel details-panel">
+                <h3>Event Details</h3>
+                <div id="fire-details-content">
+                    <!-- Fire/weather event details will go here -->
+                </div>
+            </div>
+
+            <!-- SOS Panel -->
+            <div class="panel sos-panel">
+                <h3>Emergency Assistant</h3>
+                <button id="sos-button" class="sos-launch-btn">
+                    Launch SOS Assistant
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div id="sos-plan-panel" class="panel">
         <div class="panel-header">
