@@ -7,19 +7,18 @@
     <title>2Safety - Your AI Assistant for Extreme Weather</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14'>🔥</text></svg>">
 
-    <!-- Leaflet CSS must come before any other CSS -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 
-    <!-- Your custom CSS -->
+    <!-- Your CSS -->
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="sos-styles.css">
 
-    <!-- Leaflet JS must be loaded before your custom scripts -->
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 
-    <!-- Add evacuation-router.js before script.js -->
     <script src="evacuation-router.js"></script>
     <script src="script.js" defer></script>
 </head>
@@ -30,147 +29,51 @@
         <header class="main-header">
             <div class="logo">2Safety</div>
             <div class="risk-display">
-                <div class="risk-score">Risk Level: HIGH</div>
-                <div class="location-coords">Lat: 34.0522° N, Long: 118.2437° W</div>
+                <div id="risk-indicator" class="risk-indicator">Risk Level: Calculating...</div>
+                <div id="coordinates">Loading location...</div>
             </div>
         </header>
 
-        <!-- Main Map Section -->
-        <div class="map-container">
-            <div id="wildfire-map"></div>
-            <div class="map-controls">
-                <!-- Your existing map controls -->
+        <!-- Search Bar -->
+        <div class="location-search">
+            <input type="text" id="location-input" placeholder="Enter a location">
+            <button id="search-button">Search</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-container">
+            <!-- Map Container -->
+            <div id="wildfire-map" class="map-container"></div>
+
+            <!-- Info Panels -->
+            <div class="info-panels">
+                <!-- Weather Panel -->
+                <div class="panel weather-panel">
+                    <h3>Weather Forecast</h3>
+                    <div id="weather-container" class="weather-container"></div>
+                </div>
+
+                <!-- Event Details Panel -->
+                <div class="panel details-panel">
+                    <h3>Event Details</h3>
+                    <div id="fire-details-content"></div>
+                </div>
+
+                <!-- SOS Panel -->
+                <div class="panel sos-panel">
+                    <h3>Emergency Assistant</h3>
+                    <button id="sos-button" class="sos-launch-btn" onclick="openSOSModal()">
+                        Launch SOS Assistant
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Info Panels Container -->
-        <div class="info-panels">
-            <!-- Weather Forecast Panel -->
-            <div class="panel weather-panel">
-                <h3>5-Day Forecast</h3>
-                <div class="forecast-container">
-                    <!-- Weather cards will go here -->
-                </div>
-            </div>
-
-            <!-- Event Details Panel -->
-            <div class="panel details-panel">
-                <h3>Event Details</h3>
-                <div id="fire-details-content">
-                    <!-- Fire/weather event details will go here -->
-                </div>
-            </div>
-
-            <!-- SOS Panel -->
-            <div class="panel sos-panel">
-                <h3>Emergency Assistant</h3>
-                <button id="sos-button" class="sos-launch-btn">
-                    Launch SOS Assistant
-                </button>
-            </div>
+        <!-- Keep your existing SOS modal -->
+        <div id="sos-modal" class="modal">
+            <!-- Your existing SOS form content -->
         </div>
     </div>
-
-    <div id="sos-plan-panel" class="panel">
-        <div class="panel-header">
-            <h2>🆘 SOS Plan Setup</h2>
-            <div id="sos-risk-summary"></div>
-        </div>
-        
-        <form id="sos-profile-form">
-            <div class="form-section">
-                <h3>👥 Household Information</h3>
-                <div class="form-group">
-                    <label for="adults">Number of Adults:</label>
-                    <input type="number" id="adults" min="1" value="1">
-                </div>
-                <div class="form-group">
-                    <label for="minors">Children (under 14):</label>
-                    <input type="number" id="minors" min="0" value="0">
-                </div>
-                <div class="form-group">
-                    <label for="seniors">Seniors (over 65):</label>
-                    <input type="number" id="seniors" min="0" value="0">
-                </div>
-            </div>
-    
-            <div class="form-section">
-                <h3>🐾 Pets</h3>
-                <div class="form-group">
-                    <label for="dogs">Dogs:</label>
-                    <input type="number" id="dogs" min="0" value="0">
-                </div>
-                <div class="form-group">
-                    <label for="cats">Cats:</label>
-                    <input type="number" id="cats" min="0" value="0">
-                </div>
-                <div class="form-group">
-                    <label for="other-pets">Other Pets:</label>
-                    <input type="number" id="other-pets" min="0" value="0">
-                </div>
-            </div>
-    
-            <div class="form-section">
-                <h3>🚗 Transportation</h3>
-                <div class="form-group">
-                    <label for="has-vehicle">Do you have a vehicle?</label>
-                    <select id="has-vehicle">
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-                <div class="form-group vehicle-details">
-                    <label for="vehicle-type">Vehicle Type:</label>
-                    <select id="vehicle-type">
-                        <option value="sedan">Sedan</option>
-                        <option value="suv">SUV</option>
-                        <option value="truck">Truck</option>
-                        <option value="van">Van</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group vehicle-details">
-                    <label for="fuel-range">Estimated Fuel Range (miles):</label>
-                    <input type="number" id="fuel-range" min="0" step="10" value="300">
-                </div>
-            </div>
-    
-            <div class="form-section">
-                <h3>⚕️ Medical & Accessibility</h3>
-                <div class="form-group">
-                    <label for="has-disabilities">Does anyone require special assistance?</label>
-                    <select id="has-disabilities">
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
-                    </select>
-                </div>
-                <div class="form-group disability-details" style="display: none;">
-                    <label for="assistance-details">Please specify needs:</label>
-                    <textarea id="assistance-details"></textarea>
-                </div>
-            </div>
-    
-            <div class="form-section">
-                <h3>🏠 Evacuation Location</h3>
-                <div class="form-group">
-                    <label for="has-evacuation-place">Do you have a predetermined evacuation location?</label>
-                    <select id="has-evacuation-place">
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
-                    </select>
-                </div>
-                <div class="form-group evacuation-details" style="display: none;">
-                    <label for="evacuation-address">Address:</label>
-                    <input type="text" id="evacuation-address">
-                </div>
-            </div>
-    
-            <button type="submit" class="generate-plan-btn">Generate My SOS Plan</button>
-        </form>
-    </div>
-
-    <!-- Your custom JavaScript should be loaded last -->
-    <script src="script.js" defer></script>
 </body>
 
 </html>
