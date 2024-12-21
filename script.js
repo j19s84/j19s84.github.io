@@ -34,10 +34,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     try {
         // Initialize map with US center coordinates
-        wildfireMap = L.map('wildfire-map').setView([39.8283, -98.5795], 4);
+        wildfireMap = L.map('wildfire-map', {
+            center: [39.8283, -98.5795],
+            zoom: 4,
+            dragging: true,      // Enable dragging
+            tap: true,           // Enable mobile taps
+            trackResize: true,   // Handle window resizing
+            boxZoom: true,       // Enable box zooming
+            doubleClickZoom: true,
+            scrollWheelZoom: true
+        });
+
+        // Add the tile layer with proper opacity
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19,
+            opacity: 1.0  // Ensure full opacity
         }).addTo(wildfireMap);
+
         console.log('Map initialized');
 
         // Immediately fetch wildfire data
@@ -750,58 +764,47 @@ function addMapLegend() {
 let isMapInitialized = false;
 
 // Add this after your map initialization
-wildfireMap.on('click', async function(e) {
-    console.log('Map clicked:', e.latlng); // Debug log
-    
-    // Stop event propagation
-    L.DomEvent.stopPropagation(e);
-    
-    const clickedLat = e.latlng.lat;
-    const clickedLng = e.latlng.lng;
-    
-    try {
-        // Update map view with animation
-        wildfireMap.setView([clickedLat, clickedLng], 10, {
+wildfireMap.on('click', function(e) {
+    if (e.originalEvent.target.classList.contains('leaflet-container')) {
+        const { lat, lng } = e.latlng;
+        console.log('Clicked location:', lat, lng);
+        
+        // Update map center with animation
+        wildfireMap.setView([lat, lng], 10, {
             animate: true,
-            duration: 1
+            duration: 0.5
         });
         
-        // Get location name
-        const locationName = await reverseGeocode(clickedLat, clickedLng);
-        console.log('Location found:', locationName); // Debug log
-        
-        // Update location display
-        updateLocationDisplay(clickedLat, clickedLng, locationName);
-        
-        // Update current location for other functions
-        currentLocation = {
-            lat: clickedLat,
-            lon: clickedLng
-        };
-        
-        // Fetch all data for new location
-        await Promise.all([
-            fetchWeatherData(clickedLat, clickedLng),
-            fetchWildfireData(clickedLat, clickedLng),
-            fetchNWSAlerts(clickedLat, clickedLng),
-            fetchWeatherForecast(clickedLat, clickedLng)
-        ]);
-        
-    } catch (error) {
-        console.error('Error handling map click:', error);
+        // Update data for new location
+        updateLocationData(lat, lng);
     }
 });
 
-// Helper function to update location display
-function updateLocationDisplay(lat, lon, locationName) {
-    const locationInfo = document.getElementById('coordinates');
-    if (locationInfo) {
-        locationInfo.innerHTML = `
+// Separate function to update all location-based data
+async function updateLocationData(lat, lng) {
+    try {
+        const locationName = await reverseGeocode(lat, lng);
+        
+        // Update location display
+        document.getElementById('coordinates').innerHTML = `
             <div class="location-details">
                 <span class="city-name">${locationName}</span>
-                <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>
+                <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lng.toFixed(4)}</span>
             </div>
         `;
+        
+        // Update current location
+        currentLocation = { lat, lon: lng };
+        
+        // Fetch all data for new location
+        await Promise.all([
+            fetchWeatherData(lat, lng),
+            fetchWildfireData(lat, lng),
+            fetchNWSAlerts(lat, lng),
+            fetchWeatherForecast(lat, lng)
+        ]);
+    } catch (error) {
+        console.error('Error updating location data:', error);
     }
 }
 
