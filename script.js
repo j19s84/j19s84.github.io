@@ -672,6 +672,9 @@ function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
 
+    // Initialize map first
+    initializeMap(latitude, longitude);
+    
     // Store the location
     localStorage.setItem(STORED_LAT, latitude);
     localStorage.setItem(STORED_LON, longitude);
@@ -824,7 +827,7 @@ async function fetchWeatherData(lat, lon) {
     weatherContainer.classList.add('loading');
 
     try {
-        const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740';
+        const API_KEY = process.env.OPENWEATHER_API_KEY || '8224d2b200e0f0663e86aa1f3d1ea740';
         if (!API_KEY) {
             console.error('Weather API key is missing');
             return;
@@ -911,8 +914,7 @@ async function fetchNWSAlerts(lat, lon) {
             `https://api.weather.gov/points/${lat},${lon}`,
             { headers }
         );
-        const pointData = await pointResponse.json();
-        console.log('NWS Point Response:', pointData); 
+        const pointData = await pointResponse.json(); 
 
         const forecastZone = pointData.properties.forecastZone.split('/').pop();
         const county = pointData.properties.county.split('/').pop();
@@ -1316,4 +1318,13 @@ const userProfile = {
         maxTravelDistance: 50  // in miles
     }
 };
+
+function initializeMap(lat, lon) {
+    if (!wildfireMap) {
+        wildfireMap = L.map('wildfire-map').setView([lat, lon], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(wildfireMap);
+    }
+}
 
