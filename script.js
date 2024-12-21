@@ -60,9 +60,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Get user location
+    // Request location immediately
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(successLocation, errorLocation);
+        console.log('Requesting location...');
+        navigator.geolocation.getCurrentPosition(
+            successLocation,
+            errorLocation,
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+    } else {
+        console.error('Geolocation not supported');
+        errorLocation();
     }
 
     // Event listeners
@@ -639,4 +651,3 @@ function addMapLegend() {
 
 // Add this to track initialization state
 let isMapInitialized = false;
- 
