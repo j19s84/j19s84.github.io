@@ -494,6 +494,7 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
             }
         });
 
+        // Get safe points
         const safePoints = await findSafeEvacuationPoints(startLat, startLon, fireLocation);
         
         if (safePoints.length === 0) {
@@ -501,21 +502,41 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
             return [];
         }
 
+        // Create new router instance
+        const router = new EvacuationRouter(userProfile);
+
         // Get routes to the closest safe points
         const routes = await Promise.all(safePoints.slice(0, 3).map(async point => {
             const route = await fetchRoute(startLat, startLon, point.lat, point.lon);
+            
+            if (!route) return null;
+
             return {
                 ...route,
-                destination: point
+                destination: point,
+                distance: route.distance || 0,
+                congestion: 0,  // Default value for now
+                surface: 'paved',  // Default value
+                terrain: 'normal', // Default value
+                elevation_gain: 0  // Default value
             };
         }));
 
-        // Draw routes on map
-        routes.forEach((route, index) => {
+        // Filter out null routes
+        const validRoutes = routes.filter(route => route !== null);
+
+        // Get optimal routes using the router
+        const optimalRoutes = await router.findOptimalRoute(
+            { lat: startLat, lon: startLon },
+            validRoutes
+        );
+
+        // Draw routes on map with explanations
+        optimalRoutes.forEach((route, index) => {
             const colors = ['#2ecc71', '#3498db', '#9b59b6'];
             
+            // Draw the route line
             const routeLine = L.geoJSON(route.geometry, {
-                className: `route-line route-${index}`,
                 style: {
                     color: colors[index],
                     weight: 4,
@@ -526,12 +547,12 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
             // Add destination marker
             const destination = route.destination;
             const markerIcon = L.divIcon({
-                className: `destination-marker-${destination.type}`,
-                html: `<div class="marker-icon ${destination.type}">
-                    ${destination.type === 'hospital' ? '🏥' : 
-                      destination.type === 'shelter' ? '🏘️' : 
-                      destination.type === 'assembly_point' ? '🚩' : '📍'}
-                </div>`,
+                className: 'destination-marker-' + destination.type,
+                html: '<div class="marker-icon ' + destination.type + '">' +
+                      (destination.type === 'hospital' ? 'H' : 
+                       destination.type === 'shelter' ? 'S' : 
+                       destination.type === 'assembly_point' ? 'A' : 'P') +
+                      '</div>',
                 iconSize: [32, 32]
             });
 
@@ -539,67 +560,45 @@ async function findEvacuationRoutes(startLat, startLon, fireLocation) {
                 icon: markerIcon
             })
             .addTo(wildfireMap)
-            .bindPopup(`
-                <strong>${destination.name}</strong><br>
-                ${destination.type}<br>
-                Distance: ${(route.distance / 1000).toFixed(1)}km
-            `);
-
-            // Add clickable area
-            const clickableArea = L.geoJSON(route.geometry, {
-                style: {
-                    color: colors[index],
-                    weight: 12,
-                    opacity: 0.3
-                }
-            }).addTo(wildfireMap);
-
-            // Click handler for route line
-            routeLine.on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                
-                // Reset all routes
-                routes.forEach(r => {
-                    if (r.line) {
-                        r.line.setStyle({
-                            weight: 4,
-                            opacity: 0.7
-                        });
-                    }
-                });
-                
-                // Reset all route options
-                document.querySelectorAll('.route-option').forEach(opt => 
-                    opt.classList.remove('active'));
-                
-                // Highlight this route
-                routeLine.setStyle({
-                    weight: 6,
-                    opacity: 1
-                });
-                
-                // Highlight corresponding option
-                const routeOption = document.querySelector(`.route-option:nth-child(${index + 1})`);
-                if (routeOption) {
-                    routeOption.classList.add('active');
-                }
-            });
-
-            // Click handler for clickable area
-            clickableArea.on('click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                routeLine.fire('click');
-            });
+            .bindPopup(
+                '<strong>' + destination.name + '</strong><br>' +
+                destination.type + '<br>' +
+                'Distance: ' + (route.distance / 1000).toFixed(1) + 'km<br>' +
+                route.explanation.join('<br>')
+            );
 
             route.line = routeLine;
         });
 
-        return routes;
+        // Update the details panel
+        const detailsPanel = document.getElementById('fire-details-content');
+        if (detailsPanel && optimalRoutes.length > 0) {
+            let routesHTML = '<div class="evacuation-routes">';
+            routesHTML += '<h3>Recommended Evacuation Routes</h3>';
+            
+            optimalRoutes.forEach((route, index) => {
+                routesHTML += '<div class="route-option" data-route-index="' + index + '">';
+                routesHTML += '<strong>Option ' + (index + 1) + ':</strong> ';
+                routesHTML += 'To ' + route.destination.name;
+                routesHTML += ' (' + Math.round(route.distance / 1609.34) + ' miles)';
+                routesHTML += '<div class="route-explanation">';
+                route.explanation.forEach(reason => {
+                    routesHTML += '<div>' + reason + '</div>';
+                });
+                routesHTML += '</div></div>';
+            });
+            
+            routesHTML += '</div>';
+            detailsPanel.innerHTML += routesHTML;
+        }
+
+        return optimalRoutes;
     } catch (error) {
         console.error('Error finding evacuation routes:', error);
         return [];
     }
 }
+            
 
 async function findSafeEvacuationPoints(startLat, startLon, fireLocation) {
     const bbox = calculateBoundingBox(startLat, startLon, 50); // 50km radius
@@ -1137,16 +1136,25 @@ function calculateFireRisk(weatherData, alerts, isUrban = false) {
             }
             
             // Count contributing weather factors
-@ -1149,165 +1157,159 @@
-                alertTags.add('💧 Low Humidity');
+            if (event.includes('Red Flag')) {
+                weatherAlertCount++;
+                alertTags.add('🚩 Red Flag Warning');
+                riskScore += 3;
+            }
+            if (event.includes('Wind')) {
+                weatherAlertCount++;
+                alertTags.add('🌬️ High Winds');
                 riskScore += 2;
             }
-            if (nearFire) {
-                return {
-                    score: 10,
-                    level: 'EXTREME',
-                    tags: ['🔥 Active Fire']
-                };
+            if (event.includes('Heat')) {
+                weatherAlertCount++;
+                alertTags.add('🌡️ Heat Alert');
+                riskScore += 2;
+            }
+            if (event.includes('Humidity')) {
+                weatherAlertCount++;
+                alertTags.add('💧 Low Humidity');
+                riskScore += 2;
             }
            
         });
@@ -1279,27 +1287,33 @@ class SOSPlan {
 // User profile configuration (after the class definition)
 const userProfile = {
     household: {
-        totalMembers: null,
+        totalMembers: 2,  // Example number
         minors: 0,
         seniors: 0,
         pets: {
-            dogs: 0,
+            dogs: 1,      // Example: 1 dog
             cats: 0,
-            other: 0
+            other: 0,
+            total: 1      // Important: Add this total
         }
     },
     mobility: {
         hasDisabilities: false,
         requiresAssistance: false
     },
+    medical: {           // Add this section
+        requiresAssistance: false,
+        hasDisabilities: false,
+        medications: false
+    },
     transportation: {
         hasVehicle: true,
-        vehicleType: null,
-        fuelRange: null
+        vehicleType: 'sedan',  // Options: 'sedan', 'suv', '4x4'
+        fuelRange: 300        // Range in miles
     },
     evacuation: {
         predefinedLocation: null,
-        maxTravelDistance: null
+        maxTravelDistance: 50  // in miles
     }
-}; 
+};
 
