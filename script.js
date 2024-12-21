@@ -601,12 +601,18 @@ async function fetchNWSAlerts(lat, lon) {
 
 function setupAlertCollapse() {
     document.querySelectorAll('.alert-header').forEach(header => {
-        header.addEventListener('click', () => {
+        header.addEventListener('click', (e) => {
+            e.preventDefault();
             const content = header.parentElement.querySelector('.alert-content');
             const icon = header.querySelector('.expand-icon');
+            
+            // Toggle just the content
             content.classList.toggle('collapsed');
             icon.style.transform = content.classList.contains('collapsed') ?
                 'rotate(0deg)' : 'rotate(180deg)';
+            
+            // Prevent event from bubbling up
+            e.stopPropagation();
         });
     });
 }
@@ -760,4 +766,49 @@ async function findSafeRoutes(fireLat, fireLon) {
     
     // Display routes on map
     displayEvacuationRoutes(routes);
+}
+
+async function fetchWeatherForecast(lat, lon) {
+    const API_KEY = '8224d2b200e0f0663e86aa1f3d1ea740'; // Your OpenWeather API key
+    try {
+        const response = await fetch(
+            `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=imperial`
+        );
+        const data = await response.json();
+        
+        // Group by day
+        const dailyForecasts = data.list.reduce((days, forecast) => {
+            const date = new Date(forecast.dt * 1000).toLocaleDateString();
+            if (!days[date]) {
+                days[date] = forecast;
+            }
+            return days;
+        }, {});
+
+        // Create forecast HTML
+        const forecastContainer = document.getElementById('weather-forecast');
+        if (forecastContainer) {
+            forecastContainer.innerHTML = `
+                <h3>5-Day Forecast</h3>
+                <div class="forecast-grid">
+                    ${Object.values(dailyForecasts).slice(0, 5).map(day => `
+                        <div class="forecast-day">
+                            <div class="forecast-date">
+                                ${new Date(day.dt * 1000).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}
+                            </div>
+                            <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png" alt="${day.weather[0].description}">
+                            <div class="forecast-temp">
+                                ${Math.round(day.main.temp)}°F
+                            </div>
+                            <div class="forecast-desc">
+                                ${day.weather[0].main}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error fetching forecast:', error);
+    }
 }
