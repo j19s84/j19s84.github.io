@@ -886,4 +886,34 @@ h2 {
     margin-bottom: 20px;
 }
 
+.find-safe-routes-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.find-safe-routes-btn:hover {
+    background: color-mix(in srgb, var(--accent-red) 90%, white);
+}
+
+.safe-route {
+    stroke: #4CAF50;
+    stroke-width: 4;
+    stroke-opacity: 0.8;
+    animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: -20;
+    }
+}
+
 
