@@ -973,4 +973,88 @@ h2 {
     gap: 4px;
 }
 
+.sos-indicator {
+    animation: bounce 1s infinite;
+}
+
+.sos-button {
+    background: var(--danger);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
+
+.evacuation-routes-panel {
+    background: var(--panel-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+}
+
+.routes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.route-option {
+    background: var(--panel-bg-light);
+    border-radius: var(--border-radius-md);
+    padding: 15px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.route-option:hover {
+    transform: translateY(-2px);
+}
+
+.route-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.route-letter {
+    font-weight: bold;
+    color: var(--accent-cyan);
+}
+
+.route-time {
+    color: var(--text-secondary);
+}
+
+.route-destination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.route-stats {
+    display: flex;
+    gap: 15px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.evacuation-route {
+    animation: dash 1.5s linear infinite;
+    stroke-dasharray: 10, 10;
+}
+
+@keyframes dash {
+    to { stroke-dashoffset: -20; }
+}
+
 
