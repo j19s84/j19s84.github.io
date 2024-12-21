@@ -407,75 +407,86 @@ async function fetchWildfireData(lat, lon) {
                     iconSize: [size, size]
                 });
 
-                L.marker([fireLat, fireLon], { icon: fireIcon })
-                    .addTo(wildfireMap)
-                    .on('click', function() {
-                        const fireDetailsPanel = document.getElementById('fire-details-content');
-                        
-                        // Format the discovery date
-                        const discoveryDate = props.FireDiscoveryDateTime ? 
-                            new Date(props.FireDiscoveryDateTime).toLocaleDateString('en-US', {
-                                month: 'numeric',
-                                day: 'numeric',
-                                year: 'numeric',
-                                hour: 'numeric',
-                                minute: 'numeric'
-                            }) : 'Unknown';
+                const marker = L.marker([fireLat, fireLon], { icon: fireIcon }).addTo(wildfireMap);
+                
+                // Add SOS indicator
+                const sosIndicator = L.marker([fireLat + 0.05, fireLon], {
+                    icon: L.divIcon({
+                        className: 'sos-indicator',
+                        html: '<div class="sos-button">See SOS Plan</div>'
+                    })
+                }).addTo(wildfireMap);
 
-                        // Calculate time since discovery
-                        let timeSince = '';
-                        if (props.FireDiscoveryDateTime) {
-                            const hours = Math.floor((new Date() - new Date(props.FireDiscoveryDateTime)) / (1000 * 60 * 60));
-                            timeSince = `(${hours} hours ago)`;
-                        }
+                // Handle SOS click
+                sosIndicator.on('click', () => showEvacuationRoutes(fireLat, fireLon, props));
+                
+                marker.on('click', function() {
+                    const fireDetailsPanel = document.getElementById('fire-details-content');
+                    
+                    // Format the discovery date
+                    const discoveryDate = props.FireDiscoveryDateTime ? 
+                        new Date(props.FireDiscoveryDateTime).toLocaleDateString('en-US', {
+                            month: 'numeric',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric'
+                        }) : 'Unknown';
 
-                        // Calculate containment percentage
-                        const containment = props.PercentContained || 0;
-                        
-                        // Get fire cause if available
-                        const fireCause = props.FireCause || 'Under Investigation';
-                        
-                        // Get fire behavior if available
-                        const fireBehavior = props.FireBehavior || 'No behavior information available';
-                        
-                        // Format the fire name
-                        const fireName = `${props.IncidentName || 'Unnamed'} Fire`;
+                    // Calculate time since discovery
+                    let timeSince = '';
+                    if (props.FireDiscoveryDateTime) {
+                        const hours = Math.floor((new Date() - new Date(props.FireDiscoveryDateTime)) / (1000 * 60 * 60));
+                        timeSince = `(${hours} hours ago)`;
+                    }
 
-                        fireDetailsPanel.innerHTML = `
-                            <div class="fire-details-card">
-                                <h2 class="fire-name">🔥 ${fireName}</h2>
-                                <div class="fire-stats">
-                                    <div class="stat-group">
-                                        <label>Size:</label>
-                                        <span>${(acres).toLocaleString()} acres</span>
-                                    </div>
-                                    <div class="stat-group">
-                                        <label>Type:</label>
-                                        <span>${props.FireType || 'Unknown'}</span>
-                                    </div>
-                                    <div class="stat-group">
-                                        <label>Discovered:</label>
-                                        <span>${discoveryDate} ${timeSince}</span>
-                                    </div>
-                                    <div class="stat-group">
-                                        <label>Containment:</label>
-                                        <span>${containment}%</span>
-                                    </div>
-                                    <div class="stat-group">
-                                        <label>Cause:</label>
-                                        <span>${fireCause}</span>
-                                    </div>
-                                    <div class="stat-group">
-                                        <label>Behavior:</label>
-                                        <span>${fireBehavior}</span>
-                                    </div>
-                                    <button class="find-safe-routes-btn" onclick="findSafeRoutes(${fireLat}, ${fireLon})">
-                                        Find Safe Routes
-                                    </button>
+                    // Calculate containment percentage
+                    const containment = props.PercentContained || 0;
+                    
+                    // Get fire cause if available
+                    const fireCause = props.FireCause || 'Under Investigation';
+                    
+                    // Get fire behavior if available
+                    const fireBehavior = props.FireBehavior || 'No behavior information available';
+                    
+                    // Format the fire name
+                    const fireName = `${props.IncidentName || 'Unnamed'} Fire`;
+
+                    fireDetailsPanel.innerHTML = `
+                        <div class="fire-details-card">
+                            <h2 class="fire-name">🔥 ${fireName}</h2>
+                            <div class="fire-stats">
+                                <div class="stat-group">
+                                    <label>Size:</label>
+                                    <span>${(acres).toLocaleString()} acres</span>
                                 </div>
+                                <div class="stat-group">
+                                    <label>Type:</label>
+                                    <span>${props.FireType || 'Unknown'}</span>
+                                </div>
+                                <div class="stat-group">
+                                    <label>Discovered:</label>
+                                    <span>${discoveryDate} ${timeSince}</span>
+                                </div>
+                                <div class="stat-group">
+                                    <label>Containment:</label>
+                                    <span>${containment}%</span>
+                                </div>
+                                <div class="stat-group">
+                                    <label>Cause:</label>
+                                    <span>${fireCause}</span>
+                                </div>
+                                <div class="stat-group">
+                                    <label>Behavior:</label>
+                                    <span>${fireBehavior}</span>
+                                </div>
+                                <button class="find-safe-routes-btn" onclick="findSafeRoutes(${fireLat}, ${fireLon})">
+                                    Find Safe Routes
+                                </button>
                             </div>
-                        `;
-                    });
+                        </div>
+                    `;
+                });
             });
         }
     } catch (error) {
@@ -723,15 +734,14 @@ let isMapInitialized = false;
 
 // Add this after your map initialization
 wildfireMap.on('click', async function(e) {
-    const lat = e.latlng.lat;
-    const lon = e.latlng.lng;
+    const { lat, lng } = e.latlng;
     
     // Update map view
-    wildfireMap.setView([lat, lon], 10);
+    wildfireMap.setView([lat, lng], 10);
     
     try {
-        // Get city name for new location
-        const cityName = await reverseGeocode(lat, lon);
+        // Get city name
+        const cityName = await reverseGeocode(lat, lng);
         
         // Update location display
         const locationInfo = document.getElementById('coordinates');
@@ -739,18 +749,16 @@ wildfireMap.on('click', async function(e) {
             locationInfo.innerHTML = `
                 <div class="location-details">
                     <span class="city-name">${cityName}</span>
-                    <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>
+                    <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lng.toFixed(4)}</span>
                 </div>
             `;
         }
 
-        // Update current location
-        currentLocation = { lat, lon };
-        
-        // Fetch new data for this location
-        fetchWeatherData(lat, lon);
-        fetchWildfireData(lat, lon);
-        fetchNWSAlerts(lat, lon);
+        // Update data for new location
+        fetchWeatherData(lat, lng);
+        fetchWildfireData(lat, lng);
+        fetchNWSAlerts(lat, lng);
+        fetchWeatherForecast(lat, lng);
         
     } catch (error) {
         console.error('Error updating location:', error);
@@ -945,4 +953,56 @@ function formatAlert(props, tags) {
             </div>
         </div>
     `;
+}
+
+async function showEvacuationRoutes(fireLat, fireLon, fireProps) {
+    // Clear existing routes
+    if (window.currentRoutes) {
+        window.currentRoutes.forEach(route => route.remove());
+    }
+    window.currentRoutes = [];
+
+    const evacuationService = new EvacuationService();
+    const routes = await evacuationService.findSafeLocations(
+        { lat: fireLat, lon: fireLon },
+        currentLocation
+    );
+
+    // Show routes panel
+    const routesPanel = document.getElementById('fire-details-content');
+    routesPanel.innerHTML = `
+        <div class="evacuation-routes-panel">
+            <h2>🚗 Evacuation Routes</h2>
+            <div class="routes-container">
+                ${routes.map((route, index) => `
+                    <div class="route-option" onclick="highlightRoute(${index})">
+                        <div class="route-header">
+                            <span class="route-letter">Route ${String.fromCharCode(65 + index)}</span>
+                            <span class="route-time">${route.duration} min</span>
+                        </div>
+                        <div class="route-destination">
+                            <span class="destination-icon">🏥</span>
+                            <span>${route.destination.name}</span>
+                        </div>
+                        <div class="route-stats">
+                            <span>${route.distance} mi</span>
+                            <span>${route.traffic}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    // Draw routes on map
+    routes.forEach((route, index) => {
+        const routeLine = L.polyline(route.coordinates, {
+            color: ['#00BFA5', '#00B0FF', '#651FFF'][index],
+            weight: 5,
+            opacity: 0.8,
+            className: 'evacuation-route'
+        }).addTo(wildfireMap);
+        
+        window.currentRoutes.push(routeLine);
+    });
 }
