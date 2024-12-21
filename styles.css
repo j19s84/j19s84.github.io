@@ -40,12 +40,17 @@ header {
 }
 
 .content-container {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 20px;
+    height: calc(100vh - 100px);
+}
+
+.main-content {
     display: flex;
+    flex-direction: column;
     gap: 20px;
     height: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
 }
 
 /* Typography */
@@ -114,12 +119,8 @@ h2 {
 
 /* Map Components */
 #wildfire-map {
-    flex: 2;
-    height: 600px;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-md);
-    background: #e0e0e0;
-    width: 100%;
+    flex: 1;
+    min-height: 60vh;
 }
 
 .fire-popup {
@@ -357,6 +358,8 @@ h2 {
 .alert-content {
     padding: 15px;
     border-top: 1px solid var(--border-color);
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .alert-content.collapsed {
@@ -519,11 +522,9 @@ h2 {
 
 /* Right Side Container */
 .right-panel-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
     height: 100%;
     overflow-y: auto;
+    padding-right: 10px;
 }
 
 #fire-details-content {
@@ -543,17 +544,14 @@ h2 {
 }
 
 /* Scrollbar Styling */
-.right-panel-container::-webkit-scrollbar {
+.right-panel-container::-webkit-scrollbar,
+.alert-content::-webkit-scrollbar {
     width: 8px;
 }
 
-.right-panel-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-
-.right-panel-container::-webkit-scrollbar-thumb {
-    background: #888;
+.right-panel-container::-webkit-scrollbar-thumb,
+.alert-content::-webkit-scrollbar-thumb {
+    background: var(--border-color);
     border-radius: 4px;
 }
 
@@ -914,6 +912,35 @@ h2 {
     to {
         stroke-dashoffset: -20;
     }
+}
+
+.forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.forecast-day {
+    text-align: center;
+    padding: 10px;
+    background: var(--panel-bg-light);
+    border-radius: var(--border-radius-md);
+}
+
+.forecast-date {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.forecast-temp {
+    font-size: 1.2em;
+    margin: 5px 0;
+}
+
+.forecast-desc {
+    color: var(--text-secondary);
+    font-size: 0.9em;
 }
 
 
