@@ -259,30 +259,49 @@ h2 {
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
     margin: 10px;
     min-width: 200px;
-    z-index: 1000;
-}
-
-.legend-item {
-    margin: 8px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9em;
-    color: #333;
 }
 
 .legend-container h4 {
     margin: 0 0 8px 0;
     color: #333;
+    font-size: 14px;
 }
 
-/* Make sure legend items are visible */
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #333;
+}
+
 .legend-color {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: inline-block;
     border: 1px solid rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+
+.rx-legend {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff6b6b;
+    color: white;
+    border-radius: 2px;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
 }
 
 /* Ensure the legend control is above the map */
@@ -880,6 +899,45 @@ h2 {
 
 .coordinates {
     color: var(--text-secondary);
+}
+
+.fire-details-card {
+    background: var(--panel-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 20px;
+}
+
+.fire-name {
+    color: var(--text-primary);
+    margin: 0 0 15px 0;
+    font-size: 1.5em;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.fire-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.stat-group label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-group span {
+    color: var(--text-primary);
 }
 
 
