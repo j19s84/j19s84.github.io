@@ -840,4 +840,31 @@ h2 {
     z-index: 1;
 }
 
+.location-info {
+    max-width: 1200px;
+    margin: 10px auto;
+    padding: 0 20px;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+}
+
+.location-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--panel-bg);
+    padding: 8px 15px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.city-name {
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.coordinates {
+    color: var(--text-secondary);
+}
+
 
