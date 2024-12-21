@@ -119,8 +119,42 @@ h2 {
 
 /* Map Components */
 #wildfire-map {
-    flex: 1;
-    min-height: 60vh;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    background: #fff;
+}
+
+#wildfire-map.leaflet-drag-target {
+    cursor: grabbing;
+}
+
+/* Ensure map tiles are fully visible */
+.leaflet-tile-container img {
+    opacity: 1 !important;
+}
+
+/* Ensure proper z-index for interactive elements */
+.leaflet-interactive {
+    cursor: pointer;
+}
+
+/* Keep the map container visible */
+.leaflet-container {
+    background: #fff !important;
+    opacity: 1 !important;
+}
+
+/* Ensure proper cursor for different map states */
+.leaflet-grab {
+    cursor: grab;
+}
+
+.leaflet-grabbing {
+    cursor: grabbing;
+}
+
+.leaflet-clickable {
     cursor: pointer;
 }
 
