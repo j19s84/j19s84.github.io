@@ -75,25 +75,50 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+async function reverseGeocode(lat, lon) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+        );
+        const data = await response.json();
+        return data.address.city || data.address.town || data.address.village || 'Unknown Location';
+    } catch (error) {
+        console.error('Error getting location name:', error);
+        return 'Location name unavailable';
+    }
+}
+
 function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
     
-    // Update details panel
-    const detailsPanel = document.getElementById('fire-details-content');
-    if (detailsPanel) {
-        detailsPanel.innerHTML = `
-            <div class="fire-details-grid">
-                <div class="location-title-container">
-                    <h2>Current Location</h2>
-                    <p class="location-subtitle">Latitude: ${latitude.toFixed(4)}, Longitude: ${longitude.toFixed(4)}</p>
-                </div>
+    // Update map view
+    if (wildfireMap) {
+        wildfireMap.setView([latitude, longitude], 8);
+    }
+    
+    // Update location display
+    const locationInfo = document.createElement('div');
+    locationInfo.id = 'coordinates';
+    locationInfo.className = 'location-info';
+    
+    // Get city name and update display
+    reverseGeocode(latitude, longitude).then(cityName => {
+        locationInfo.innerHTML = `
+            <div class="location-details">
+                <span class="city-name">${cityName}</span>
+                <span class="coordinates">Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}</span>
             </div>
         `;
-    }
+        
+        // Insert after search bar
+        const searchContainer = document.querySelector('.location-search');
+        if (searchContainer) {
+            searchContainer.insertAdjacentElement('afterend', locationInfo);
+        }
+    });
 
-    // Fetch all data
-    initializeMap(latitude, longitude);
+    // Fetch data for the new location
     fetchWeatherData(latitude, longitude);
     fetchWildfireData(latitude, longitude);
     fetchNWSAlerts(latitude, longitude);
@@ -599,7 +624,11 @@ function addMapLegend() {
                 <span>Large (> 10,000 acres)</span>
             </div>
             <div class="legend-item">
-                <span class="rx-fire-indicator-legend">℞</span>
+                <span class="legend-color pulsing-dot" style="background-color: #FF4444;"></span>
+                <span>NEW (Last 24 hours)</span>
+            </div>
+            <div class="legend-item">
+                <span class="rx-fire-indicator">℞</span>
                 <span>Prescribed Burn</span>
             </div>
         `;
@@ -610,3 +639,4 @@ function addMapLegend() {
 
 // Add this to track initialization state
 let isMapInitialized = false;
+ 
