@@ -255,8 +255,11 @@ h2 {
 .legend-container {
     background: white;
     padding: 12px;
-    border-radius: var(--border-radius-md);
+    border-radius: 4px;
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    margin: 10px;
+    min-width: 200px;
+    z-index: 1000;
 }
 
 .legend-item {
@@ -265,14 +268,26 @@ h2 {
     align-items: center;
     gap: 8px;
     font-size: 0.9em;
+    color: #333;
 }
 
+.legend-container h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+/* Make sure legend items are visible */
 .legend-color {
     width: 20px;
     height: 20px;
     border-radius: 50%;
     display: inline-block;
     border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Ensure the legend control is above the map */
+.leaflet-control {
+    z-index: 1000 !important;
 }
 
 /* Alert System Styles */
