@@ -8,8 +8,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14'>🔥</text></svg>">
 
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 
     <!-- Your CSS -->
     <link rel="stylesheet" href="styles.css">
@@ -36,28 +35,18 @@
         <!-- Main Content -->
         <div class="content-container">
             <!-- Map Container -->
-            <div id="wildfire-map" class="map-container"></div>
+            <div id="wildfire-map"></div>
 
-            <!-- Info Panels -->
-            <div class="info-panels">
-                <!-- Weather Panel -->
-                <div class="panel weather-panel">
-                    <h3>Weather Forecast</h3>
-                    <div id="weather-container" class="weather-container"></div>
+            <!-- Right Panel Container -->
+            <div class="right-panel-container">
+                <div id="fire-details-content">
+                    <!-- Fire details will be populated here -->
                 </div>
-
-                <!-- Event Details Panel -->
-                <div class="panel details-panel">
-                    <h3>Event Details</h3>
-                    <div id="fire-details-content"></div>
+                <div id="weather-container">
+                    <!-- Weather cards will be populated here -->
                 </div>
-
-                <!-- SOS Panel -->
-                <div class="panel sos-panel">
-                    <h3>Emergency Assistant</h3>
-                    <button id="sos-button" class="sos-launch-btn" onclick="openSOSModal()">
-                        Launch SOS Assistant
-                    </button>
+                <div id="alert-banner">
+                    <!-- Alerts will be populated here -->
                 </div>
             </div>
         </div>
@@ -69,11 +58,9 @@
     </div>
 
     <!-- Scripts at the end of body -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="evacuation-router.js"></script>
     <script src="script.js"></script>
 </body>
 
 </html>
- 
