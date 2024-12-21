@@ -262,6 +262,9 @@ h2 {
 }
 
 .legend-container h4 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin: 0 0 8px 0;
     color: #333;
     font-size: 14px;
@@ -907,9 +910,13 @@ h2 {
     padding: 20px;
     box-shadow: var(--shadow-md);
     margin-bottom: 20px;
+    border-left: 4px solid var(--accent-orange);
 }
 
 .fire-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--text-primary);
     margin: 0 0 15px 0;
     font-size: 1.5em;
@@ -938,6 +945,17 @@ h2 {
 
 .stat-group span {
     color: var(--text-primary);
+}
+
+#fire-details-content:empty::before {
+    content: 'Click a fire marker to view details';
+    display: block;
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--panel-bg);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 20px;
 }
 
 
