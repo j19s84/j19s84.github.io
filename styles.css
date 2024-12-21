@@ -943,4 +943,34 @@ h2 {
     font-size: 0.9em;
 }
 
+.alert-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.alert-tag {
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    background: var(--panel-bg-light);
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.severity-tag {
+    padding: 2px 6px;
+    border-radius: var(--border-radius-sm);
+    color: white;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.alert-title {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 
