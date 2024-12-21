@@ -2,6 +2,10 @@
 let wildfireMap;
 let userLocationMarker;
 let mapLegend;
+let currentLocation = {
+    lat: null,
+    lon: null
+};
 
 // Utility functions
 const debounce = (func, wait) => {
@@ -21,8 +25,25 @@ const debouncedSearch = debounce(searchLocation, 300);
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing...');
+    console.log('DOM loaded');
+    if (typeof L === 'undefined') {
+        console.error('Leaflet not loaded');
+        return;
+    }
+    console.log('Leaflet loaded');
     
+    try {
+        wildfireMap = L.map('wildfire-map').setView([39.8283, -98.5795], 4);
+        console.log('Map initialized');
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(wildfireMap);
+        console.log('Tile layer added');
+    } catch (error) {
+        console.error('Map initialization error:', error);
+    }
+
     const sosButton = document.getElementById('sos-button');
     const searchButton = document.getElementById('search-button');
     const locationInput = document.getElementById('location-input');
@@ -91,9 +112,18 @@ function initializeMap(lat, lon) {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
+        
+        // Add the legend when map is first initialized
+        addMapLegend();
+        isMapInitialized = true;
     } else {
         wildfireMap.setView([lat, lon], 6);
     }
+
+    // Update current location
+    currentLocation.lat = lat;
+    currentLocation.lon = lon;
+    updateLocationDisplay(lat, lon);
 
     // Add user location marker
     const userIcon = L.divIcon({
@@ -210,8 +240,11 @@ async function fetchWeatherData(lat, lon) {
 
     try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Weather API error');
+        if (!response.ok) {
+            throw new Error('Weather API error: ' + response.status);
+        }
         const data = await response.json();
+        console.log('Weather data:', data); // Add this for debugging
         
         weatherContainer.innerHTML = '';
         const dailyForecasts = {};
@@ -257,8 +290,8 @@ async function fetchWeatherData(lat, lon) {
             weatherContainer.appendChild(weatherCard);
         });
     } catch (error) {
-        console.error('Error fetching weather:', error);
-        weatherContainer.innerHTML = '<p>Weather data temporarily unavailable. Please try again later.</p>';
+        console.error('Weather fetch error:', error);
+        weatherContainer.innerHTML = '<p>Weather data temporarily unavailable</p>';
     } finally {
         weatherContainer.classList.remove('loading');
     }
@@ -529,3 +562,45 @@ function calculateFireRisk(lat, lon, alertTags) {
     
     return riskLevel;
 }
+
+function updateLocationDisplay(lat, lon) {
+    const locationDisplay = document.querySelector('.location-subtitle');
+    if (locationDisplay) {
+        locationDisplay.textContent = `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
+    }
+}
+
+function addMapLegend() {
+    if (mapLegend) {
+        mapLegend.remove();
+    }
+
+    mapLegend = L.control({ position: 'bottomright' });
+    mapLegend.onAdd = function() {
+        const div = L.DomUtil.create('div', 'legend-container');
+        div.innerHTML = `
+            <h4>Fire Size</h4>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #FFD700;"></span>
+                <span>Small (< 1,000 acres)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #FFA500;"></span>
+                <span>Medium (1,000-10,000 acres)</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #FF0000;"></span>
+                <span>Large (> 10,000 acres)</span>
+            </div>
+            <div class="legend-item">
+                <span class="rx-fire-indicator-legend">℞</span>
+                <span>Prescribed Burn</span>
+            </div>
+        `;
+        return div;
+    };
+    mapLegend.addTo(wildfireMap);
+}
+
+// Add this to track initialization state
+let isMapInitialized = false;
