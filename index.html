@@ -16,44 +16,22 @@
 </head>
 
 <body>
-    <div class="app-container dark-theme">
-        <!-- Header -->
+    <div class="app-container">
         <header class="main-header">
             <div class="logo">2Safety</div>
-            <div class="risk-display">
-                <div id="risk-indicator" class="risk-indicator">Risk Level: Calculating...</div>
-                <div id="coordinates">Loading location...</div>
-            </div>
+            <div class="risk-display">Risk Level: Calculating...</div>
         </header>
-
-        <!-- Search Bar -->
+        
         <div class="location-search">
             <input type="text" id="location-input" placeholder="Enter a location">
             <button id="search-button">Search</button>
         </div>
 
-        <!-- Main Content -->
         <div class="content-container">
-            <!-- Map Container -->
             <div id="wildfire-map"></div>
-
-            <!-- Right Panel Container -->
             <div class="right-panel-container">
-                <div id="fire-details-content">
-                    <!-- Fire details will be populated here -->
-                </div>
-                <div id="weather-container">
-                    <!-- Weather cards will be populated here -->
-                </div>
-                <div id="alert-banner">
-                    <!-- Alerts will be populated here -->
-                </div>
+                <!-- Your panels here -->
             </div>
-        </div>
-
-        <!-- Keep your existing SOS modal -->
-        <div id="sos-modal" class="modal">
-            <!-- Your existing SOS form content -->
         </div>
     </div>
 
