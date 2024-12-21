@@ -469,6 +469,9 @@ async function fetchWildfireData(lat, lon) {
                                         <label>Behavior:</label>
                                         <span>${fireBehavior}</span>
                                     </div>
+                                    <button class="find-safe-routes-btn" onclick="findSafeRoutes(${fireLat}, ${fireLon})">
+                                        Find Safe Routes
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -747,3 +750,14 @@ wildfireMap.on('click', async function(e) {
         console.error('Error updating location:', error);
     }
 });
+
+async function findSafeRoutes(fireLat, fireLon) {
+    const evacuationService = new EvacuationService();
+    const fireLocation = { lat: fireLat, lon: fireLon };
+    const userLocation = currentLocation;
+
+    const routes = await evacuationService.findSafeLocations(fireLocation, userLocation);
+    
+    // Display routes on map
+    displayEvacuationRoutes(routes);
+}
