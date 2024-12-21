@@ -119,6 +119,7 @@ h2 {
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-md);
     background: #e0e0e0;
+    width: 100%;
 }
 
 .fire-popup {
