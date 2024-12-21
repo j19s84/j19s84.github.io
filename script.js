@@ -486,41 +486,36 @@ async function fetchWildfireData(lat, lon) {
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
     if (!alertContainer) {
-        console.error('Alert container element not found');
+        console.error('Alert container not found');
         return;
     }
 
     alertContainer.classList.add('loading');
+    
     try {
+        // First get the NWS grid point for the location
         const pointResponse = await fetch(
             `https://api.weather.gov/points/${lat},${lon}`
         );
-        if (!pointResponse.ok) {
-            throw new Error('Failed to fetch NWS point data');
-        }
+        if (!pointResponse.ok) throw new Error('Failed to fetch NWS point data');
         const pointData = await pointResponse.json();
-        
+
+        // Then get active alerts for this location
         const alertsResponse = await fetch(
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
-        if (!alertsResponse.ok) {
-            throw new Error('Failed to fetch alerts');
-        }
+        if (!alertsResponse.ok) throw new Error('Failed to fetch alerts');
         const alertsData = await alertsResponse.json();
 
         if (alertsData.features && alertsData.features.length > 0) {
+            // Sort alerts by severity
             const alerts = alertsData.features.sort((a, b) => {
                 const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
-                const severityDiff =
-                    severityOrder.indexOf(a.properties.severity) -
-                    severityOrder.indexOf(b.properties.severity);
-                
-                if (severityDiff === 0) {
-                    return new Date(b.properties.effective) - new Date(a.properties.effective);
-                }
-                return severityDiff;
+                return severityOrder.indexOf(a.properties.severity) - 
+                       severityOrder.indexOf(b.properties.severity);
             });
 
+            // Create alert tags for different conditions
             const alertTags = new Set();
             alerts.forEach(feature => {
                 const alert = feature.properties;
@@ -533,7 +528,7 @@ async function fetchNWSAlerts(lat, lon) {
                 if (event.includes('wind')) {
                     alertTags.add('🌬️ High Winds');
                 }
-                if (description.includes('humidity') &&
+                if (description.includes('humidity') && 
                     (description.includes('low') || description.includes('critical'))) {
                     alertTags.add('💧 Low Humidity');
                 }
@@ -545,9 +540,10 @@ async function fetchNWSAlerts(lat, lon) {
                 }
             });
 
-            const tagsHTML = Array.from(alertTags).map(tag =>
-                `<span class="alert-tag">${tag}</span>`
-            ).join('');
+            // Generate HTML for alert tags and alerts
+            const tagsHTML = Array.from(alertTags)
+                .map(tag => `<span class="alert-tag">${tag}</span>`)
+                .join('');
 
             const alertsHTML = alerts.map(feature => {
                 const alert = feature.properties;
@@ -564,7 +560,9 @@ async function fetchNWSAlerts(lat, lon) {
                         </div>
                         <div class="alert-content collapsed">
                             <p>${alert.description}</p>
-                            ${alert.instruction ? `<p class="alert-instruction">${alert.instruction}</p>` : ''}
+                            ${alert.instruction ? 
+                                `<p class="alert-instruction">${alert.instruction}</p>` : 
+                                ''}
                         </div>
                     </div>
                 `;
@@ -578,9 +576,11 @@ async function fetchNWSAlerts(lat, lon) {
                     ${alertsHTML}
                 </div>
             `;
-            
+
+            // Update SOS plans based on alerts
             updateSOSPlans(alertTags);
             setupAlertCollapse();
+            
         } else {
             alertContainer.innerHTML = `
                 <div class="alert-none">
