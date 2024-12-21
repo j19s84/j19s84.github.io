@@ -409,12 +409,70 @@ async function fetchWildfireData(lat, lon) {
 
                 L.marker([fireLat, fireLon], { icon: fireIcon })
                     .addTo(wildfireMap)
-                    .bindPopup(`
-                        <h3>${props.IncidentName || 'Unnamed Fire'}</h3>
-                        <p>Size: ${acres.toLocaleString()} acres</p>
-                        <p>Type: ${props.FireType || 'Unknown'}</p>
-                        <p>Discovered: ${discoveryDate ? discoveryDate.toLocaleDateString() : 'Unknown'}</p>
-                    `);
+                    .on('click', function() {
+                        const fireDetailsPanel = document.getElementById('fire-details-content');
+                        
+                        // Format the discovery date
+                        const discoveryDate = props.FireDiscoveryDateTime ? 
+                            new Date(props.FireDiscoveryDateTime).toLocaleDateString('en-US', {
+                                month: 'numeric',
+                                day: 'numeric',
+                                year: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric'
+                            }) : 'Unknown';
+
+                        // Calculate time since discovery
+                        let timeSince = '';
+                        if (props.FireDiscoveryDateTime) {
+                            const hours = Math.floor((new Date() - new Date(props.FireDiscoveryDateTime)) / (1000 * 60 * 60));
+                            timeSince = `(${hours} hours ago)`;
+                        }
+
+                        // Calculate containment percentage
+                        const containment = props.PercentContained || 0;
+                        
+                        // Get fire cause if available
+                        const fireCause = props.FireCause || 'Under Investigation';
+                        
+                        // Get fire behavior if available
+                        const fireBehavior = props.FireBehavior || 'No behavior information available';
+                        
+                        // Format the fire name
+                        const fireName = `${props.IncidentName || 'Unnamed'} Fire`;
+
+                        fireDetailsPanel.innerHTML = `
+                            <div class="fire-details-card">
+                                <h2 class="fire-name">${fireName}</h2>
+                                <div class="fire-stats">
+                                    <div class="stat-group">
+                                        <label>Size:</label>
+                                        <span>${(acres).toLocaleString()} acres</span>
+                                    </div>
+                                    <div class="stat-group">
+                                        <label>Type:</label>
+                                        <span>${props.FireType || 'Unknown'}</span>
+                                    </div>
+                                    <div class="stat-group">
+                                        <label>Discovered:</label>
+                                        <span>${discoveryDate} ${timeSince}</span>
+                                    </div>
+                                    <div class="stat-group">
+                                        <label>Containment:</label>
+                                        <span>${containment}%</span>
+                                    </div>
+                                    <div class="stat-group">
+                                        <label>Cause:</label>
+                                        <span>${fireCause}</span>
+                                    </div>
+                                    <div class="stat-group">
+                                        <label>Behavior:</label>
+                                        <span>${fireBehavior}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
             });
         }
     } catch (error) {
@@ -623,25 +681,27 @@ function addMapLegend() {
         const div = L.DomUtil.create('div', 'legend-container');
         div.innerHTML = `
             <h4>Fire Size</h4>
-            <div class="legend-item">
-                <span class="legend-color" style="background-color: #FFD700;"></span>
-                <span>Small (< 1,000 acres)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-color" style="background-color: #FFA500;"></span>
-                <span>Medium (1,000-10,000 acres)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-color" style="background-color: #FF0000;"></span>
-                <span>Large (> 10,000 acres)</span>
-            </div>
-            <div class="legend-item">
-                <span class="legend-color pulsing-dot" style="background-color: #FF4444;"></span>
-                <span>NEW (Last 24 hours)</span>
-            </div>
-            <div class="legend-item">
-                <span class="rx-fire-indicator">℞</span>
-                <span>Prescribed Burn</span>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: #FFD700;"></span>
+                    <span>Small (< 1,000 acres)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: #FFA500;"></span>
+                    <span>Medium (1,000-10,000 acres)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: #FF0000;"></span>
+                    <span>Large (> 10,000 acres)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: #FF4444;"></span>
+                    <span>NEW (Last 24 hours)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="rx-legend">℞</span>
+                    <span>Prescribed Burn</span>
+                </div>
             </div>
         `;
         return div;
