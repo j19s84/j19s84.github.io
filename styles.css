@@ -731,14 +731,6 @@ h2 {
     gap: 10px;
 }
 
-.weather-card {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    flex: 1;
-}
-
 .sos-launch-btn {
     background: linear-gradient(45deg, var(--accent-purple), var(--accent-orange));
     border: none;
@@ -753,6 +745,68 @@ h2 {
 
 .sos-launch-btn:hover {
     transform: scale(1.05);
+}
+
+/* Loading Animation */
+.loading {
+    position: relative;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* SOS Plan Buttons */
+.sos-plan-button {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.sos-plan-button.sos-high {
+    background-color: #ff9800;
+    color: white;
+}
+
+.sos-plan-button.sos-critical {
+    background-color: #f44336;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+/* New Fire Indicator */
+.new-fire-indicator {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: #ff4444;
+    color: white;
+    padding: 2px 4px;
+    border-radius: var(--border-radius-sm);
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 1;
 }
 
 
