@@ -812,3 +812,137 @@ async function fetchWeatherForecast(lat, lon) {
         console.error('Error fetching forecast:', error);
     }
 }
+
+function processAlerts(alerts) {
+    // First, deduplicate similar alerts
+    const uniqueAlerts = deduplicateAlerts(alerts);
+    
+    // Then process each alert
+    return uniqueAlerts.map(alert => {
+        const props = alert.properties;
+        
+        // Extract key information for tags
+        const tags = extractAlertTags(props);
+        
+        // Format the alert
+        return formatAlert(props, tags);
+    });
+}
+
+function deduplicateAlerts(alerts) {
+    const alertMap = new Map();
+    
+    alerts.forEach(alert => {
+        const props = alert.properties;
+        // Create a key from event type and area
+        const key = `${props.event}-${props.areaDesc}`;
+        
+        if (alertMap.has(key)) {
+            const existing = alertMap.get(key);
+            // If new alert is more recent, replace old one
+            if (new Date(props.sent) > new Date(existing.properties.sent)) {
+                alertMap.set(key, alert);
+            }
+        } else {
+            alertMap.set(key, alert);
+        }
+    });
+    
+    return Array.from(alertMap.values());
+}
+
+function extractAlertTags(props) {
+    const tags = new Set();
+    
+    // Add event type tag
+    tags.add(formatEventTag(props.event));
+    
+    // Add severity tag
+    if (props.severity) {
+        tags.add(formatSeverityTag(props.severity));
+    }
+    
+    // Add specific condition tags based on content
+    const description = props.description.toLowerCase();
+    
+    // Air Quality specific tags
+    if (description.includes('air quality')) {
+        if (description.includes('unhealthy')) tags.add('😷 Unhealthy Air');
+        if (description.includes('moderate')) tags.add('😐 Moderate Air');
+        if (description.includes('hazardous')) tags.add('⚠️ Hazardous Air');
+    }
+    
+    // Fire related tags
+    if (description.includes('fire') || description.includes('smoke')) {
+        if (description.includes('smoke')) tags.add('💨 Smoke');
+        if (description.includes('visibility')) tags.add('👁️ Low Visibility');
+    }
+    
+    // Weather related tags
+    if (description.includes('wind')) tags.add('💨 High Winds');
+    if (description.includes('heat')) tags.add('🌡️ Extreme Heat');
+    if (description.includes('humidity')) tags.add('💧 Low Humidity');
+    
+    // No-burn specific tags
+    if (description.includes('no-burn') || description.includes('burning ban')) {
+        tags.add('🚫 No Burning');
+    }
+    
+    return Array.from(tags);
+}
+
+function formatEventTag(event) {
+    const eventIcons = {
+        'Air Quality': '💨',
+        'Red Flag': '🚩',
+        'Heat': '🌡️',
+        'Wind': '🌪️',
+        'Fire Weather': '🔥'
+    };
+    
+    const icon = eventIcons[event] || '⚠️';
+    return `${icon} ${event}`;
+}
+
+function formatSeverityTag(severity) {
+    const severityColors = {
+        'Extreme': 'var(--danger)',
+        'Severe': 'var(--warning)',
+        'Moderate': 'var(--caution)',
+        'Minor': 'var(--info)'
+    };
+    
+    return `<span class="severity-tag" style="background: ${severityColors[severity]}">${severity}</span>`;
+}
+
+function formatAlert(props, tags) {
+    const date = new Date(props.sent).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    
+    const time = new Date(props.sent).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+    
+    return `
+        <div class="alert-container alert-${props.severity.toLowerCase()}">
+            <div class="alert-header">
+                <div class="alert-title">
+                    <h3>${props.event}</h3>
+                    <span class="alert-timing">Until ${new Date(props.expires).toLocaleString()}</span>
+                </div>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="alert-tags">
+                ${tags.map(tag => `<span class="alert-tag">${tag}</span>`).join('')}
+            </div>
+            <div class="alert-content collapsed">
+                <p>${props.description}</p>
+                ${props.instruction ? `<p class="alert-instruction">${props.instruction}</p>` : ''}
+            </div>
+        </div>
+    `;
+}
