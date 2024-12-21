@@ -33,13 +33,19 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Leaflet loaded');
     
     try {
+        // Initialize map with US center coordinates
         wildfireMap = L.map('wildfire-map').setView([39.8283, -98.5795], 4);
-        console.log('Map initialized');
-        
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
-        console.log('Tile layer added');
+        console.log('Map initialized');
+
+        // Immediately fetch wildfire data
+        fetchWildfireData(39.8283, -98.5795);
+        
+        // Add map legend
+        addMapLegend();
+
     } catch (error) {
         console.error('Map initialization error:', error);
     }
