@@ -410,15 +410,7 @@ async function fetchWildfireData(lat, lon) {
                 const marker = L.marker([fireLat, fireLon], { icon: fireIcon }).addTo(wildfireMap);
                 
                 // Add SOS indicator
-                const sosIndicator = L.marker([fireLat + 0.05, fireLon], {
-                    icon: L.divIcon({
-                        className: 'sos-indicator',
-                        html: '<div class="sos-button">See SOS Plan</div>'
-                    })
-                }).addTo(wildfireMap);
-
-                // Handle SOS click
-                sosIndicator.on('click', () => showEvacuationRoutes(fireLat, fireLon, props));
+                addSOSControl(fireLat, fireLon, props);
                 
                 marker.on('click', function() {
                     const fireDetailsPanel = document.getElementById('fire-details-content');
@@ -962,40 +954,40 @@ async function showEvacuationRoutes(fireLat, fireLon, fireProps) {
     }
     window.currentRoutes = [];
 
-    const evacuationService = new EvacuationService();
-    const routes = await evacuationService.findSafeLocations(
-        { lat: fireLat, lon: fireLon },
-        currentLocation
+    // Find safe locations
+    const safeLocations = await findSafeLocations(fireLat, fireLon);
+    
+    // Sort by distance and take top 3
+    const sortedLocations = safeLocations
+        .map(loc => ({
+            ...loc,
+            distance: getDistance(fireLat, fireLon, loc.lat, loc.lon)
+        }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 3);
+
+    // Calculate routes
+    const routes = await Promise.all(
+        sortedLocations.map(async location => {
+            const route = await calculateRoute(
+                { lat: fireLat, lon: fireLon },
+                { lat: location.lat, lon: location.lon }
+            );
+            return {
+                ...route,
+                destination: location
+            };
+        })
     );
 
-    // Show routes panel
-    const routesPanel = document.getElementById('fire-details-content');
-    routesPanel.innerHTML = `
-        <div class="evacuation-routes-panel">
-            <h2>🚗 Evacuation Routes</h2>
-            <div class="routes-container">
-                ${routes.map((route, index) => `
-                    <div class="route-option" onclick="highlightRoute(${index})">
-                        <div class="route-header">
-                            <span class="route-letter">Route ${String.fromCharCode(65 + index)}</span>
-                            <span class="route-time">${route.duration} min</span>
-                        </div>
-                        <div class="route-destination">
-                            <span class="destination-icon">🏥</span>
-                            <span>${route.destination.name}</span>
-                        </div>
-                        <div class="route-stats">
-                            <span>${route.distance} mi</span>
-                            <span>${route.traffic}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
+    // Filter out failed routes
+    const validRoutes = routes.filter(r => r !== null);
+
+    // Update the panel with route information
+    updateRoutesPanel(validRoutes);
 
     // Draw routes on map
-    routes.forEach((route, index) => {
+    validRoutes.forEach((route, index) => {
         const routeLine = L.polyline(route.coordinates, {
             color: ['#00BFA5', '#00B0FF', '#651FFF'][index],
             weight: 5,
@@ -1003,6 +995,115 @@ async function showEvacuationRoutes(fireLat, fireLon, fireProps) {
             className: 'evacuation-route'
         }).addTo(wildfireMap);
         
+        // Add destination marker
+        const dest = route.destination;
+        L.marker([dest.lat, dest.lon], {
+            icon: L.divIcon({
+                className: 'destination-marker',
+                html: `<div class="destination-icon">${getDestinationIcon(dest.type)}</div>`
+            })
+        }).addTo(wildfireMap);
+        
         window.currentRoutes.push(routeLine);
     });
+}
+
+function getDestinationIcon(type) {
+    const icons = {
+        'shelter': '🏘️',
+        'school': '🏫',
+        'hospital': '🏥',
+        'fire_station': '🚒'
+    };
+    return icons[type] || '🏢';
+}
+
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+async function findSafeLocations(fireLat, fireLon, radius = 20000) { // radius in meters
+    try {
+        // Fetch emergency locations from OpenStreetMap
+        const query = `
+            [out:json][timeout:25];
+            (
+                way["amenity"="shelter"](around:${radius},${fireLat},${fireLon});
+                way["amenity"="school"](around:${radius},${fireLat},${fireLon});
+                way["amenity"="hospital"](around:${radius},${fireLat},${fireLon});
+                way["amenity"="fire_station"](around:${radius},${fireLat},${fireLon});
+            );
+            out body;
+            >;
+            out skel qt;
+        `;
+
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: query
+        });
+
+        const data = await response.json();
+        return data.elements.filter(e => e.tags && e.lat && e.lon).map(e => ({
+            type: e.tags.amenity,
+            name: e.tags.name || `${e.tags.amenity.charAt(0).toUpperCase() + e.tags.amenity.slice(1)}`,
+            lat: e.lat,
+            lon: e.lon
+        }));
+    } catch (error) {
+        console.error('Error fetching safe locations:', error);
+        return [];
+    }
+}
+
+async function calculateRoute(start, end) {
+    try {
+        const response = await fetch(
+            `https://router.project-osrm.org/route/v1/driving/` +
+            `${start.lon},${start.lat};${end.lon},${end.lat}` +
+            `?overview=full&geometries=geojson`
+        );
+        const data = await response.json();
+        
+        if (data.routes && data.routes[0]) {
+            return {
+                coordinates: data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]),
+                distance: (data.routes[0].distance / 1609.34).toFixed(1), // Convert to miles
+                duration: Math.round(data.routes[0].duration / 60) // Convert to minutes
+            };
+        }
+        throw new Error('No route found');
+    } catch (error) {
+        console.error('Error calculating route:', error);
+        return null;
+    }
+}
+
+function addSOSControl(fireLat, fireLon, props) {
+    const SOSControl = L.Control.extend({
+        options: {
+            position: 'bottomright'
+        },
+        onAdd: function(map) {
+            const container = L.DomUtil.create('div', 'sos-control');
+            container.innerHTML = `
+                <button class="sos-button">
+                    <span class="pulse-dot"></span>
+                    See SOS Plan
+                </button>
+            `;
+            
+            container.onclick = () => showEvacuationRoutes(fireLat, fireLon, props);
+            return container;
+        }
+    });
+    
+    return new SOSControl();
 }
