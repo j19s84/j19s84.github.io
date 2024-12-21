@@ -121,6 +121,7 @@ h2 {
 #wildfire-map {
     flex: 1;
     min-height: 60vh;
+    cursor: pointer;
 }
 
 .fire-popup {
@@ -1099,6 +1100,31 @@ h2 {
 .destination-icon {
     font-size: 1.2em;
     text-align: center;
+}
+
+.location-details {
+    background: var(--panel-bg);
+    padding: 12px 15px;
+    border-radius: var(--border-radius-md);
+    margin: 10px 0;
+    box-shadow: var(--shadow-sm);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.city-name {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.coordinates {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 
