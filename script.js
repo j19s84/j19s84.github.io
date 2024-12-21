@@ -473,40 +473,7 @@ async function fetchWildfireData(lat, lon) {
                     // Format the fire name
                     const fireName = `${props.IncidentName || 'Unnamed'} Fire`;
 
-                    fireDetailsPanel.innerHTML = `
-                        <div class="fire-details-card">
-                            <h2 class="fire-name">🔥 ${fireName}</h2>
-                            <div class="fire-stats">
-                                <div class="stat-group">
-                                    <label>Size:</label>
-                                    <span>${(acres).toLocaleString()} acres</span>
-                                </div>
-                                <div class="stat-group">
-                                    <label>Type:</label>
-                                    <span>${props.FireType || 'Unknown'}</span>
-                                </div>
-                                <div class="stat-group">
-                                    <label>Discovered:</label>
-                                    <span>${discoveryDate} ${timeSince}</span>
-                                </div>
-                                <div class="stat-group">
-                                    <label>Containment:</label>
-                                    <span>${containment}%</span>
-                                </div>
-                                <div class="stat-group">
-                                    <label>Cause:</label>
-                                    <span>${fireCause}</span>
-                                </div>
-                                <div class="stat-group">
-                                    <label>Behavior:</label>
-                                    <span>${fireBehavior}</span>
-                                </div>
-                                <button class="find-safe-routes-btn" onclick="findSafeRoutes(${fireLat}, ${fireLon})">
-                                    Find Safe Routes
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                    fireDetailsPanel.innerHTML = createFireDetailsPanel(props);
                 });
             });
         } else {
@@ -803,6 +770,10 @@ async function updateLocationData(lat, lng) {
             fetchNWSAlerts(lat, lng),
             fetchWeatherForecast(lat, lng)
         ]);
+        
+        // After all data is fetched, scroll to top
+        scrollPanelToTop();
+        
     } catch (error) {
         console.error('Error updating location data:', error);
     }
@@ -1157,4 +1128,147 @@ function addSOSControl(fireLat, fireLon, props) {
     });
     
     return new SOSControl();
+}
+
+async function updateLocationDisplay(lat, lon, locationName, isSelected = false) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?` +
+            `format=json&lat=${lat}&lon=${lon}&zoom=12&addressdetails=1`
+        );
+        
+        const data = await response.json();
+        const address = data.address;
+        const state = address.state || '';
+        const displayName = `${locationName}, ${state}`;
+        
+        const locationInfo = document.getElementById('coordinates');
+        if (locationInfo) {
+            locationInfo.innerHTML = `
+                <div class="location-details">
+                    <span class="location-type">${isSelected ? 'Selected Location' : 'Current Location'}</span>
+                    <span class="city-name">${displayName}</span>
+                    <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error updating location display:', error);
+    }
+}
+
+async function handleSearch(searchQuery) {
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?` +
+            `q=${encodeURIComponent(searchQuery)}` +
+            `&format=json&addressdetails=1&polygon_geojson=1`
+        );
+        
+        const results = await response.json();
+        if (results.length > 0) {
+            const location = results[0];
+            
+            // Center map on location
+            wildfireMap.setView([location.lat, location.lon], 12);
+            
+            // Show city boundaries if available
+            if (location.geojson) {
+                if (window.currentBoundary) {
+                    wildfireMap.removeLayer(window.currentBoundary);
+                }
+                
+                window.currentBoundary = L.geoJSON(location.geojson, {
+                    style: {
+                        color: '#FF4444',
+                        weight: 2,
+                        opacity: 0.8,
+                        fillOpacity: 0.1
+                    }
+                }).addTo(wildfireMap);
+            }
+            
+            // Update location info
+            updateLocationDisplay(
+                location.lat, 
+                location.lon, 
+                location.address.city || location.address.town || location.address.village || searchQuery,
+                true
+            );
+            
+            // Fetch data for new location
+            updateLocationData(location.lat, location.lon);
+            
+            // After updating location and fetching data
+            scrollPanelToTop();
+            
+        }
+    } catch (error) {
+        console.error('Search error:', error);
+    }
+}
+
+function createFireDetailsPanel(props) {
+    const isPrescribedBurn = props.FireType?.toLowerCase().includes('rx') || 
+                            props.IncidentName?.toLowerCase().includes('rx');
+    
+    const fireIcon = isPrescribedBurn ? '℞' : '🔥';
+    const fireType = isPrescribedBurn ? 'Prescribed Burn' : (props.FireType || 'Unknown');
+    
+    const fireDetailsPanel = `
+        <div class="fire-details-card">
+            <h2 class="fire-name">${fireIcon} ${props.IncidentName || 'Unnamed'} Fire</h2>
+            <div class="fire-stats">
+                <div class="stat-group">
+                    <label>Size:</label>
+                    <span>${(props.DailyAcres || 0).toLocaleString()} acres</span>
+                </div>
+                <div class="stat-group">
+                    <label>Type:</label>
+                    <span>${fireType}</span>
+                </div>
+                <div class="stat-group">
+                    <label>Discovered:</label>
+                    <span>${props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime).toLocaleDateString('en-US', {
+                        month: 'numeric',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric'
+                    }) : 'Unknown'}</span>
+                </div>
+                <div class="stat-group">
+                    <label>Containment:</label>
+                    <span>${props.PercentContained || 0}%</span>
+                </div>
+                <div class="stat-group">
+                    <label>Cause:</label>
+                    <span>${props.FireCause || 'Under Investigation'}</span>
+                </div>
+                <div class="stat-group">
+                    <label>Behavior:</label>
+                    <span>${props.FireBehavior || 'No behavior information available'}</span>
+                </div>
+                <button class="find-safe-routes-btn" onclick="findSafeRoutes(${props.lat}, ${props.lon})">
+                    Find Safe Routes
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // After setting the innerHTML, scroll to top
+    scrollPanelToTop();
+    
+    return fireDetailsPanel;
+}
+
+// Add this helper function
+function scrollPanelToTop() {
+    const rightPanel = document.querySelector('.right-panel-container');
+    if (rightPanel) {
+        rightPanel.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
 }
