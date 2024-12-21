@@ -443,7 +443,7 @@ async function fetchWildfireData(lat, lon) {
 
                         fireDetailsPanel.innerHTML = `
                             <div class="fire-details-card">
-                                <h2 class="fire-name">${fireName}</h2>
+                                <h2 class="fire-name">🔥 ${fireName}</h2>
                                 <div class="fire-stats">
                                     <div class="stat-group">
                                         <label>Size:</label>
@@ -680,7 +680,7 @@ function addMapLegend() {
     mapLegend.onAdd = function() {
         const div = L.DomUtil.create('div', 'legend-container');
         div.innerHTML = `
-            <h4>Fire Size</h4>
+            <h4>🔥 Fire Size</h4>
             <div class="legend-items">
                 <div class="legend-item">
                     <span class="legend-color" style="background-color: #FFD700;"></span>
@@ -711,3 +711,39 @@ function addMapLegend() {
 
 // Add this to track initialization state
 let isMapInitialized = false;
+
+// Add this after your map initialization
+wildfireMap.on('click', async function(e) {
+    const lat = e.latlng.lat;
+    const lon = e.latlng.lng;
+    
+    // Update map view
+    wildfireMap.setView([lat, lon], 10);
+    
+    try {
+        // Get city name for new location
+        const cityName = await reverseGeocode(lat, lon);
+        
+        // Update location display
+        const locationInfo = document.getElementById('coordinates');
+        if (locationInfo) {
+            locationInfo.innerHTML = `
+                <div class="location-details">
+                    <span class="city-name">${cityName}</span>
+                    <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>
+                </div>
+            `;
+        }
+
+        // Update current location
+        currentLocation = { lat, lon };
+        
+        // Fetch new data for this location
+        fetchWeatherData(lat, lon);
+        fetchWildfireData(lat, lon);
+        fetchNWSAlerts(lat, lon);
+        
+    } catch (error) {
+        console.error('Error updating location:', error);
+    }
+});
