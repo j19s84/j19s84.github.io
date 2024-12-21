@@ -151,13 +151,26 @@ h2 {
     align-items: center;
 }
 
-.rx-fire-indicator, .rx-fire-indicator-legend {
+.new-fire-indicator {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: #ff4444;
+    color: white;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 1;
+}
+
+.rx-fire-indicator {
     position: absolute;
     top: -15px;
     left: -15px;
     background: white;
     padding: 2px 4px;
-    border-radius: var(--border-radius-sm);
+    border-radius: 4px;
     font-weight: bold;
     border: 1px solid #ddd;
 }
@@ -192,33 +205,50 @@ h2 {
 
 /* Search Components */
 .location-search {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 20px;
     display: flex;
     gap: 10px;
+    max-width: 1200px;
+    margin: 0 auto 20px;
+    padding: 0 20px;
 }
 
 #location-input {
     flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: var(--border-radius-sm);
+    padding: 12px 15px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: var(--panel-bg);
+    color: var(--text-primary);
     font-size: 16px;
 }
 
-#search-button {
-    padding: 10px 20px;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    cursor: pointer;
-    transition: background-color 0.2s;
+#location-input::placeholder {
+    color: var(--text-secondary);
 }
 
-#search-button:hover {
-    background-color: #357abd;
+#location-input:focus {
+    outline: 2px solid var(--accent-cyan);
+    box-shadow: var(--glow-effect);
+}
+
+.search-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    background: var(--accent-cyan);
+    color: var(--primary-bg);
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.search-btn:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--accent-cyan) 90%, white);
+}
+
+.search-btn:active {
+    transform: translateY(0);
 }
 
 /* Legend Styles */
@@ -811,4 +841,3 @@ h2 {
 }
 
 
- 
