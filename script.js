@@ -1,3 +1,5 @@
+import EvacuationRouter from './evacuation-router.js';
+
 // Global variables
 let wildfireMap;
 let userLocationMarker;
@@ -59,6 +61,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add map legend
         addMapLegend();
+
+        // During map initialization
+        const evacuationRouter = new EvacuationRouter(wildfireMap);
 
     } catch (error) {
         console.error('Map initialization error:', error);
@@ -1488,4 +1493,10 @@ function showError(message) {
         errorDiv.style.opacity = '0';
         setTimeout(() => errorDiv.remove(), 300);
     }, 3000);
+}
+
+// When handling fire clicks or evacuation requests
+function handleFireClick(fire) {
+    const { latitude, longitude } = fire.properties;
+    evacuationRouter.showEvacuationRoutes(latitude, longitude);
 }
