@@ -784,28 +784,6 @@ function processAlerts(alerts) {
     });
 }
 
-function deduplicateAlerts(alerts) {
-    const alertMap = new Map();
-    
-    alerts.forEach(alert => {
-        const props = alert.properties;
-        // Create a key from event type and area
-        const key = `${props.event}-${props.areaDesc}`;
-        
-        if (alertMap.has(key)) {
-            const existing = alertMap.get(key);
-            // If new alert is more recent, replace old one
-            if (new Date(props.sent) > new Date(existing.properties.sent)) {
-                alertMap.set(key, alert);
-            }
-        } else {
-            alertMap.set(key, alert);
-        }
-    });
-    
-    return Array.from(alertMap.values());
-}
-
 function extractAlertTags(props) {
     const tags = new Set();
     
