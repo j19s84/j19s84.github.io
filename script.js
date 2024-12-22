@@ -1605,3 +1605,4 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Map initialization error:', error);
     }
 });
+ 
