@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addMapLegend();
 
         // During map initialization
-        const evacuationRouter = new EvacuationRouter(wildfireMap);
+        // evacuationRouter = new EvacuationRouter(wildfireMap);
 
     } catch (error) {
         console.error('Map initialization error:', error);
