@@ -1077,27 +1077,45 @@ function addSOSControl(fireLat, fireLon, props) {
     return new SOSControl();
 }
 
-async function updateLocationDisplay(lat, lon, locationName, isSelected = false) {
+async function updateLocationDisplay(position, locationName = null, isSelected = false) {
     try {
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?` +
-            `format=json&lat=${lat}&lon=${lon}&zoom=12&addressdetails=1`
-        );
+        // Handle both position object and direct lat/lon inputs
+        const lat = position.coords ? position.coords.latitude : position;
+        const lon = position.coords ? position.coords.longitude : arguments[1];
         
-        const data = await response.json();
-        const address = data.address;
-        const state = address.state || '';
-        const displayName = `${locationName}, ${state}`;
+        // Update map center
+        wildfireMap.setView([lat, lon], 10);
         
-        const locationInfo = document.getElementById('coordinates');
-        if (locationInfo) {
-            locationInfo.innerHTML = `
-                <div class="location-details">
-                    <span class="location-type">${isSelected ? 'Selected Location' : 'Current Location'}</span>
-                    <span class="city-name">${displayName}</span>
-                    <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>
-                </div>
-            `;
+        // Update or create user marker
+        if (userMarker) {
+            userMarker.setLatLng([lat, lon]);
+        } else {
+            userMarker = L.marker([lat, lon]).addTo(wildfireMap);
+        }
+
+        // Get location details if needed
+        if (locationName === null) {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?` +
+                `format=json&lat=${lat}&lon=${lon}&zoom=12&addressdetails=1`
+            );
+            
+            const data = await response.json();
+            const address = data.address;
+            const state = address.state || '';
+            locationName = address.city || address.town || address.village || 'Unknown Location';
+            const displayName = `${locationName}, ${state}`;
+            
+            const locationInfo = document.getElementById('coordinates');
+            if (locationInfo) {
+                locationInfo.innerHTML = `
+                    <div class="location-details">
+                        <span class="location-type">${isSelected ? 'Selected Location' : 'Current Location'}</span>
+                        <span class="city-name">${displayName}</span>
+                        <span class="coordinates">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>
+                    </div>
+                `;
+            }
         }
     } catch (error) {
         console.error('Error updating location display:', error);
@@ -1320,7 +1338,7 @@ function generateAlertTags(props) {
     
     // Wind only if explicitly mentioned as high/strong
     if (description.includes('high wind') || description.includes('strong wind')) {
-        tags.add('��� High Winds');
+        tags.add('💨 High Winds');
     }
     
     // Visibility specific
