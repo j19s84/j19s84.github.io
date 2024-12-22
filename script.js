@@ -497,22 +497,19 @@ async function fetchWildfireData(lat, lon) {
 
 async function fetchNWSAlerts(lat, lon) {
     const alertContainer = document.getElementById('alert-banner');
-    if (!alertContainer) {
-        console.error('Alert container not found');
-        return;
-    }
+    if (!alertContainer) return;
 
     alertContainer.classList.add('loading');
     
     try {
-        // First get the NWS grid point for the location
+        // Get NWS grid point
         const pointResponse = await fetch(
             `https://api.weather.gov/points/${lat},${lon}`
         );
         if (!pointResponse.ok) throw new Error('Failed to fetch NWS point data');
         const pointData = await pointResponse.json();
 
-        // Then get active alerts for this location
+        // Get active alerts
         const alertsResponse = await fetch(
             `https://api.weather.gov/alerts/active?point=${lat},${lon}`
         );
@@ -520,77 +517,17 @@ async function fetchNWSAlerts(lat, lon) {
         const alertsData = await alertsResponse.json();
 
         if (alertsData.features && alertsData.features.length > 0) {
-            // Sort alerts by severity
-            const alerts = alertsData.features.sort((a, b) => {
-                const severityOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'];
-                return severityOrder.indexOf(a.properties.severity) - 
-                       severityOrder.indexOf(b.properties.severity);
-            });
-
-            // Create alert tags for different conditions
-            const alertTags = new Set();
-            alerts.forEach(feature => {
-                const alert = feature.properties;
-                const event = alert.event.toLowerCase();
-                const description = alert.description.toLowerCase();
-                
-                if (event.includes('fire') || event.includes('red flag')) {
-                    alertTags.add('🔥 Fire Risk');
-                }
-                if (event.includes('wind')) {
-                    alertTags.add('🌬️ High Winds');
-                }
-                if (description.includes('humidity') && 
-                    (description.includes('low') || description.includes('critical'))) {
-                    alertTags.add('💧 Low Humidity');
-                }
-                if (event.includes('heat')) {
-                    alertTags.add('🌡️ Extreme Heat');
-                }
-                if (event.includes('evacuation')) {
-                    alertTags.add('⚠️ Evacuation');
-                }
-            });
-
-            // Generate HTML for alert tags and alerts
-            const tagsHTML = Array.from(alertTags)
-                .map(tag => `<span class="alert-tag">${tag}</span>`)
-                .join('');
-
-            const alertsHTML = alerts.map(feature => {
-                const alert = feature.properties;
-                return `
-                    <div class="alert-container alert-${alert.severity.toLowerCase()}">
-                        <div class="alert-header">
-                            <div>
-                                <h3>${alert.event}</h3>
-                                <span class="alert-timing">
-                                    Until ${new Date(alert.expires).toLocaleString()}
-                                </span>
-                            </div>
-                            <span class="expand-icon">▼</span>
-                        </div>
-                        <div class="alert-content collapsed">
-                            <p>${alert.description}</p>
-                            ${alert.instruction ? 
-                                `<p class="alert-instruction">${alert.instruction}</p>` : 
-                                ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
+            // Process alerts through our deduplication and tagging system
+            const processedAlerts = processNWSAlerts(alertsData.features);
+            
+            // Update the container with processed alerts
             alertContainer.innerHTML = `
                 <div class="alerts-container">
-                    <div class="alert-tags-container">
-                        ${tagsHTML}
-                    </div>
-                    ${alertsHTML}
+                    ${processedAlerts.join('')}
                 </div>
             `;
 
-            // Update SOS plans based on alerts
-            updateSOSPlans(alertTags);
+            // Set up collapse functionality
             setupAlertCollapse();
             
         } else {
@@ -1275,11 +1212,20 @@ function scrollPanelToTop() {
 
 // Add this to your NWS alerts handling
 function processNWSAlerts(alerts) {
-    // First deduplicate alerts
-    const uniqueAlerts = deduplicateAlerts(alerts);
+    console.log('Processing alerts:', alerts);
     
-    // Then process and display
-    return uniqueAlerts.map(alert => generateAlertHTML(alert));
+    // First deduplicate
+    const uniqueAlerts = deduplicateAlerts(alerts);
+    console.log('After deduplication:', uniqueAlerts);
+    
+    // Generate HTML for each unique alert
+    const processedAlerts = uniqueAlerts.map(alert => {
+        console.log('Processing alert:', alert);
+        return generateAlertHTML(alert);
+    });
+    
+    console.log('Final processed alerts:', processedAlerts);
+    return processedAlerts;
 }
 
 function deduplicateAlerts(alerts) {
