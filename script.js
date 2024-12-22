@@ -622,10 +622,17 @@ function calculateFireRisk(lat, lon, alertTags) {
     return riskLevel;
 }
 
-function updateLocationDisplay(lat, lon) {
-    const locationDisplay = document.querySelector('.location-subtitle');
-    if (locationDisplay) {
-        locationDisplay.textContent = `Latitude: ${lat.toFixed(4)}, Longitude: ${lon.toFixed(4)}`;
+function updateLocationDisplay(position) {
+    const { latitude, longitude } = position.coords;
+    
+    // Update map center
+    wildfireMap.setView([latitude, longitude], 10);
+    
+    // Update or create user marker
+    if (userMarker) {
+        userMarker.setLatLng([latitude, longitude]);
+    } else {
+        userMarker = L.marker([latitude, longitude]).addTo(wildfireMap);
     }
 }
 
@@ -1509,7 +1516,6 @@ function handleFireClick(fire) {
     // Show fire details and evacuation options
     evacuationRouter.showEvacuationRoutes(latitude, longitude);
 }
-
 // Add the EvacuationRouter class directly in script.js
 class EvacuationRouter {
     constructor(map) {
@@ -1605,3 +1611,4 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Map initialization error:', error);
     }
 });
+
