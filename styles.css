@@ -1213,4 +1213,84 @@ h2 {
     }
 }
 
+.evacuation-alert {
+    margin: 15px 0;
+    padding: 20px;
+    border-radius: var(--border-radius-lg);
+    animation: pulse 2s infinite;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.level-3 {
+    background: var(--danger);
+    color: white;
+    border-left: 6px solid darkred;
+}
+
+.level-2 {
+    background: var(--warning);
+    color: var(--text-dark);
+    border-left: 6px solid darkorange;
+}
+
+.level-1 {
+    background: var(--caution);
+    color: var(--text-dark);
+    border-left: 6px solid yellow;
+}
+
+.evac-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.evac-level {
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.2);
+    font-size: 0.9em;
+}
+
+.evac-action {
+    font-size: 1.1em;
+    font-weight: 500;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+.evac-details {
+    font-size: 0.9em;
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(0,0,0,0.1);
+    border-radius: var(--border-radius-sm);
+    line-height: 1.5;
+}
+
+.find-routes-btn {
+    background: white;
+    color: var(--text-dark);
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
+}
+
+.find-routes-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.01); }
+    100% { transform: scale(1); }
+}
+
 
