@@ -1282,32 +1282,41 @@ function isAlertSimilar(alert1, alert2) {
 function generateAlertTags(props) {
     const tags = new Set();
     const description = props.description.toLowerCase();
+    const event = props.event.toLowerCase();
     
-    // Event type tag
-    tags.add(getEventTag(props.event));
+    // Only add tags that match the actual content
     
-    // Air Quality tags
-    if (description.includes('air quality')) {
-        if (description.includes('unhealthy for sensitive')) tags.add('😷 Sensitive Groups');
-        else if (description.includes('unhealthy')) tags.add('😷 Unhealthy Air');
-        else if (description.includes('hazardous')) tags.add('⚠️ Hazardous Air');
-        else if (description.includes('moderate')) tags.add('😐 Moderate Air');
+    // Air Quality specific
+    if (event.includes('air quality') || description.includes('air quality')) {
+        tags.add('⚠️ Air Quality Alert');
+        
+        if (description.includes('smoke')) {
+            tags.add('💨 Smoke Present');
+        }
     }
     
-    // Fire related tags
-    if (description.includes('fire') || description.includes('smoke')) {
-        if (description.includes('smoke')) tags.add('💨 Smoke Present');
-        if (description.includes('visibility')) tags.add('👁️ Low Visibility');
-    }
-    
-    // Weather tags
-    if (description.includes('wind')) tags.add('💨 High Winds');
-    if (description.includes('heat')) tags.add('🌡️ Extreme Heat');
-    if (description.includes('humidity')) tags.add('💧 Low Humidity');
-    
-    // Restriction tags
-    if (description.includes('no-burn') || description.includes('burning ban')) {
+    // No-Burn specific
+    if (description.includes('no-burn') || 
+        description.includes('burning ban') || 
+        description.includes('mandatory wood-burning ban')) {
         tags.add('🚫 No Burning');
+    }
+    
+    // Heat only if explicitly mentioned as a warning/advisory
+    if ((event.includes('heat') || description.includes('excessive heat')) &&
+        (description.includes('warning') || description.includes('advisory'))) {
+        tags.add('🌡️ Extreme Heat');
+    }
+    
+    // Wind only if explicitly mentioned as high/strong
+    if (description.includes('high wind') || description.includes('strong wind')) {
+        tags.add('💨 High Winds');
+    }
+    
+    // Visibility specific
+    if (description.includes('visibility') && 
+        (description.includes('low') || description.includes('poor'))) {
+        tags.add('👁️ Low Visibility');
     }
     
     return Array.from(tags);
@@ -1346,4 +1355,85 @@ function generateAlertHTML(alert) {
             </div>
         </div>
     `;
+}
+
+// First, let's create a more flexible system that can work with multiple data sources
+async function checkEvacuationStatus(lat, lon) {
+    try {
+        // Try multiple sources in order
+        const sources = [
+            checkCalFireEvacuations,
+            checkCountyEvacuations,
+            checkNWSEvacuations
+        ];
+
+        for (const checkSource of sources) {
+            const status = await checkSource(lat, lon);
+            if (status) return status;
+        }
+
+        // If no evacuation orders found
+        return null;
+
+    } catch (error) {
+        console.error('Error checking evacuation status:', error);
+        return null;
+    }
+}
+
+// Check NWS alerts for evacuation information (more reliable as we already have this)
+async function checkNWSEvacuations(lat, lon) {
+    try {
+        const response = await fetch(
+            `https://api.weather.gov/alerts/active?point=${lat},${lon}`
+        );
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        const features = data.features || [];
+        
+        // Look for evacuation-related alerts
+        for (const alert of features) {
+            const description = alert.properties.description.toLowerCase();
+            const instruction = (alert.properties.instruction || '').toLowerCase();
+            
+            if (description.includes('evacuat') || instruction.includes('evacuat')) {
+                // Determine evacuation level
+                let level = 1;
+                if (description.includes('immediate') || description.includes('mandatory')) {
+                    level = 3;
+                } else if (description.includes('prepare') || description.includes('warning')) {
+                    level = 2;
+                }
+                
+                return {
+                    level,
+                    message: level === 3 ? '🚨 MANDATORY EVACUATION' : 
+                            level === 2 ? '⚠️ EVACUATION WARNING' : 
+                            '📱 EVACUATION PREPARATION',
+                    action: alert.properties.instruction || 'Follow local authority instructions',
+                    type: 'Emergency',
+                    details: alert.properties.description
+                };
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error checking NWS evacuation status:', error);
+        return null;
+    }
+}
+
+// Placeholder for future CalFire integration
+async function checkCalFireEvacuations(lat, lon) {
+    // We can implement this later when we have proper API access
+    return null;
+}
+
+// Placeholder for county-specific evacuation data
+async function checkCountyEvacuations(lat, lon) {
+    // We can implement this later for specific counties
+    return null;
 }
