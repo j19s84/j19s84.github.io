@@ -1,5 +1,3 @@
-import EvacuationRouter from './evacuation-router.js';
-
 // Global variables
 let wildfireMap;
 let userLocationMarker;
@@ -1500,3 +1498,198 @@ function handleFireClick(fire) {
     const { latitude, longitude } = fire.properties;
     evacuationRouter.showEvacuationRoutes(latitude, longitude);
 }
+
+// Add the EvacuationRouter class directly in script.js
+class EvacuationRouter {
+    constructor(map) {
+        this.map = map;
+        this.currentRoutes = [];
+        this.markers = [];
+    }
+
+    async showEvacuationRoutes(fireLat, fireLon) {
+        this.clearExistingRoutes();
+        
+        try {
+            const safeDestinations = await this.findSafeDestinations(fireLat, fireLon);
+            const routes = await this.calculateEvacuationRoutes(
+                { lat: fireLat, lon: fireLon },
+                safeDestinations.slice(0, 3)
+            );
+            
+            this.displayEvacuationRoutes(routes);
+        } catch (error) {
+            console.error('Error showing evacuation routes:', error);
+        }
+    }
+
+    async findSafeDestinations(fireLat, fireLon) {
+        // Query for emergency locations within 30km, away from fire
+        const query = `
+            [out:json][timeout:25];
+            (
+                way["amenity"="shelter"](around:30000,${fireLat},${fireLon});
+                way["amenity"="school"](around:30000,${fireLat},${fireLon});
+                way["amenity"="hospital"](around:30000,${fireLat},${fireLon});
+                way["amenity"="fire_station"](around:30000,${fireLat},${fireLon});
+            );
+            out body;
+            >;
+            out skel qt;
+        `;
+        
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: query
+        });
+        
+        const data = await response.json();
+        
+        return data.elements
+            .filter(e => e.tags && e.lat && e.lon)
+            .map(e => ({
+                type: e.tags.amenity,
+                name: e.tags.name || `${e.tags.amenity.charAt(0).toUpperCase() + e.tags.amenity.slice(1)}`,
+                lat: e.lat,
+                lon: e.lon,
+                distance: this.calculateDistance(fireLat, fireLon, e.lat, e.lon)
+            }))
+            .sort((a, b) => a.distance - b.distance);
+    }
+
+    calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                 Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                 Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    async calculateEvacuationRoutes(start, destinations) {
+        const routes = await Promise.all(destinations.map(async dest => {
+            const response = await fetch(
+                `https://router.project-osrm.org/route/v1/driving/` +
+                `${start.lon},${start.lat};${dest.lon},${dest.lat}` +
+                `?overview=full&alternatives=true&geometries=geojson`
+            );
+            
+            const data = await response.json();
+            
+            return {
+                destination: dest,
+                path: data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]),
+                duration: Math.round(data.routes[0].duration / 60), // minutes
+                distance: (data.routes[0].distance / 1609.34).toFixed(1) // miles
+            };
+        }));
+        
+        return routes;
+    }
+
+    displayEvacuationRoutes(routes) {
+        // Display in right panel
+        const routesPanel = document.getElementById('fire-details-content');
+        routesPanel.innerHTML = `
+            <div class="evacuation-routes">
+                <h2>🚗 Evacuation Routes</h2>
+                ${routes.map((route, index) => `
+                    <div class="route-option" data-route-index="${index}">
+                        <div class="route-header">
+                            <span class="route-letter">Route ${String.fromCharCode(65 + index)}</span>
+                            <span class="route-time">${route.duration} min</span>
+                        </div>
+                        <div class="route-destination">
+                            <span class="destination-icon">${this.getDestinationIcon(route.destination.type)}</span>
+                            <span>${route.destination.name}</span>
+                        </div>
+                        <div class="route-stats">
+                            <span>${route.distance} mi</span>
+                            <span class="route-traffic">Light traffic</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        // Draw routes on map
+        routes.forEach((route, index) => {
+            const routeLine = L.polyline(route.path.map(coord => [coord[1], coord[0]]), {
+                color: this.getRouteColor(index),
+                weight: 5,
+                opacity: 0.8
+            }).addTo(this.map);
+            
+            // Add destination marker
+            L.marker([route.destination.lat, route.destination.lon], {
+                icon: L.divIcon({
+                    className: 'destination-marker',
+                    html: `<div class="marker-content">${this.getDestinationIcon(route.destination.type)}</div>`
+                })
+            }).addTo(this.map);
+            
+            this.currentRoutes.push(routeLine);
+        });
+        
+        // Add click handlers
+        document.querySelectorAll('.route-option').forEach(option => {
+            option.addEventListener('click', () => this.highlightRoute(parseInt(option.dataset.routeIndex)));
+        });
+    }
+
+    highlightRoute(index) {
+        // Reset all routes
+        this.currentRoutes.forEach((route, i) => {
+            route.setStyle({
+                weight: 5,
+                opacity: i === index ? 1 : 0.4
+            });
+        });
+        
+        // Highlight selected route in panel
+        document.querySelectorAll('.route-option').forEach((option, i) => {
+            option.classList.toggle('selected', i === index);
+        });
+    }
+
+    getRouteColor(index) {
+        const colors = ['#00BFA5', '#00B0FF', '#651FFF'];
+        return colors[index] || colors[0];
+    }
+
+    getDestinationIcon(type) {
+        const icons = {
+            'shelter': '🏘️',
+            'school': '🏫',
+            'hospital': '🏥',
+            'fire_station': '🚒'
+        };
+        return icons[type] || '🏢';
+    }
+
+    clearExistingRoutes() {
+        this.currentRoutes.forEach(route => route.remove());
+        this.currentRoutes = [];
+        this.markers.forEach(marker => marker.remove());
+        this.markers = [];
+    }
+}
+
+// Make sure evacuationRouter is created after map initialization
+let evacuationRouter;
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing initialization code ...
+    try {
+        wildfireMap = L.map('wildfire-map', {
+            // ... map options ...
+        });
+        
+        evacuationRouter = new EvacuationRouter(wildfireMap);
+        
+        // ... rest of initialization code ...
+    } catch (error) {
+        console.error('Map initialization error:', error);
+    }
+});
