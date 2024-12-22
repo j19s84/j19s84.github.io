@@ -1320,7 +1320,7 @@ function generateAlertTags(props) {
     
     // Wind only if explicitly mentioned as high/strong
     if (description.includes('high wind') || description.includes('strong wind')) {
-        tags.add('💨 High Winds');
+        tags.add('��� High Winds');
     }
     
     // Visibility specific
