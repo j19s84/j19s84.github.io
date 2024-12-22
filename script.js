@@ -622,20 +622,6 @@ function calculateFireRisk(lat, lon, alertTags) {
     return riskLevel;
 }
 
-function updateLocationDisplay(position) {
-    const { latitude, longitude } = position.coords;
-    
-    // Update map center
-    wildfireMap.setView([latitude, longitude], 10);
-    
-    // Update or create user marker
-    if (userMarker) {
-        userMarker.setLatLng([latitude, longitude]);
-    } else {
-        userMarker = L.marker([latitude, longitude]).addTo(wildfireMap);
-    }
-}
-
 function addMapLegend() {
     if (mapLegend) {
         mapLegend.remove();
@@ -1630,4 +1616,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
- 
