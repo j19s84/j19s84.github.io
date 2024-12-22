@@ -1272,4 +1272,132 @@ function scrollPanelToTop() {
         });
     }
 }
- 
+
+// Add this to your NWS alerts handling
+function processNWSAlerts(alerts) {
+    // First deduplicate alerts
+    const uniqueAlerts = deduplicateAlerts(alerts);
+    
+    // Then process and display
+    return uniqueAlerts.map(alert => generateAlertHTML(alert));
+}
+
+function deduplicateAlerts(alerts) {
+    const alertMap = new Map();
+    
+    alerts.sort((a, b) => new Date(b.properties.sent) - new Date(a.properties.sent));
+    
+    alerts.forEach(alert => {
+        const props = alert.properties;
+        // Create a similarity key based on event type and area
+        const similarityKey = `${props.event}-${props.areaDesc}`;
+        
+        if (alertMap.has(similarityKey)) {
+            const existing = alertMap.get(similarityKey);
+            // Check if alerts are similar and within 3 days
+            if (isAlertSimilar(existing.properties, props)) {
+                // Keep the newer alert
+                if (new Date(props.sent) > new Date(existing.properties.sent)) {
+                    alertMap.set(similarityKey, alert);
+                }
+            } else {
+                // If not similar enough, treat as separate alert
+                alertMap.set(`${similarityKey}-${props.sent}`, alert);
+            }
+        } else {
+            alertMap.set(similarityKey, alert);
+        }
+    });
+    
+    return Array.from(alertMap.values());
+}
+
+function isAlertSimilar(alert1, alert2) {
+    // Check if alerts are within 3 days
+    const timeDiff = Math.abs(new Date(alert1.sent) - new Date(alert2.sent));
+    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+    
+    if (daysDiff > 3) return false;
+    
+    // Compare description similarity (simple version)
+    const description1 = alert1.description.toLowerCase();
+    const description2 = alert2.description.toLowerCase();
+    
+    // Calculate similarity score
+    const words1 = new Set(description1.split(' '));
+    const words2 = new Set(description2.split(' '));
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const union = new Set([...words1, ...words2]);
+    
+    const similarity = intersection.size / union.size;
+    return similarity > 0.85; // 85% similarity threshold
+}
+
+function generateAlertTags(props) {
+    const tags = new Set();
+    const description = props.description.toLowerCase();
+    
+    // Event type tag
+    tags.add(getEventTag(props.event));
+    
+    // Air Quality tags
+    if (description.includes('air quality')) {
+        if (description.includes('unhealthy for sensitive')) tags.add('😷 Sensitive Groups');
+        else if (description.includes('unhealthy')) tags.add('😷 Unhealthy Air');
+        else if (description.includes('hazardous')) tags.add('⚠️ Hazardous Air');
+        else if (description.includes('moderate')) tags.add('😐 Moderate Air');
+    }
+    
+    // Fire related tags
+    if (description.includes('fire') || description.includes('smoke')) {
+        if (description.includes('smoke')) tags.add('💨 Smoke Present');
+        if (description.includes('visibility')) tags.add('👁️ Low Visibility');
+    }
+    
+    // Weather tags
+    if (description.includes('wind')) tags.add('💨 High Winds');
+    if (description.includes('heat')) tags.add('🌡️ Extreme Heat');
+    if (description.includes('humidity')) tags.add('💧 Low Humidity');
+    
+    // Restriction tags
+    if (description.includes('no-burn') || description.includes('burning ban')) {
+        tags.add('🚫 No Burning');
+    }
+    
+    return Array.from(tags);
+}
+
+function getEventTag(event) {
+    const eventIcons = {
+        'Air Quality': '💨',
+        'Red Flag': '🚩',
+        'Heat': '🌡️',
+        'Wind': '🌪️',
+        'Fire Weather': '🔥'
+    };
+    return `${eventIcons[event] || '⚠️'} ${event}`;
+}
+
+function generateAlertHTML(alert) {
+    const props = alert.properties;
+    const tags = generateAlertTags(props);
+    
+    return `
+        <div class="alert-container alert-${props.severity.toLowerCase()}">
+            <div class="alert-header">
+                <div class="alert-title">
+                    <h3>${props.event}</h3>
+                    <span class="alert-timing">Until ${new Date(props.expires).toLocaleString()}</span>
+                </div>
+                <span class="expand-icon">▼</span>
+            </div>
+            <div class="alert-tags">
+                ${tags.map(tag => `<span class="alert-tag">${tag}</span>`).join('')}
+            </div>
+            <div class="alert-content collapsed">
+                <p>${props.description}</p>
+                ${props.instruction ? `<p class="alert-instruction">${props.instruction}</p>` : ''}
+            </div>
+        </div>
+    `;
+}
