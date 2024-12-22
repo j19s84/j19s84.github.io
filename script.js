@@ -1437,3 +1437,55 @@ async function checkCountyEvacuations(lat, lon) {
     // We can implement this later for specific counties
     return null;
 }
+
+// Add this to your HTML via JavaScript when the page loads
+function showLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.className = 'loading-overlay';
+    overlay.innerHTML = `
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Fetching your location...</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function hideLoadingOverlay() {
+    const overlay = document.querySelector('.loading-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s ease-out';
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
+// Update your initialization code
+async function initializeApp() {
+    showLoadingOverlay();
+    try {
+        // Get user's location
+        const position = await getCurrentPosition();
+        // Initialize map and fetch data
+        await initializeMap(position.coords.latitude, position.coords.longitude);
+        // Hide overlay after everything is loaded
+        hideLoadingOverlay();
+    } catch (error) {
+        console.error('Error initializing app:', error);
+        hideLoadingOverlay();
+        // Show error message to user
+        showError('Could not fetch location. Please try again.');
+    }
+}
+
+// Helper function for error messages
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+    setTimeout(() => {
+        errorDiv.style.opacity = '0';
+        setTimeout(() => errorDiv.remove(), 300);
+    }, 3000);
+}
