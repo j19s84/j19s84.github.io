@@ -897,7 +897,8 @@ function formatAlert(props, tags) {
     `;
 }
 
-async function showEvacuationRoutes(fireLat, fireLon, fireProps) {
+// Make showEvacuationRoutes available globally
+window.showEvacuationRoutes = async function(fireLat, fireLon, fireProps) {
     // Clear existing routes
     if (window.currentRoutes) {
         window.currentRoutes.forEach(route => route.remove());
@@ -956,7 +957,7 @@ async function showEvacuationRoutes(fireLat, fireLon, fireProps) {
         
         window.currentRoutes.push(routeLine);
     });
-}
+};
 
 function getDestinationIcon(type) {
     const icons = {
@@ -1195,7 +1196,7 @@ function createFireDetailsPanel(props) {
                     <label>Behavior:</label>
                     <span>${props.FireBehavior || 'No behavior information available'}</span>
                 </div>
-                <button class="find-safe-routes-btn" onclick="findSafeRoutes(${props.lat}, ${props.lon})">
+                <button class="find-safe-routes-btn" onclick="showEvacuationRoutes(${props.lat}, ${props.lon}, ${JSON.stringify(props)})">
                     Find Safe Routes
                 </button>
             </div>
