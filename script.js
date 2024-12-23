@@ -713,14 +713,31 @@ async function updateLocationData(lat, lng) {
 }
 
 async function findSafeRoutes(fireLat, fireLon) {
-    const evacuationService = new EvacuationService();
-    const fireLocation = { lat: fireLat, lon: fireLon };
-    const userLocation = currentLocation;
+    try {
+        // Clear existing routes if any
+        if (window.currentRoutes) {
+            window.currentRoutes.forEach(route => route.remove());
+        }
+        window.currentRoutes = [];
 
-    const routes = await evacuationService.findSafeLocations(fireLocation, userLocation);
-    
-    // Display routes on map
-    displayEvacuationRoutes(routes);
+        // Show a message to the user
+        const fireDetailsPanel = document.getElementById('fire-details-content');
+        if (fireDetailsPanel) {
+            fireDetailsPanel.innerHTML = `
+                <div class="evacuation-message">
+                    <h3>🚗 Evacuation Routes</h3>
+                    <p>This feature is currently being updated. In case of emergency:</p>
+                    <ul>
+                        <li>Follow local emergency instructions</li>
+                        <li>Call 911 for immediate assistance</li>
+                        <li>Monitor local news and weather</li>
+                    </ul>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error finding safe routes:', error);
+    }
 }
 
 async function fetchWeatherForecast(lat, lon) {
