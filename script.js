@@ -680,7 +680,7 @@ wildfireMap.on('click', function(e) {
     }
 });
 
-// Separate function to update all location-based data
+// Add this function to handle all location-based data updates
 async function updateLocationData(lat, lng) {
     try {
         const locationName = await reverseGeocode(lat, lng);
@@ -1601,7 +1601,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ... existing initialization code ...
     try {
         wildfireMap = L.map('wildfire-map', {
-            // ... map options ...
+            center: [lat, lon],
+            zoom: 8,
+            scrollWheelZoom: true,  // Enable scroll wheel zoom
+            zoomControl: true,      // Show zoom controls
+            doubleClickZoom: true   // Enable double click zoom
         });
         
         evacuationRouter = new EvacuationRouter(wildfireMap);
