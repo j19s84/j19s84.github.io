@@ -44,6 +44,13 @@ document.addEventListener('DOMContentLoaded', function() {
             doubleClickZoom: true,
             scrollWheelZoom: true,
             gestureHandling: true // Better mobile handling
+        }).on('dragstart', function() {
+            this.dragging.enable();
+        }).on('drag', function() {
+            const center = this.getCenter();
+            if (draggableMarker) {
+                draggableMarker.setLatLng(center);
+            }
         });
 
         // Add the tile layer with proper opacity
@@ -69,8 +76,16 @@ document.addEventListener('DOMContentLoaded', function() {
             position: 'bottomright'
         }).addTo(wildfireMap);
 
-        // Add a draggable marker feature
+        // Create pin icon and marker
+        const pinIcon = L.divIcon({
+            className: 'custom-pin-icon',
+            html: `<div class="pin-container">📍</div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+        });
+
         const draggableMarker = L.marker([39.8283, -98.5795], {
+            icon: pinIcon,
             draggable: true,
             autoPan: true
         }).addTo(wildfireMap);
@@ -1667,5 +1682,17 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
         console.error('Map initialization error:', error);
     }
+});
+
+// Add map click and marker drag handlers
+wildfireMap.on('click', function(e) {
+    const clickedPoint = e.latlng;
+    draggableMarker.setLatLng(clickedPoint);
+    updateLocationData(clickedPoint.lat, clickedPoint.lng);
+});
+
+draggableMarker.on('dragend', function(e) {
+    const position = e.target.getLatLng();
+    updateLocationData(position.lat, position.lng);
 });
 
