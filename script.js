@@ -1696,3 +1696,4 @@ draggableMarker.on('dragend', function(e) {
     updateLocationData(position.lat, position.lng);
 });
 
+ 
