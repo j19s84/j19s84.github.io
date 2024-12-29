@@ -1339,4 +1339,23 @@ h2 {
     100% { opacity: 0.6; }
 }
 
+.drag-pin-control {
+    background: white;
+    padding: 5px;
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+}
+
+.drag-pin-button {
+    border: none;
+    background: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.drag-pin-button:hover {
+    transform: scale(1.1);
+}
+
 
