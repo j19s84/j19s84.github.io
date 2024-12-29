@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
             trackResize: true,   // Handle window resizing
             boxZoom: true,       // Enable box zooming
             doubleClickZoom: true,
-            scrollWheelZoom: true
+            scrollWheelZoom: true,
+            gestureHandling: true // Better mobile handling
         });
 
         // Add the tile layer with proper opacity
@@ -62,6 +63,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // During map initialization
         // evacuationRouter = new EvacuationRouter(wildfireMap);
+
+        // Add zoom control to bottom right
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(wildfireMap);
+
+        // Add a draggable marker feature
+        const draggableMarker = L.marker([39.8283, -98.5795], {
+            draggable: true,
+            autoPan: true
+        }).addTo(wildfireMap);
+
+        // Handle marker drag events
+        draggableMarker.on('dragend', function(e) {
+            const marker = e.target;
+            const position = marker.getLatLng();
+            
+            // Update map view
+            wildfireMap.setView(position, wildfireMap.getZoom(), {
+                animate: true,
+                duration: 0.5
+            });
+            
+            // Update data for new location
+            updateLocationData(position.lat, position.lng);
+        });
+
+        // Add a custom control for the draggable pin
+        const customControl = L.Control.extend({
+            options: {
+                position: 'topleft'
+            },
+            
+            onAdd: function(map) {
+                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control drag-pin-control');
+                container.innerHTML = `
+                    <button class="drag-pin-button" title="Drag to set location">
+                        📍
+                    </button>
+                `;
+                
+                container.onclick = function() {
+                    draggableMarker.setLatLng(map.getCenter());
+                    draggableMarker.setOpacity(1);
+                    draggableMarker.dragging.enable();
+                };
+                
+                return container;
+            }
+        });
+
+        wildfireMap.addControl(new customControl());
 
     } catch (error) {
         console.error('Map initialization error:', error);
