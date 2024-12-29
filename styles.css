@@ -1358,4 +1358,22 @@ h2 {
     transform: scale(1.1);
 }
 
+.custom-pin-icon {
+    cursor: grab;
+}
+
+.custom-pin-icon:active {
+    cursor: grabbing;
+}
+
+.pin-container {
+    font-size: 24px;
+    text-align: center;
+    cursor: grab;
+}
+
+.pin-container:active {
+    cursor: grabbing;
+}
+
 
