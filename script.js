@@ -25,117 +25,58 @@ const debounce = (func, wait) => {
 // Create a debounced version of searchLocation
 const debouncedSearch = debounce(searchLocation, 300);
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM loaded');
-    if (typeof L === 'undefined') {
-        console.error('Leaflet not loaded');
+
+    const mapContainer = document.getElementById('wildfire-map');
+    if (!mapContainer) {
+        console.error('❌ Map container not found! Check HTML.');
         return;
     }
-    console.log('Leaflet loaded');
-    
+
+    if (typeof L === 'undefined') {
+        console.error('❌ Leaflet not loaded!');
+        return;
+    }
+    console.log('✅ Leaflet loaded');
+
     try {
-        // Initialize map with US center coordinates
         wildfireMap = L.map('wildfire-map', {
             center: [39.8283, -98.5795],
-            zoom: 4,
-            dragging: true,      // Enable dragging
-            tap: true,           // Enable mobile taps
-            trackResize: true,   // Handle window resizing
-            boxZoom: true,       // Enable box zooming
-            doubleClickZoom: true,
+            zoom: 5,
             scrollWheelZoom: true,
-            gestureHandling: true // Better mobile handling
-        }).on('dragstart', function() {
-            this.dragging.enable();
-        }).on('drag', function() {
-            const center = this.getCenter();
-            if (draggableMarker) {
-                draggableMarker.setLatLng(center);
-            }
+            doubleClickZoom: true
         });
 
-        // Add the tile layer with proper opacity
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19,
-            opacity: 1.0  // Ensure full opacity
+            attribution: '© OpenStreetMap contributors'
         }).addTo(wildfireMap);
 
-        console.log('Map initialized');
+        console.log('✅ Map initialized');
 
-        // Immediately fetch wildfire data
+        // Attach a safe event listener to wildfireMap
+        if (wildfireMap) {
+            wildfireMap.whenReady(() => {
+                wildfireMap.on('click', function (e) {
+                    console.log("✅ Map clicked at:", e.latlng);
+                });
+
+                // Safely update map view only when initialized
+                wildfireMap.setView([39.8283, -98.5795], 5);
+            });
+        } else {
+            console.error("❌ wildfireMap is undefined!");
+        }
+
+        isMapInitialized = true;
+
+        // Load Wildfire Data
         fetchWildfireData(39.8283, -98.5795);
         
-        // Add map legend
-        addMapLegend();
-
-        // During map initialization
-        // evacuationRouter = new EvacuationRouter(wildfireMap);
-
-        // Add zoom control to bottom right
-        L.control.zoom({
-            position: 'bottomright'
-        }).addTo(wildfireMap);
-
-        // Create pin icon and marker
-        const pinIcon = L.divIcon({
-            className: 'custom-pin-icon',
-            html: `<div class="pin-container">📍</div>`,
-            iconSize: [30, 30],
-            iconAnchor: [15, 30]
-        });
-
-        const draggableMarker = L.marker([39.8283, -98.5795], {
-            icon: pinIcon,
-            draggable: true,
-            autoPan: true
-        }).addTo(wildfireMap);
-
-        // Handle marker drag events
-        draggableMarker.on('dragend', function(e) {
-            const marker = e.target;
-            const position = marker.getLatLng();
-            
-            // Update map view
-            wildfireMap.setView(position, wildfireMap.getZoom(), {
-                animate: true,
-                duration: 0.5
-            });
-            
-            // Update data for new location
-            updateLocationData(position.lat, position.lng);
-        });
-
-        // Add a custom control for the draggable pin
-        const customControl = L.Control.extend({
-            options: {
-                position: 'topleft'
-            },
-            
-            onAdd: function(map) {
-                const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control drag-pin-control');
-                container.innerHTML = `
-                    <button class="drag-pin-button" title="Drag to set location">
-                        📍
-                    </button>
-                `;
-                
-                container.onclick = function() {
-                    draggableMarker.setLatLng(map.getCenter());
-                    draggableMarker.setOpacity(1);
-                    draggableMarker.dragging.enable();
-                };
-                
-                return container;
-            }
-        });
-
-        wildfireMap.addControl(new customControl());
-
     } catch (error) {
-        console.error('Map initialization error:', error);
+        console.error('❌ Map initialization error:', error);
     }
+});
 
     const sosButton = document.getElementById('sos-button');
     const searchButton = document.getElementById('search-button');
