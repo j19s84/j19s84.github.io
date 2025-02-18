@@ -732,12 +732,17 @@ function addMapLegend() {
 // Add this to track initialization state
 let isMapInitialized = false;
 
-// Add this after your map initialization
-wildfireMap.on('click', function(e) {
-    if (e.originalEvent.target.classList.contains('leaflet-container')) {
-        const { lat, lng } = e.latlng;
-        console.log('Clicked location:', lat, lng);
-        
+// Ensure wildfireMap is defined before adding event listener
+if (typeof wildfireMap !== 'undefined' && wildfireMap) {
+    wildfireMap.whenReady(() => {
+        wildfireMap.on('click', function (e) {
+            console.log("✅ Map clicked at:", e.latlng);
+        });
+    });
+} else {
+    console.error("❌ wildfireMap is undefined! Map may not have loaded.");
+}
+// Update map center with animation
         // Update map center with animation
         wildfireMap.setView([lat, lng], 10, {
             animate: true,
