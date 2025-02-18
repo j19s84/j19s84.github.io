@@ -9,6 +9,19 @@ let currentLocation = {
     lon: null
 };
 
+// ✅ Safe function to update the map only if initialized
+function updateMapView(lat, lon, zoom = 8) {
+    if (typeof wildfireMap !== 'undefined' && wildfireMap && isMapInitialized) {
+        wildfireMap.setView([lat, lon], zoom, {
+            animate: true,
+            duration: 0.5
+        });
+        console.log(`📍 Map view updated to: Lat ${lat}, Lon ${lon}, Zoom ${zoom}`);
+    } else {
+        console.error("❌ Cannot update map view - wildfireMap is not initialized!");
+    }
+}
+
 // Utility functions
 const debounce = (func, wait) => {
     let timeout;
@@ -26,14 +39,38 @@ const debounce = (func, wait) => {
 const debouncedSearch = debounce(searchLocation, 300);
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM loaded');
+    console.log("DOM loaded");
 
+    // Wait for the elements to be available
+    const sosButton = document.getElementById('sos-button');
+    const searchButton = document.getElementById('search-button');
+    const locationInput = document.getElementById('location-input');
     const mapContainer = document.getElementById('wildfire-map');
+
+    if (!sosButton || !searchButton || !locationInput) {
+        console.error("❌ One or more required elements not found in the DOM");
+        return;
+    }
+
     if (!mapContainer) {
         console.error('❌ Map container not found! Check HTML.');
         return;
     }
 
+    console.log("✅ All required elements found");
+
+    // Attach event listeners AFTER elements are found
+    sosButton.addEventListener('click', launchSOSPlan);
+    searchButton.addEventListener('click', debouncedSearch);
+    locationInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            debouncedSearch();
+        }
+    });
+
+    console.log("✅ Event listeners added successfully");
+
+    // Ensure Leaflet is loaded
     if (typeof L === 'undefined') {
         console.error('❌ Leaflet not loaded!');
         return;
@@ -53,20 +90,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }).addTo(wildfireMap);
 
         console.log('✅ Map initialized');
+            // ✅ Add this right after "Map initialized"
+    const draggableMarker = L.marker([39.8283, -98.5795], {
+        draggable: true
+    }).addTo(wildfireMap);
+
+    // Handle marker drag event
+    draggableMarker.on('dragend', function(e) {
+        const position = e.target.getLatLng();
+        updateLocationData(position.lat, position.lng);
+    });
+        
+        // ✅ If needed, add event listener for map clicks
+    wildfireMap.on('click', function(e) {
+        const clickedPoint = e.latlng;
+        draggableMarker.setLatLng(clickedPoint);
+        updateLocationData(clickedPoint.lat, clickedPoint.lng);
+    });
 
         // Attach a safe event listener to wildfireMap
-        if (wildfireMap) {
-            wildfireMap.whenReady(() => {
-                wildfireMap.on('click', function (e) {
-                    console.log("✅ Map clicked at:", e.latlng);
-                });
-
-                // Safely update map view only when initialized
-                wildfireMap.setView([39.8283, -98.5795], 5);
+        wildfireMap.whenReady(() => {
+            wildfireMap.on('click', function (e) {
+                console.log("✅ Map clicked at:", e.latlng);
             });
-        } else {
-            console.error("❌ wildfireMap is undefined!");
-        }
+
+            // Safely update map view only when initialized
+            wildfireMap.setView([39.8283, -98.5795], 5);
+        });
 
         isMapInitialized = true;
 
@@ -76,19 +126,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (error) {
         console.error('❌ Map initialization error:', error);
     }
-});
 
-    const sosButton = document.getElementById('sos-button');
-    const searchButton = document.getElementById('search-button');
-    const locationInput = document.getElementById('location-input');
-
-    // Check if all elements exist
-    if (!sosButton || !searchButton || !locationInput) {
-        console.error('One or more required elements not found');
-        return;
-    }
-
-    // Request location immediately
+    // ✅ Request user location after everything is set up
     if (navigator.geolocation) {
         console.log('Requesting location...');
         navigator.geolocation.getCurrentPosition(
@@ -101,18 +140,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         );
     } else {
-        console.error('Geolocation not supported');
+        console.error('❌ Geolocation not supported!');
         errorLocation();
     }
-
-    // Event listeners
-    sosButton.addEventListener('click', launchSOSPlan);
-    searchButton.addEventListener('click', debouncedSearch);
-    locationInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            debouncedSearch();
-        }
-    });
 });
 
 async function reverseGeocode(lat, lon) {
@@ -145,17 +175,15 @@ async function reverseGeocode(lat, lon) {
 function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
-    
-    // Update map view
-    if (wildfireMap) {
-        wildfireMap.setView([latitude, longitude], 8);
-    }
-    
+
+    // ✅ Ensure map updates only when initialized
+    updateMapView(latitude, longitude, 8);
+
     // Update location display
     const locationInfo = document.createElement('div');
     locationInfo.id = 'coordinates';
     locationInfo.className = 'location-info';
-    
+
     // Get city name and update display
     reverseGeocode(latitude, longitude).then(cityName => {
         locationInfo.innerHTML = `
@@ -202,7 +230,7 @@ function initializeMap(lat, lon) {
         addMapLegend();
         isMapInitialized = true;
     } else {
-        wildfireMap.setView([lat, lon], 6);
+        updateMapView(lat, lon, 6); // ✅ Updated
     }
 
     // Update current location
@@ -245,7 +273,7 @@ async function searchLocation() {
         if (wildfireMap) {
             const foundFire = findFireByName(input);
             if (foundFire) {
-                wildfireMap.setView([foundFire.lat, foundFire.lon], 8);
+                updateMapView(foundFire.lat, foundFire.lon, 8); // ✅ Updated
                 fetchWeatherData(foundFire.lat, foundFire.lon);
                 fetchWildfireData(foundFire.lat, foundFire.lon);
                 fetchNWSAlerts(foundFire.lat, foundFire.lon);
@@ -273,9 +301,7 @@ async function searchLocation() {
             fetchWildfireData(lat, lon);
             fetchNWSAlerts(lat, lon);
 
-            if (wildfireMap) {
-                wildfireMap.setView([lat, lon], 8);
-            }
+            updateMapView(lat, lon, 8); // ✅ Updated
         } else {
             alert('Location or fire not found. Please try a different search term.');
         }
@@ -385,9 +411,16 @@ async function fetchWeatherData(lat, lon) {
 
 async function fetchWildfireData(lat, lon) {
     try {
+        console.log(`📡 Fetching wildfire data for Lat: ${lat}, Lon: ${lon}...`);
+
+        // ✅ Ensure the map element exists before proceeding
         const mapElement = document.getElementById('wildfire-map');
-        mapElement.classList.add('loading');
-        
+        if (!mapElement) {
+            console.error('❌ Wildfire map container not found!');
+            return;
+        }
+
+        // ✅ API Request URL
         const url = 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/0/query?' +
             'where=1%3D1' +
             '&outFields=*' +
@@ -395,117 +428,91 @@ async function fetchWildfireData(lat, lon) {
             '&spatialRel=esriSpatialRelIntersects' +
             '&returnGeometry=true' +
             '&f=json';
-        
+
         const response = await fetch(url);
         const data = await response.json();
-        
+
+        // ✅ Check if API returned an error
         if (data.error) {
             throw new Error(`API error: ${data.error.message || 'Unknown error'}`);
         }
 
-        // Clear existing fire markers
-        wildfireMap.eachLayer((layer) => {
+        console.log(`🔥 ${data.features.length} wildfire(s) found`);
+
+        // ✅ Clear existing fire markers (but keep user location marker)
+        wildfireMap.eachLayer(layer => {
             if (layer instanceof L.Marker && layer !== userLocationMarker) {
-                layer.remove();
+                wildfireMap.removeLayer(layer);
             }
         });
 
-        if (data.features && data.features.length > 0) {
-            data.features.forEach(feature => {
-                if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
-                
-                const props = feature.attributes;
-                const fireLat = feature.geometry.y;
-                const fireLon = feature.geometry.x;
-                
-                const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
-                const isNew = discoveryDate && 
-                    ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
-                
-                const acres = parseFloat(props.DailyAcres) || parseFloat(props.GISAcres) || 0;
-                let color, size;
-                
-                if (acres > 10000) {
-                    color = '#FF0000';
-                    size = 30;
-                } else if (acres > 1000) {
-                    color = '#FFA500';
-                    size = 20;
-                } else {
-                    color = '#FFD700';
-                    size = 12;
-                }
-
-                const isRx = props.IncidentName?.includes('RX') || props.FireType?.includes('RX');
-                const markerHtml = isNew || isRx ?
-                    `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
-                        ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
-                        ${isRx ? '<span class="rx-fire-indicator"><span class="rx-symbol">℞</span></span>' : ''}
-                    </div>` :
-                    `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`;
-
-                const fireIcon = L.divIcon({
-                    className: 'fire-icon',
-                    html: markerHtml,
-                    iconSize: [size, size]
-                });
-
-                const marker = L.marker([fireLat, fireLon], { icon: fireIcon }).addTo(wildfireMap);
-                
-                // Add SOS indicator
-                addSOSControl(fireLat, fireLon, props);
-                
-                marker.on('click', function() {
-                    const fireDetailsPanel = document.getElementById('fire-details-content');
-                    
-                    // Format the discovery date
-                    const discoveryDate = props.FireDiscoveryDateTime ? 
-                        new Date(props.FireDiscoveryDateTime).toLocaleDateString('en-US', {
-                            month: 'numeric',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: 'numeric',
-                            minute: 'numeric'
-                        }) : 'Unknown';
-
-                    // Calculate time since discovery
-                    let timeSince = '';
-                    if (props.FireDiscoveryDateTime) {
-                        const hours = Math.floor((new Date() - new Date(props.FireDiscoveryDateTime)) / (1000 * 60 * 60));
-                        timeSince = `(${hours} hours ago)`;
-                    }
-
-                    // Calculate containment percentage
-                    const containment = props.PercentContained || 0;
-                    
-                    // Get fire cause if available
-                    const fireCause = props.FireCause || 'Under Investigation';
-                    
-                    // Get fire behavior if available
-                    const fireBehavior = props.FireBehavior || 'No behavior information available';
-                    
-                    // Format the fire name
-                    const fireName = `${props.IncidentName || 'Unnamed'} Fire`;
-
-                    fireDetailsPanel.innerHTML = createFireDetailsPanel(props);
-                });
-            });
-        } else {
-            const fireDetailsPanel = document.getElementById('fire-details-content');
-            if (fireDetailsPanel) {
-                fireDetailsPanel.innerHTML = `
-                    <div class="fire-details-card">
-                        <h3>No Active Fires</h3>
-                        <p>There are currently no active fires reported in this area.</p>
-                    </div>
-                `;
-            }
+        // ✅ If no wildfires are found, display a message
+        if (!data.features || data.features.length === 0) {
+            console.warn('⚠️ No active wildfires detected in this area.');
+            return;
         }
+
+        // ✅ Loop through fire data & plot markers
+        data.features.forEach(feature => {
+            if (!feature.geometry || !feature.geometry.x || !feature.geometry.y) return;
+
+            const props = feature.attributes;
+            const fireLat = feature.geometry.y;
+            const fireLon = feature.geometry.x;
+
+            // 🔹 Determine fire discovery date
+            const discoveryDate = props.FireDiscoveryDateTime ? new Date(props.FireDiscoveryDateTime) : null;
+            const isNew = discoveryDate && ((new Date().getTime() - discoveryDate.getTime()) < (24 * 60 * 60 * 1000));
+
+            // 🔹 Determine fire size category
+            const acres = parseFloat(props.DailyAcres) || parseFloat(props.GISAcres) || 0;
+            let color, size;
+
+            if (acres > 10000) {
+                color = '#FF0000'; // 🔴 Large fires
+                size = 30;
+            } else if (acres > 1000) {
+                color = '#FFA500'; // 🟠 Medium fires
+                size = 20;
+            } else {
+                color = '#FFD700'; // 🟡 Small fires
+                size = 12;
+            }
+
+            // 🔹 Determine if it's a prescribed burn (Rx Fire)
+            const isRx = props.IncidentName?.includes('RX') || props.FireType?.includes('RX');
+
+            // 🔹 Create custom marker
+            const markerHtml = isNew || isRx
+                ? `<div class="pulsing-dot" style="background-color: ${color}; width: ${size}px; height: ${size}px;">
+                    ${isNew ? '<span class="new-fire-indicator">NEW</span>' : ''}
+                    ${isRx ? '<span class="rx-fire-indicator"><span class="rx-symbol">℞</span></span>' : ''}
+                </div>`
+                : `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%;"></div>`;
+
+            const fireIcon = L.divIcon({
+                className: 'fire-icon',
+                html: markerHtml,
+                iconSize: [size, size]
+            });
+
+            // 🔹 Add marker to map
+            const marker = L.marker([fireLat, fireLon], { icon: fireIcon }).addTo(wildfireMap);
+
+            // 🔹 Handle marker click event (Display fire details)
+            marker.on('click', function () {
+                const fireDetailsPanel = document.getElementById('fire-details-content');
+                if (fireDetailsPanel) {
+                    fireDetailsPanel.innerHTML = createFireDetailsPanel(props);
+                }
+            });
+
+            // 🔹 Add SOS indicator if needed
+            addSOSControl(fireLat, fireLon, props);
+        });
+
     } catch (error) {
-        console.error('Error fetching wildfire data:', error);
-        mapElement.innerHTML = '<p>Wildfire data temporarily unavailable. Please try again later.</p>';
-    } finally {
-        mapElement.classList.remove('loading');
+        console.error('❌ Error fetching wildfire data:', error);
     }
 }
 
