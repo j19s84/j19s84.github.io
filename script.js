@@ -751,7 +751,6 @@ if (typeof wildfireMap !== 'undefined' && wildfireMap) {
         
         // Update data for new location
         updateLocationData(lat, lng);
-    }
 });
 
 // Add this function to handle all location-based data updates
