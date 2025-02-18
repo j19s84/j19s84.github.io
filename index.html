@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <title>2Safety - Your AI Assistant for Extreme Weather</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14'>🔥</text></svg>">
 
@@ -27,9 +27,11 @@
             <button id="search-button">Search</button>
         </div>
 
-        <div class="content-container">
+       <div class="content-container">
             <div class="main-content">
-                <div id="wildfire-map"></div>
+                <div id="wildfire-map">
+                    <p class="fallback-message">📌 Loading map... If the map does not appear, ensure JavaScript is enabled.</p>
+                </div>
                 <div id="weather-forecast"></div>
             </div>
             <div class="right-panel-container">
