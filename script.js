@@ -1,4 +1,5 @@
 console.log("Script loaded!");
+
 // Global variables
 let wildfireMap;
 let userLocationMarker;
