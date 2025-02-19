@@ -333,7 +333,7 @@ function findFireByName(searchTerm) {
 
 async function fetchWeatherData(lat, lon) {
     try {
-        const weatherContainer = document.getElementById('weather-container');
+        const weatherContainer = document.getElementById('weather-forecast');
         if (!weatherContainer) return;
         
         weatherContainer.classList.add('loading');
