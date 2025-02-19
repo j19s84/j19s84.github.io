@@ -176,34 +176,37 @@ function successLocation(position) {
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
 
-    // ✅ Ensure map updates only when initialized
+    console.log(`📍 User location detected: Lat ${latitude}, Lon ${longitude}`);
+
+    // ✅ Ensure the map updates immediately
     updateMapView(latitude, longitude, 8);
 
-    // Update location display
-    const locationInfo = document.createElement('div');
-    locationInfo.id = 'coordinates';
-    locationInfo.className = 'location-info';
-
-    // Get city name and update display
+    // ✅ Reverse geocode to get city name and update UI
     reverseGeocode(latitude, longitude).then(cityName => {
+        const locationInfo = document.createElement('div');
+        locationInfo.id = 'coordinates';
+        locationInfo.className = 'location-info';
+
         locationInfo.innerHTML = `
             <div class="location-details">
                 <span class="city-name">${cityName}</span>
                 <span class="coordinates">Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}</span>
             </div>
         `;
-        
-        // Insert after search bar
+
+        // Insert location info after the search bar
         const searchContainer = document.querySelector('.location-search');
         if (searchContainer) {
             searchContainer.insertAdjacentElement('afterend', locationInfo);
         }
     });
 
-    // Fetch data for the new location
+    // ✅ Fetch ALL necessary data for this location
     fetchWeatherData(latitude, longitude);
     fetchWildfireData(latitude, longitude);
     fetchNWSAlerts(latitude, longitude);
+    
+    console.log("✅ All data requested for user location.");
 }
 
 function errorLocation() {
