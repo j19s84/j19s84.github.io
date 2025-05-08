@@ -1653,4 +1653,47 @@ draggableMarker.on('dragend', function(e) {
     updateLocationData(position.lat, position.lng);
 });
 
+// --- AI Wildfire Assistant ---
+document.addEventListener("DOMContentLoaded", function() {
+  const askBtn = document.createElement("button");
+  askBtn.textContent = "Ask AI";
+  const inputBox = document.createElement("input");
+  inputBox.placeholder = "How do I get to safety?";
+  const outputArea = document.createElement("p");
+  outputArea.textContent = "AI will respond here.";
+
+  document.body.appendChild(inputBox);
+  document.body.appendChild(askBtn);
+  document.body.appendChild(outputArea);
+
+  askBtn.addEventListener("click", async function() {
+    const userInput = inputBox.value;
+    outputArea.textContent = "Thinking...";
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "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" // ⚠️ TEMP for testing
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [{ role: "user", content: userInput }],
+          max_tokens: 150
+        })
+      });
+
+      const data = await response.json();
+      if (data.choices && data.choices.length > 0) {
+        outputArea.textContent = data.choices[0].message.content;
+      } else {
+        outputArea.textContent = "No response from AI.";
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      outputArea.textContent = "Error: " + error.message;
+    }
+  });
+});
  
