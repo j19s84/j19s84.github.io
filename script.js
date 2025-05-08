@@ -1696,4 +1696,34 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 });
- 
+// ---- AI Wildfire Assistant ----
+document.addEventListener("DOMContentLoaded", function() {
+  const askBtn = document.createElement("button");
+  askBtn.textContent = "Ask AI";
+  const inputBox = document.createElement("input");
+  inputBox.placeholder = "How do I get to safety?";
+  const outputArea = document.createElement("p");
+  outputArea.textContent = "AI will respond here.";
+
+  document.body.appendChild(inputBox);
+  document.body.appendChild(askBtn);
+  document.body.appendChild(outputArea);
+
+  askBtn.addEventListener("click", async function() {
+    const userInput = inputBox.value;
+    outputArea.textContent = "Thinking...";
+
+    try {
+      const response = await fetch("https://YOUR-REPLIT-URL/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userInput })
+      });
+      const data = await response.json();
+      outputArea.textContent = data.answer;
+    } catch (error) {
+      console.error("Error:", error);
+      outputArea.textContent = "Error: " + error.message;
+    }
+  });
+});
